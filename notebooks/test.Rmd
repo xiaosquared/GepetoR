@@ -1,19 +1,116 @@
 ---
-title: "Test Notebook"
+title: "BRMS Practice"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+Exercises in Chapter 11 of Statistical Rethinking, using 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+A. Solomon Kurz's [Statistical Rethinking Recoded](https://bookdown.org/ajkurz/Statistical_Rethinking_recoded/), which translates the examples of the book into BRMS.
 
 ```{r}
-plot(cars)
+# Load usual libraries
+library(tidyverse)
 ```
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+## Binomial Logistic Regression with Chimpanzees
 
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+```{r}
+# Get the data from the Rethinking library
+library(rethinking)
+data(chimpanzees)
+d <- chimpanzees
 
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+# Detach rethinking, because it conflicts with brms. Then load brms.
+detach(package:rethinking, unload = T)
+library(brms)
+rm(chimpanzees)
+```
+
+Start with the simplest intercept-only model. Intercept is the average value of $pulled\_left$ without any predictors.
+
+$$ pulled\_left_i \sim\ Binomial(1, p_i) \\
+  logit(p_i) = \alpha \\
+  \alpha \sim\ Normal(0, 10) 
+$$
+
+```{r}
+b10.1 <-
+  brm(data = d, family = binomial,
+      pulled_left | trials(1) ~ 1,
+      prior(normal(0, 10), class = Intercept),
+      seed = 10)
+
+# Summary of intercept
+fixef(b10.1) %>%
+  round(digits = 2)
+```
+
+We want to convert parameters the outcome scale using the inverse link function. Our link function is the logit function, so we use the logistic function (a.k.a. inv_logit) 
+
+```{r}
+fixef(b10.1) %>%
+  inv_logit_scaled()
+```
+
+Model 2 - Add a $\beta$ parameter (slope) for the treatmeant of $prosoc\_left$. Give a vaguely informative prior.
+
+Model 3 - Full model
+
+```{r}
+b10.2 <-
+  brm(data = d, family = binomial,
+      pulled_left | trials(1) ~ 1 + prosoc_left,
+      prior = c(prior(normal(0, 10), class = Intercept),
+                prior(normal(0, 10), class = b)),
+      seed = 10)
+
+b10.3 <-
+  update(b10.2,
+         newdata = d,
+         formula = pulled_left | trials(1) ~ 1 + prosoc_left + condition:prosoc_left)
+```
+
+Compute WAIC for each model and save the result in the brmfit objects returned by brm:
+```{r}
+b10.1 <- add_criterion(b10.1, "waic")
+b10.2 <- add_criterion(b10.2, "waic")
+b10.3 <- add_criterion(b10.3, "waic")
+```
+
+Comparing:
+
+```{r}
+w <- loo_compare(b10.1, b10.2, b10.3, criterion = "waic")
+print(w, simplify = F)
+```
+
+To get differences from elpd metric to WAIC metric:
+```{r}
+cbind(waic_diff = w[, 1] * -2,
+      se        = w[, 2] *  2) %>% 
+  round(digits = 2)
+```
+
+Plot WAICs
+
+```{r}
+w %>%
+  data.frame() %>% 
+  rownames_to_column(var = "model") %>% 
+  
+  ggplot() +
+  geom_pointrange(aes(x = reorder(model, -waic), y = waic,
+                      ymin = waic - se_waic,
+                      ymax = waic + se_waic,
+                      color = model),
+                  shape = 16) +
+  coord_flip() +
+  labs(x = NULL, y = NULL,
+       title = "WAIC") +
+  theme(axis.ticks.y    = element_blank(),
+        legend.position = "none")
+```
+
+
+
 
