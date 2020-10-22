@@ -34,18 +34,35 @@ master <- get_results(subjects, "../data/singleSyllableVariedTonePerception/")
 summary(master)
 ```
 
-Let's plot the data from one subject for group of stimuli. TN is "none of the above". T2 is the rising tone and occupies top left region (end.freq > start.freq). Tone 4 falls and occupies the bottom right region (end.freq < start.freq). T1 is normally described as "high steady." We would expect to find it along the diagonal on the top right corner. From these 4 plots, tone movements up to 2 semitones in either direction still get perceived as tone 1. Without the contrast from adjacent utterances, low steady tones also get perceived as tone 1.
+Plotting all results all together. Each point represents the choice of tone for one stimuli by one subject. The points in each square all have the same start.freq and end.freq. The jitter makes it such that the points are not on top of each other. 
+
+TN is "none of the above". T2 is the rising tone and occupies top left region (end.freq > start.freq). Tone 4 falls and occupies the bottom right region (end.freq < start.freq). T1 is normally described as "high steady." We would expect to find it along the diagonal on the top right corner, and we do. On the upper right corner, tone movements up to 2 semitones in either direction still get perceived as tone 1. Without the contrast from adjacent utterances, low steady tones also get perceived as tone 1. "None of the above" can be found along perceptual boundaries, with some clusters in the lower left corner.
+
 ```{r}
-library("gridExtra")
 
 # Custome palette that assigns a specific color to each tone
 palette <- c(
   "T1" = "skyblue",
   "T2" = "lightcoral", 
-  "T3" = "lightgreen", 
+  "T3" = "forestgreen", 
   "T4" = "gold3",
-  "TN" = "slategray" 
+  "TN" = "ivory" 
 )
+
+ggplot(master)+ geom_jitter(size=0.7, width = 0.5, height = 0.5,
+                                  mapping = aes(x=start.freq, y=end.freq, 
+                                                 label=selected_tone, color=selected_tone)) +
+  xlab("Start frequency (ST)") + ylab("End Frequency (ST)") +
+    scale_x_continuous(breaks = seq(-6, 6, by = 2)) +
+    scale_y_continuous(breaks = seq(-6, 6, by = 2)) +
+scale_color_manual(values = palette, limits = names(palette)) +
+ggtitle("Jitter plot of all results")  
+```
+
+Looking at the choices from two subjects for two different carrier syllables. We see an example of the variation across subjects and across syllable.
+
+```{r}
+library("gridExtra")
 
 # Function that filters the results of one subject for one carrier syllable
 # and plots it in a grid
@@ -59,7 +76,11 @@ plot_one_group <- function(data, my_subject, my_syllable) {
     geom_label(aes(x=start.freq, y=end.freq, color=selected_tone, label=selected_tone), show.legend = FALSE) +
     scale_color_manual(values = palette,
                        limits = names(palette)) +
-    labs(title = paste("Subject: ", my_subject, ", Syllable: ", my_syllable, sep=""))
+    labs(title = paste("Subject: ", my_subject, ", Syllable: ", my_syllable, sep="")) +
+    theme(axis.text.x = element_text(color = "grey20", size = 6),
+        axis.text.y = element_text(color = "grey20", size = 6),  
+        axis.title.x = element_text(color = "grey20", size = 8),
+        axis.title.y = element_text(color = "grey20", size = 8))
 }
 
 ma29 <- plot_one_group(master, "s29", "ma")
@@ -71,5 +92,77 @@ mao32 <- plot_one_group(master, "s32", "mao")
 grid.arrange(ma29, mao29, ma32, mao32, nrow=2)
 ```
 
+## Fitting Some Models
 
-## 
+Theoretically, we can do a multinomial, multilevel logistic regression, but the results of multinomial logistic regressions are difficult to interpret. Also, multilevel logistic regressions work best when the number of results in each category are more or less even. This data has too few results in T3 and TN. 
+
+First we will look at a binomial logistic regression on Tone 2. Start with at intercept-only models and the random effect due to subject, syllable, and both. Looks like the intercept doesn't change at all.
+
+### Intercept-only models
+```{r}
+library(lme4)
+library(jtools)
+
+# New column that is binary measure for the tone in question
+dt2 <- mutate(master, is.tone = ifelse(selected_tone == "T2", 1, 0))
+
+# intercept only models
+model_intercept <- function(my_data) {
+  glm(is.tone ~ 1, data = my_data, family = "binomial")
+}
+
+model_intercept_subject <- function(my_data) {
+  glmer(is.tone ~ 1 + (1|subject), data = my_data, family = "binomial", nAGQ = 0)
+}
+
+model_intercept_syllable <- function(my_data) {
+  glmer(is.tone ~ 1 + (1|carrier_syllable), data = my_data, family = "binomial", nAGQ = 0)
+}
+
+model_intercept_syllable_subject <- function(my_data) {
+  glmer(is.tone ~ 1 + (1|carrier_syllable) + (1|subject), data = my_data, family = "binomial", nAGQ = 0)
+}
+
+m2.0 <- model_intercept(dt2)
+m2.1 <- model_intercept_subject(dt2)
+m2.2 <- model_intercept_syllable(dt2)
+m2.3 <- model_intercept_syllable_subject(dt2)
+
+names <- c("Intercept only",
+           "Random levels for subject",
+           "Random levels for syllable",
+           "Random levels for subject & syllable")
+plot_coefs(m2.0, m2.1, m2.2, m2.3, model.names=names, omit.coefs=NULL)
+
+```
+
+TODO: Do the same thing for other tones
+```{r}
+#dt1 <- mutate(master, is.tone = ifelse(selected_tone == "T1", 1, 0))
+#dt3 <- mutate(master, is.tone = ifelse(selected_tone == "T3", 1, 0))
+#dt4 <- mutate(master, is.tone = ifelse(selected_tone == "T4", 1, 0))
+
+```
+
+### Adding some predictors
+
+Starting with tone 2
+
+```{r}
+library("ggeffects")
+
+model_full <- function(my_data) {
+  glm(is.tone ~ start.freq * freq.shift, data = my_data, family = "binomial")
+}
+
+m2.f <- model_full(dt2)
+pr2.1 <- ggpredict(m2.f, c("start.freq", "freq.shift")) %>% 
+       plot() + labs(title = "Predicted probabilities of Tone 2")
+
+pr2.2<- ggpredict(m2.f, c("freq.shift", "start.freq")) %>% plot() + 
+  labs(title = " ") 
+
+grid.arrange(pr2.1, pr2.2, nrow=1)
+
+```
+
