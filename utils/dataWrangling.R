@@ -48,3 +48,8 @@ to_tibble_one_subject_results <- function(subject, path) {
 get_results <- function(subjects, my_path) {
   do.call("rbind",lapply(subjects, to_tibble_one_subject_results,path=my_path))
 }
+
+# Returns tibble with binary-coded column for whether my_tone is selected
+data_for_selected_tone <- function(data, my_tone) {
+  mutate(data, is.tone = ifelse(selected_tone == my_tone, 1, 0))
+}

@@ -1,0 +1,47 @@
+---
+title: "Analyze Tone Perception (1 syllable) - Carrier Syllable Effects"
+output: html_notebook
+---
+
+### Motivation
+
+One goal of the study is to determine whether the perceptual boundaries between tones varies more based on individual listeners or based on carrier syllables. Multilevel analysis in [Part I](https://xiaosquared.github.io/GepetoR/notebooks/1_analyzeTonePerceptionResults.nb.html) seemed to indicate more variation based on subject when all the syllables were pooled together. 
+
+Now, I want to split the data, looking at pairs of syllables at a time. 
+
+* High vs low vowel
+  * */ma* vs */mi*
+  * */ya* vs */yi*
+* Effect of diphthong  
+  * */ma* vs */mao*
+* Effect of glide
+  * */Mao* vs */Miao*
+* Effect of nasal ending
+  * */Yi* vs */Yin*
+* Effect of aspiration
+  * */Di* vs */Ti* 
+* Other consonant effects
+  * */Yi* vs */Xi*
+  * *Yi* vs */Mi*
+  * */Mi* vs */Xi*
+
+```{r}
+# Loading data
+library("tidyverse") #alwways
+source("../utils/dataWrangling.R") #helper functions to load data
+
+subjects <- c("s29", "s30", "s31", "s32", "s33", "s34")
+master <- get_results(subjects, "../data/singleSyllableVariedTonePerception/")
+
+# Function to data by syllable
+get_data_syllables <- function(data, syll1, syll2) {
+  filter(data, carrier_syllable == syll1 | carrier_syllable == syll2)
+}
+```
+
+TODO:
+- put data wrangling into one file
+- put models into one file so they can be shared across notebooks
+
+### Tone 4
+
