@@ -25,7 +25,7 @@ library("tidyverse") #alwways
 source("../utils/dataWrangling.R") #helper functions to load data
 
 subjects <- c("s29", "s30", "s31", "s32", "s33", "s34")
-master <- get_results(subjects, "../data/singleSyllableVariedTonePerception/")
+master <- get_results(subjects, "../data/single-syll-varied-tone-perception/")
 
 summary(master)
 

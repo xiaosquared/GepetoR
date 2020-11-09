@@ -1,0 +1,35 @@
+---
+title: "Synthesize Stimuli"
+output: html_notebook
+---
+
+### 
+
+
+```{r}
+library("tidyverse") #alwways
+library("rPraat")
+library("jsonlite")
+
+path="../data/pitch-tier-tests/"
+#name = "Elle_aime_danser_declaration"
+#name = "Elle_aime_danser_interdir"
+name = "Yang1_declaration11"
+
+pitchTierToJSON(path, name)
+
+# Function to turn Praat's PitchTier into JSON file
+pitchTierToJSON <- function(path, name) {
+  filename = paste0(path, name, "_styl.PitchTier")
+  # Load PitchTier object using rPraat
+  my.pt = pt.read(filename)
+  # Save the time and frequency columns as dataframe
+  pt.df <- data.frame(t=my.pt$t, f=my.pt$f)  
+  # Make the dataframe into a JSON object
+  my.JSON <- toJSON(pt.df)
+  # Write JSON object into the same directory as the original file
+  write(my.JSON, paste0(path,name, ".json"))
+}
+
+```
+
