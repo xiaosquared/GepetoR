@@ -1797,24 +1797,109 @@ summary {
 
 
 <!-- rnb-text-begin -->
-<div id="section" class="section level3">
-<h3></h3>
+<div id="convert-pitchtier-to-json" class="section level3">
+<h3>Convert PitchTier to JSON</h3>
+<p>Reads all the .PitchTier files in <span class="math inline">\(path\)</span> and converts them to JSON files</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxud3JpdGUobXkuSlNPTiwgcGFzdGUwKG5hbWUsIFwiLmpzb25cIikpXG5cbmBgYCJ9 -->
-<pre class="r"><code>write(my.JSON, paste0(name, &quot;.json&quot;))
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI2xpYnJhcnkoXCJ0aWR5dmVyc2VcIikgI2Fsd3dheXNcbmxpYnJhcnkoXCJyUHJhYXRcIilcbmxpYnJhcnkoXCJqc29ubGl0ZVwiKVxuc291cmNlKFwiLi4vdXRpbHMvaGVydHpUb1NULlJcIilcblxuIyBMb3dlc3QgcGl0Y2hcbnJlZiA9IDEzMFxuXG5zZXR3ZChcIi4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy9cIilcbmBgYCJ9 -->
+<pre class="r"><code>#library(&quot;tidyverse&quot;) #alwways
+library(&quot;rPraat&quot;)
+library(&quot;jsonlite&quot;)
+source(&quot;../utils/hertzToST.R&quot;)
+
+# Lowest pitch
+ref = 130
+
+setwd(&quot;../data/pitch-tier-tests/&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9kYXRhL3BpdGNoLXRpZXItdGVzdHMgaW5zaWRlIGEgbm90ZWJvb2sgY2h1bmsuIFRoZSB3b3JraW5nIGRpcmVjdG9yeSB3aWxsIGJlIHJlc2V0IHdoZW4gdGhlIGNodW5rIGlzIGZpbmlzaGVkIHJ1bm5pbmcuIFVzZSB0aGUga25pdHIgcm9vdC5kaXIgb3B0aW9uIGluIHRoZSBzZXR1cCBjaHVuayB0byBjaGFuZ2UgdGhlIHdvcmtpbmcgZGlyZWN0b3J5IGZvciBub3RlYm9vayBjaHVua3MuXG4ifQ== -->
+<pre><code>The working directory was changed to /Users/xx/Github/GepetoR/data/pitch-tier-tests inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5QaXRjaFRpZXIkXCIpXG5maWxlbmFtZXNcbmBgYCJ9 -->
+<pre class="r"><code>filenames &lt;- dir(pattern=&quot;\\.PitchTier$&quot;)
+filenames</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiY2FfdmFfZV9zdHlsLlBpdGNoVGllclwiICAgICAgICAgICAgICAgICAgICAgIFwiY2FfdmFfZl9zdHlsLlBpdGNoVGllclwiICAgICAgICAgICAgICAgICAgICAgXG5bM10gXCJjYV92YV9oX3N0eWwuUGl0Y2hUaWVyXCIgICAgICAgICAgICAgICAgICAgICAgXCJFbGxlX2FpbWVfZGFuc2VyX2RlY2xhcmF0aW9uX3N0eWwuUGl0Y2hUaWVyXCJcbls1XSBcIkVsbGVfYWltZV9kYW5zZXJfaW50ZXJkaXJfc3R5bC5QaXRjaFRpZXJcIiAgICBcIllhbmcxX2RlY2xhcmF0aW9uMTFfc3R5bC5QaXRjaFRpZXJcIiAgICAgICAgIFxuIn0= -->
+<pre><code>[1] &quot;ca_va_e_styl.PitchTier&quot;                      &quot;ca_va_f_styl.PitchTier&quot;                     
+[3] &quot;ca_va_h_styl.PitchTier&quot;                      &quot;Elle_aime_danser_declaration_styl.PitchTier&quot;
+[5] &quot;Elle_aime_danser_interdir_styl.PitchTier&quot;    &quot;Yang1_declaration11_styl.PitchTier&quot;         </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0d2QoXCIuLi8uLi9ub3RlYm9va3MvXCIpXG5zYXBwbHkoZmlsZW5hbWVzLCBwaXRjaFRpZXJUb0pTT04pXG5gYGAifQ== -->
+<pre class="r"><code>setwd(&quot;../../notebooks/&quot;)
+sapply(filenames, pitchTierToJSON)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoid2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9lX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9mX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9oX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBFbGxlX2FpbWVfZGFuc2VyX2RlY2xhcmF0aW9uX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBFbGxlX2FpbWVfZGFuc2VyX2ludGVyZGlyX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBZYW5nMV9kZWNsYXJhdGlvbjExX3N0eWwuUGl0Y2hUaWVyIFxuJGNhX3ZhX2Vfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJGNhX3ZhX2Zfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJGNhX3ZhX2hfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJEVsbGVfYWltZV9kYW5zZXJfZGVjbGFyYXRpb25fc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJEVsbGVfYWltZV9kYW5zZXJfaW50ZXJkaXJfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJFlhbmcxX2RlY2xhcmF0aW9uMTFfc3R5bC5QaXRjaFRpZXJcbk5VTExcbiJ9 -->
+<pre><code>wd  /Users/xx/Github/GepetoR/notebooks 
+name  ca_va_e_styl.PitchTier 
+wd  /Users/xx/Github/GepetoR/notebooks 
+name  ca_va_f_styl.PitchTier 
+wd  /Users/xx/Github/GepetoR/notebooks 
+name  ca_va_h_styl.PitchTier 
+wd  /Users/xx/Github/GepetoR/notebooks 
+name  Elle_aime_danser_declaration_styl.PitchTier 
+wd  /Users/xx/Github/GepetoR/notebooks 
+name  Elle_aime_danser_interdir_styl.PitchTier 
+wd  /Users/xx/Github/GepetoR/notebooks 
+name  Yang1_declaration11_styl.PitchTier 
+$ca_va_e_styl.PitchTier
+NULL
+
+$ca_va_f_styl.PitchTier
+NULL
+
+$ca_va_h_styl.PitchTier
+NULL
+
+$Elle_aime_danser_declaration_styl.PitchTier
+NULL
+
+$Elle_aime_danser_interdir_styl.PitchTier
+NULL
+
+$Yang1_declaration11_styl.PitchTier
+NULL</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGF0aD1cIi4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy9cIlxuXG4jIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGVcbiMgSGVydHogZnJvbSBQaXRjaFRpZXIgaXMgY29udmVydGVkIHRvIFNlbWl0b25lcywgY2VudGVyZWQgb24gcmVmIHBpdGNoXG5waXRjaFRpZXJUb0pTT04gPC0gZnVuY3Rpb24obmFtZSkge1xuICAjZmlsZW5hbWUgPC0gcGFzdGUwKHBhdGgsIG5hbWUpXG4gICNjYXQoZ2V0d2QoKSwgZmlsZW5hbWUpXG4gICMgTG9hZCBQaXRjaFRpZXIgb2JqZWN0IHVzaW5nIHJQcmFhdFxuICBjYXQoXCJ3ZCBcIiwgZ2V0d2QoKSwgXCJcXG5cIilcbiAgY2F0KFwibmFtZSBcIiwgbmFtZSwgXCJcXG5cIilcbiAgbXkucHQgPSBwdC5yZWFkKHBhc3RlMChwYXRoLCBuYW1lKSlcbiAgI215LnB0ID0gcHQucmVhZChuYW1lKVxuICAjIFNhdmUgdGhlIHRpbWUgYW5kIGZyZXF1ZW5jeSBjb2x1bW5zIGFzIGRhdGFmcmFtZVxuICAjIGRpdmlkZSB0aW1lIGJ5IG1heCB0aW1lXG4gIHB0LmRmIDwtIGRhdGEuZnJhbWUodD1teS5wdCR0L215LnB0JHRtYXgsIGY9aGVydHpfdG9fc2VtaXRvbmVzKG15LnB0JGYsIHJlZikpICBcbiAgXG4gICMgQWRkIGEgcG9pbnQgdG8gdGhlIGJlZ2lubmluZzogdCA9IDAgKyAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gZmlyc3QgZlxuICBwdC5kZiA8LSByYmluZChjKDAuMDEsIHB0LmRmWzEsMl0pLCBwdC5kZilcbiAgXG4gICMgQWRkIGxhc3QgcG9pbnQ6IHQgPSB0bWF4IC0gMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGxhc3QgZlxuICBwdC5kZltucm93KHB0LmRmKSArIDEsXSA9IGMoMC45OCwgcHQuZGZbbnJvdyhwdC5kZiksMl0pXG4gIFxuICAjIE1ha2UgdGhlIGRhdGFmcmFtZSBpbnRvIGEgSlNPTiBvYmplY3RcbiAgbXkuSlNPTiA8LSB0b0pTT04ocHQuZGYpXG4gIFxuICAjIEdldCB0aGUgY29yZSBuYW1lIGZvciB0aGUgb3V0cHV0IGZpbGVuYW1lXG4gIG91dF9uYW1lIDwtIHN0cl9zcGxpdChuYW1lLCBcIl9zdHlsLlBpdGNoVGllclwiKVtbMV1dWzFdXG4gIFxuICAjIFdyaXRlIEpTT04gb2JqZWN0IGludG8gdGhlIHNhbWUgZGlyZWN0b3J5IGFzIHRoZSBvcmlnaW5hbCBmaWxlXG4gIHdyaXRlKG15LkpTT04sIHBhc3RlMChwYXRoLG91dF9uYW1lLCBcIi5qc29uXCIpKVxufVxuXG5gYGAifQ== -->
+<pre class="r"><code>path=&quot;../data/pitch-tier-tests/&quot;
+
+# Function to turn Praat's PitchTier into JSON file
+# Hertz from PitchTier is converted to Semitones, centered on ref pitch
+pitchTierToJSON &lt;- function(name) {
+  #filename &lt;- paste0(path, name)
+  #cat(getwd(), filename)
+  # Load PitchTier object using rPraat
+  cat(&quot;wd &quot;, getwd(), &quot;\n&quot;)
+  cat(&quot;name &quot;, name, &quot;\n&quot;)
+  my.pt = pt.read(paste0(path, name))
+  #my.pt = pt.read(name)
+  # Save the time and frequency columns as dataframe
+  # divide time by max time
+  pt.df &lt;- data.frame(t=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  
+  # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
+  pt.df &lt;- rbind(c(0.01, pt.df[1,2]), pt.df)
+  
+  # Add last point: t = tmax - 0.01 (offset by a little), f = last f
+  pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
+  
+  # Make the dataframe into a JSON object
+  my.JSON &lt;- toJSON(pt.df)
+  
+  # Get the core name for the output filename
+  out_name &lt;- str_split(name, &quot;_styl.PitchTier&quot;)[[1]][1]
+  
+  # Write JSON object into the same directory as the original file
+  write(my.JSON, paste0(path,out_name, &quot;.json&quot;))
+}
 </code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gY2F0KHgsIGZpbGUgPSBmaWxlLCBzZXAgPSBjKHJlcC5pbnQoc2VwLCBuY29sdW1ucyAtIDEpLCBcIlxcblwiKSwgIDogXG4gIG9iamVjdCAnbXkuSlNPTicgbm90IGZvdW5kXG4ifQ== -->
-<pre><code>Error in cat(x, file = file, sep = c(rep.int(sep, ncolumns - 1), &quot;\n&quot;),  : 
-  object 'my.JSON' not found</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiU3ludGhlc2l6ZSBTdGltdWxpIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojIyMgCgoKYGBge3J9CmxpYnJhcnkoInRpZHl2ZXJzZSIpICNhbHd3YXlzCmxpYnJhcnkoInJQcmFhdCIpCmxpYnJhcnkoImpzb25saXRlIikKCnBhdGg9Ii4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy8iCiNuYW1lID0gIkVsbGVfYWltZV9kYW5zZXJfZGVjbGFyYXRpb24iCiNuYW1lID0gIkVsbGVfYWltZV9kYW5zZXJfaW50ZXJkaXIiCm5hbWUgPSAiWWFuZzFfZGVjbGFyYXRpb24xMSIKCnBpdGNoVGllclRvSlNPTihwYXRoLCBuYW1lKQoKIyBGdW5jdGlvbiB0byB0dXJuIFByYWF0J3MgUGl0Y2hUaWVyIGludG8gSlNPTiBmaWxlCnBpdGNoVGllclRvSlNPTiA8LSBmdW5jdGlvbihwYXRoLCBuYW1lKSB7CiAgZmlsZW5hbWUgPSBwYXN0ZTAocGF0aCwgbmFtZSwgIl9zdHlsLlBpdGNoVGllciIpCiAgIyBMb2FkIFBpdGNoVGllciBvYmplY3QgdXNpbmcgclByYWF0CiAgbXkucHQgPSBwdC5yZWFkKGZpbGVuYW1lKQogICMgU2F2ZSB0aGUgdGltZSBhbmQgZnJlcXVlbmN5IGNvbHVtbnMgYXMgZGF0YWZyYW1lCiAgcHQuZGYgPC0gZGF0YS5mcmFtZSh0PW15LnB0JHQsIGY9bXkucHQkZikgIAogICMgTWFrZSB0aGUgZGF0YWZyYW1lIGludG8gYSBKU09OIG9iamVjdAogIG15LkpTT04gPC0gdG9KU09OKHB0LmRmKQogICMgV3JpdGUgSlNPTiBvYmplY3QgaW50byB0aGUgc2FtZSBkaXJlY3RvcnkgYXMgdGhlIG9yaWdpbmFsIGZpbGUKICB3cml0ZShteS5KU09OLCBwYXN0ZTAocGF0aCxuYW1lLCAiLmpzb24iKSkKfQoKYGBgCgo=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiU3ludGhlc2l6ZSBTdGltdWxpIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojIyMgQ29udmVydCBQaXRjaFRpZXIgdG8gSlNPTgoKUmVhZHMgYWxsIHRoZSAuUGl0Y2hUaWVyIGZpbGVzIGluICRwYXRoJCBhbmQgY29udmVydHMgdGhlbSB0byBKU09OIGZpbGVzCgpgYGB7cn0KbGlicmFyeSgiclByYWF0IikKbGlicmFyeSgianNvbmxpdGUiKQpzb3VyY2UoIi4uL3V0aWxzL2hlcnR6VG9TVC5SIikKCiMgTG93ZXN0IHBpdGNoCnJlZiA9IDEzMAojIFJlbGF0aXZlIHBhdGggdG8gd2hlcmUgdGhlIGZpbGVzIGFyZQpwYXRoPSIuLi9kYXRhL3BpdGNoLXRpZXItdGVzdHMvIgoKc2V0d2QocGF0aCkKZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPSJcXC5QaXRjaFRpZXIkIikKc2V0d2QoIi4uLy4uL25vdGVib29rcy8iKQpzYXBwbHkoZmlsZW5hbWVzLCBwaXRjaFRpZXJUb0pTT04pCgojIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGUKIyBIZXJ0eiBmcm9tIFBpdGNoVGllciBpcyBjb252ZXJ0ZWQgdG8gU2VtaXRvbmVzLCBjZW50ZXJlZCBvbiByZWYgcGl0Y2gKcGl0Y2hUaWVyVG9KU09OIDwtIGZ1bmN0aW9uKG5hbWUpIHsKICAjZmlsZW5hbWUgPC0gcGFzdGUwKHBhdGgsIG5hbWUpCiAgI2NhdChnZXR3ZCgpLCBmaWxlbmFtZSkKICAjIExvYWQgUGl0Y2hUaWVyIG9iamVjdCB1c2luZyByUHJhYXQKICBjYXQoIndkICIsIGdldHdkKCksICJcbiIpCiAgY2F0KCJuYW1lICIsIG5hbWUsICJcbiIpCiAgbXkucHQgPSBwdC5yZWFkKHBhc3RlMChwYXRoLCBuYW1lKSkKICAjbXkucHQgPSBwdC5yZWFkKG5hbWUpCiAgIyBTYXZlIHRoZSB0aW1lIGFuZCBmcmVxdWVuY3kgY29sdW1ucyBhcyBkYXRhZnJhbWUKICAjIGRpdmlkZSB0aW1lIGJ5IG1heCB0aW1lCiAgcHQuZGYgPC0gZGF0YS5mcmFtZSh0PW15LnB0JHQvbXkucHQkdG1heCwgZj1oZXJ0el90b19zZW1pdG9uZXMobXkucHQkZiwgcmVmKSkgIAogIAogICMgQWRkIGEgcG9pbnQgdG8gdGhlIGJlZ2lubmluZzogdCA9IDAgKyAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gZmlyc3QgZgogIHB0LmRmIDwtIHJiaW5kKGMoMC4wMSwgcHQuZGZbMSwyXSksIHB0LmRmKQogIAogICMgQWRkIGxhc3QgcG9pbnQ6IHQgPSB0bWF4IC0gMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGxhc3QgZgogIHB0LmRmW25yb3cocHQuZGYpICsgMSxdID0gYygwLjk4LCBwdC5kZltucm93KHB0LmRmKSwyXSkKICAKICAjIE1ha2UgdGhlIGRhdGFmcmFtZSBpbnRvIGEgSlNPTiBvYmplY3QKICBteS5KU09OIDwtIHRvSlNPTihwdC5kZikKICAKICAjIEdldCB0aGUgY29yZSBuYW1lIGZvciB0aGUgb3V0cHV0IGZpbGVuYW1lCiAgb3V0X25hbWUgPC0gc3RyX3NwbGl0KG5hbWUsICJfc3R5bC5QaXRjaFRpZXIiKVtbMV1dWzFdCiAgCiAgIyBXcml0ZSBKU09OIG9iamVjdCBpbnRvIHRoZSBzYW1lIGRpcmVjdG9yeSBhcyB0aGUgb3JpZ2luYWwgZmlsZQogIHdyaXRlKG15LkpTT04sIHBhc3RlMChwYXRoLG91dF9uYW1lLCAiLmpzb24iKSkKfQoKYGBgCgoKCgoK</div>
 
 
 
@@ -1861,7 +1946,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("3_synthesizeTones.Rmd");
+  window.initializeSourceEmbed("3_synthesizeStimuli.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>

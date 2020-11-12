@@ -3,33 +3,58 @@ title: "Synthesize Stimuli"
 output: html_notebook
 ---
 
-### 
+### Convert PitchTier to JSON
 
+Reads all the .PitchTier files in $path$ and converts them to JSON files
 
 ```{r}
-library("tidyverse") #alwways
 library("rPraat")
 library("jsonlite")
+source("../utils/hertzToST.R")
 
+# Lowest pitch
+ref = 130
+# Relative path to where the files are
 path="../data/pitch-tier-tests/"
-#name = "Elle_aime_danser_declaration"
-#name = "Elle_aime_danser_interdir"
-name = "Yang1_declaration11"
 
-pitchTierToJSON(path, name)
+setwd(path)
+filenames <- dir(pattern="\\.PitchTier$")
+setwd("../../notebooks/")
+sapply(filenames, pitchTierToJSON)
 
 # Function to turn Praat's PitchTier into JSON file
-pitchTierToJSON <- function(path, name) {
-  filename = paste0(path, name, "_styl.PitchTier")
+# Hertz from PitchTier is converted to Semitones, centered on ref pitch
+pitchTierToJSON <- function(name) {
+  #filename <- paste0(path, name)
+  #cat(getwd(), filename)
   # Load PitchTier object using rPraat
-  my.pt = pt.read(filename)
+  cat("wd ", getwd(), "\n")
+  cat("name ", name, "\n")
+  my.pt = pt.read(paste0(path, name))
+  #my.pt = pt.read(name)
   # Save the time and frequency columns as dataframe
-  pt.df <- data.frame(t=my.pt$t, f=my.pt$f)  
+  # divide time by max time
+  pt.df <- data.frame(t=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  
+  # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
+  pt.df <- rbind(c(0.01, pt.df[1,2]), pt.df)
+  
+  # Add last point: t = tmax - 0.01 (offset by a little), f = last f
+  pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
+  
   # Make the dataframe into a JSON object
   my.JSON <- toJSON(pt.df)
+  
+  # Get the core name for the output filename
+  out_name <- str_split(name, "_styl.PitchTier")[[1]][1]
+  
   # Write JSON object into the same directory as the original file
-  write(my.JSON, paste0(path,name, ".json"))
+  write(my.JSON, paste0(path,out_name, ".json"))
 }
 
 ```
+
+
+
+
 
