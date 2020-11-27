@@ -3,13 +3,15 @@ title: "Synthesize Stimuli"
 output: html_notebook
 ---
 
-### Convert PitchTier to JSON
+### Convert PitchTier to JSON - One approach
 
-Reads all the .PitchTier files in $path$ and converts them to JSON files
+Reads all the .PitchTier files in $path$ and converts them to JSON files.
+Using jsonlite package. Array of points. If we want to put other info in JSON file (e.g. ref frequency), need to use $toJSON()$ from the rjson package.
 
 ```{r}
 library("rPraat")
 library("jsonlite")
+library("stringr")
 source("../utils/hertzToST.R")
 
 # Lowest pitch
@@ -34,7 +36,7 @@ pitchTierToJSON <- function(name) {
   #my.pt = pt.read(name)
   # Save the time and frequency columns as dataframe
   # divide time by max time
-  pt.df <- data.frame(t=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  pt.df <- data.frame(scrub=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
   
   # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
   pt.df <- rbind(c(0.01, pt.df[1,2]), pt.df)
@@ -54,6 +56,58 @@ pitchTierToJSON <- function(name) {
 
 ```
 
+### Another version
+
+```{r}
+library("stringr")
+library("rPraat")
+library("rjson")
+source("../utils/hertzToST.R")
+
+# Lowest pitch
+ref = 130
+# Relative path to where the files are
+path="../data/pitch-tier-tests/"
+
+setwd(path)
+filenames <- dir(pattern="\\.PitchTier$")
+setwd("../../notebooks/")
+sapply(filenames, pitchTierToJSON2)
+
+# Function to turn Praat's PitchTier into JSON file
+# Hertz from PitchTier is converted to Semitones, centered on ref pitch
+pitchTierToJSON2 <- function(name) {
+  #filename <- paste0(path, name)
+  #cat(getwd(), filename)
+  # Load PitchTier object using rPraat
+  cat("wd ", getwd(), "\n")
+  cat("name ", name, "\n")
+  my.pt = pt.read(paste0(path, name))
+  #my.pt = pt.read(name)
+  # Save the time and frequency columns as dataframe
+  # divide time by max time
+  pt.df <- data.frame(scrub=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  
+  # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
+  pt.df <- rbind(c(0.01, pt.df[1,2]), pt.df)
+  
+  # Add last point: t = tmax - 0.01 (offset by a little), f = last f
+  pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
+  
+  # Get the core name for the output filename
+  out_name <- str_split(name, "_styl.PitchTier")[[1]][1]
+  
+  # EXTRA STEP for this version, make a list
+  pt.list <- list(points = pt.df, reference=ref, name=out_name)
+  
+  # Make the dataframe into a JSON object
+  my.JSON <- toJSON(pt.list)
+  
+  # Write JSON object into the same directory as the original file
+  write(my.JSON, paste0(path,out_name, ".json"))
+}
+
+```
 
 
 

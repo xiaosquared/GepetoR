@@ -1797,37 +1797,84 @@ summary {
 
 
 <!-- rnb-text-begin -->
-<div id="convert-pitchtier-to-json" class="section level3">
-<h3>Convert PitchTier to JSON</h3>
-<p>Reads all the .PitchTier files in <span class="math inline">\(path\)</span> and converts them to JSON files</p>
+<div id="convert-pitchtier-to-json---one-approach" class="section level3">
+<h3>Convert PitchTier to JSON - One approach</h3>
+<p>Reads all the .PitchTier files in <span class="math inline">\(path\)</span> and converts them to JSON files. Using jsonlite package. Array of points. If we want to put other info in JSON file (e.g. ref frequency), need to use <span class="math inline">\(toJSON()\)</span> from the rjson package.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI2xpYnJhcnkoXCJ0aWR5dmVyc2VcIikgI2Fsd3dheXNcbmxpYnJhcnkoXCJyUHJhYXRcIilcbmxpYnJhcnkoXCJqc29ubGl0ZVwiKVxuc291cmNlKFwiLi4vdXRpbHMvaGVydHpUb1NULlJcIilcblxuIyBMb3dlc3QgcGl0Y2hcbnJlZiA9IDEzMFxuXG5zZXR3ZChcIi4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy9cIilcbmBgYCJ9 -->
-<pre class="r"><code>#library(&quot;tidyverse&quot;) #alwways
-library(&quot;rPraat&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcInJQcmFhdFwiKVxubGlicmFyeShcImpzb25saXRlXCIpXG5zb3VyY2UoXCIuLi91dGlscy9oZXJ0elRvU1QuUlwiKVxuXG4jIExvd2VzdCBwaXRjaFxucmVmID0gMTMwXG4jIFJlbGF0aXZlIHBhdGggdG8gd2hlcmUgdGhlIGZpbGVzIGFyZVxucGF0aD1cIi4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy9cIlxuXG5zZXR3ZChwYXRoKVxuZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5QaXRjaFRpZXIkXCIpXG5zZXR3ZChcIi4uLy4uL25vdGVib29rcy9cIilcbnNhcHBseShmaWxlbmFtZXMsIHBpdGNoVGllclRvSlNPTilcblxuIyBGdW5jdGlvbiB0byB0dXJuIFByYWF0J3MgUGl0Y2hUaWVyIGludG8gSlNPTiBmaWxlXG4jIEhlcnR6IGZyb20gUGl0Y2hUaWVyIGlzIGNvbnZlcnRlZCB0byBTZW1pdG9uZXMsIGNlbnRlcmVkIG9uIHJlZiBwaXRjaFxucGl0Y2hUaWVyVG9KU09OIDwtIGZ1bmN0aW9uKG5hbWUpIHtcbiAgI2ZpbGVuYW1lIDwtIHBhc3RlMChwYXRoLCBuYW1lKVxuICAjY2F0KGdldHdkKCksIGZpbGVuYW1lKVxuICAjIExvYWQgUGl0Y2hUaWVyIG9iamVjdCB1c2luZyByUHJhYXRcbiAgY2F0KFwid2QgXCIsIGdldHdkKCksIFwiXFxuXCIpXG4gIGNhdChcIm5hbWUgXCIsIG5hbWUsIFwiXFxuXCIpXG4gIG15LnB0ID0gcHQucmVhZChwYXN0ZTAocGF0aCwgbmFtZSkpXG4gICNteS5wdCA9IHB0LnJlYWQobmFtZSlcbiAgIyBTYXZlIHRoZSB0aW1lIGFuZCBmcmVxdWVuY3kgY29sdW1ucyBhcyBkYXRhZnJhbWVcbiAgIyBkaXZpZGUgdGltZSBieSBtYXggdGltZVxuICBwdC5kZiA8LSBkYXRhLmZyYW1lKHNjcnViPW15LnB0JHQvbXkucHQkdG1heCwgZj1oZXJ0el90b19zZW1pdG9uZXMobXkucHQkZiwgcmVmKSkgIFxuICBcbiAgIyBBZGQgYSBwb2ludCB0byB0aGUgYmVnaW5uaW5nOiB0ID0gMCArIDAuMDEgKG9mZnNldCBieSBhIGxpdHRsZSksIGYgPSBmaXJzdCBmXG4gIHB0LmRmIDwtIHJiaW5kKGMoMC4wMSwgcHQuZGZbMSwyXSksIHB0LmRmKVxuICBcbiAgIyBBZGQgbGFzdCBwb2ludDogdCA9IHRtYXggLSAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gbGFzdCBmXG4gIHB0LmRmW25yb3cocHQuZGYpICsgMSxdID0gYygwLjk4LCBwdC5kZltucm93KHB0LmRmKSwyXSlcbiAgXG4gICMgTWFrZSB0aGUgZGF0YWZyYW1lIGludG8gYSBKU09OIG9iamVjdFxuICBteS5KU09OIDwtIHRvSlNPTihwdC5kZilcbiAgXG4gICMgR2V0IHRoZSBjb3JlIG5hbWUgZm9yIHRoZSBvdXRwdXQgZmlsZW5hbWVcbiAgb3V0X25hbWUgPC0gc3RyX3NwbGl0KG5hbWUsIFwiX3N0eWwuUGl0Y2hUaWVyXCIpW1sxXV1bMV1cbiAgXG4gICMgV3JpdGUgSlNPTiBvYmplY3QgaW50byB0aGUgc2FtZSBkaXJlY3RvcnkgYXMgdGhlIG9yaWdpbmFsIGZpbGVcbiAgd3JpdGUobXkuSlNPTiwgcGFzdGUwKHBhdGgsb3V0X25hbWUsIFwiLmpzb25cIikpXG59XG5cbmBgYCJ9 -->
+<pre class="r"><code>library(&quot;rPraat&quot;)
 library(&quot;jsonlite&quot;)
 source(&quot;../utils/hertzToST.R&quot;)
 
 # Lowest pitch
 ref = 130
+# Relative path to where the files are
+path=&quot;../data/pitch-tier-tests/&quot;
 
-setwd(&quot;../data/pitch-tier-tests/&quot;)</code></pre>
+setwd(path)
+filenames &lt;- dir(pattern=&quot;\\.PitchTier$&quot;)
+setwd(&quot;../../notebooks/&quot;)
+sapply(filenames, pitchTierToJSON)
+
+# Function to turn Praat's PitchTier into JSON file
+# Hertz from PitchTier is converted to Semitones, centered on ref pitch
+pitchTierToJSON &lt;- function(name) {
+  #filename &lt;- paste0(path, name)
+  #cat(getwd(), filename)
+  # Load PitchTier object using rPraat
+  cat(&quot;wd &quot;, getwd(), &quot;\n&quot;)
+  cat(&quot;name &quot;, name, &quot;\n&quot;)
+  my.pt = pt.read(paste0(path, name))
+  #my.pt = pt.read(name)
+  # Save the time and frequency columns as dataframe
+  # divide time by max time
+  pt.df &lt;- data.frame(scrub=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  
+  # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
+  pt.df &lt;- rbind(c(0.01, pt.df[1,2]), pt.df)
+  
+  # Add last point: t = tmax - 0.01 (offset by a little), f = last f
+  pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
+  
+  # Make the dataframe into a JSON object
+  my.JSON &lt;- toJSON(pt.df)
+  
+  # Get the core name for the output filename
+  out_name &lt;- str_split(name, &quot;_styl.PitchTier&quot;)[[1]][1]
+  
+  # Write JSON object into the same directory as the original file
+  write(my.JSON, paste0(path,out_name, &quot;.json&quot;))
+}
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="another-version" class="section level3">
+<h3>Another version</h3>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcInN0cmluZ3JcIilcbmxpYnJhcnkoXCJyUHJhYXRcIilcbmxpYnJhcnkoXCJyanNvblwiKVxuc291cmNlKFwiLi4vdXRpbHMvaGVydHpUb1NULlJcIilcblxuIyBMb3dlc3QgcGl0Y2hcbnJlZiA9IDEzMFxuIyBSZWxhdGl2ZSBwYXRoIHRvIHdoZXJlIHRoZSBmaWxlcyBhcmVcbnBhdGg9XCIuLi9kYXRhL3BpdGNoLXRpZXItdGVzdHMvXCJcblxuc2V0d2QocGF0aClcbmBgYCJ9 -->
+<pre class="r"><code>library(&quot;stringr&quot;)
+library(&quot;rPraat&quot;)
+library(&quot;rjson&quot;)
+source(&quot;../utils/hertzToST.R&quot;)
+
+# Lowest pitch
+ref = 130
+# Relative path to where the files are
+path=&quot;../data/pitch-tier-tests/&quot;
+
+setwd(path)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9kYXRhL3BpdGNoLXRpZXItdGVzdHMgaW5zaWRlIGEgbm90ZWJvb2sgY2h1bmsuIFRoZSB3b3JraW5nIGRpcmVjdG9yeSB3aWxsIGJlIHJlc2V0IHdoZW4gdGhlIGNodW5rIGlzIGZpbmlzaGVkIHJ1bm5pbmcuIFVzZSB0aGUga25pdHIgcm9vdC5kaXIgb3B0aW9uIGluIHRoZSBzZXR1cCBjaHVuayB0byBjaGFuZ2UgdGhlIHdvcmtpbmcgZGlyZWN0b3J5IGZvciBub3RlYm9vayBjaHVua3MuXG4ifQ== -->
 <pre><code>The working directory was changed to /Users/xx/Github/GepetoR/data/pitch-tier-tests inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5QaXRjaFRpZXIkXCIpXG5maWxlbmFtZXNcbmBgYCJ9 -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5QaXRjaFRpZXIkXCIpXG5zZXR3ZChcIi4uLy4uL25vdGVib29rcy9cIilcbnNhcHBseShmaWxlbmFtZXMsIHBpdGNoVGllclRvSlNPTjIpXG5gYGAifQ== -->
 <pre class="r"><code>filenames &lt;- dir(pattern=&quot;\\.PitchTier$&quot;)
-filenames</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiY2FfdmFfZV9zdHlsLlBpdGNoVGllclwiICAgICAgICAgICAgICAgICAgICAgIFwiY2FfdmFfZl9zdHlsLlBpdGNoVGllclwiICAgICAgICAgICAgICAgICAgICAgXG5bM10gXCJjYV92YV9oX3N0eWwuUGl0Y2hUaWVyXCIgICAgICAgICAgICAgICAgICAgICAgXCJFbGxlX2FpbWVfZGFuc2VyX2RlY2xhcmF0aW9uX3N0eWwuUGl0Y2hUaWVyXCJcbls1XSBcIkVsbGVfYWltZV9kYW5zZXJfaW50ZXJkaXJfc3R5bC5QaXRjaFRpZXJcIiAgICBcIllhbmcxX2RlY2xhcmF0aW9uMTFfc3R5bC5QaXRjaFRpZXJcIiAgICAgICAgIFxuIn0= -->
-<pre><code>[1] &quot;ca_va_e_styl.PitchTier&quot;                      &quot;ca_va_f_styl.PitchTier&quot;                     
-[3] &quot;ca_va_h_styl.PitchTier&quot;                      &quot;Elle_aime_danser_declaration_styl.PitchTier&quot;
-[5] &quot;Elle_aime_danser_interdir_styl.PitchTier&quot;    &quot;Yang1_declaration11_styl.PitchTier&quot;         </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0d2QoXCIuLi8uLi9ub3RlYm9va3MvXCIpXG5zYXBwbHkoZmlsZW5hbWVzLCBwaXRjaFRpZXJUb0pTT04pXG5gYGAifQ== -->
-<pre class="r"><code>setwd(&quot;../../notebooks/&quot;)
-sapply(filenames, pitchTierToJSON)</code></pre>
+setwd(&quot;../../notebooks/&quot;)
+sapply(filenames, pitchTierToJSON2)</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoid2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9lX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9mX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBjYV92YV9oX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBFbGxlX2FpbWVfZGFuc2VyX2RlY2xhcmF0aW9uX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBFbGxlX2FpbWVfZGFuc2VyX2ludGVyZGlyX3N0eWwuUGl0Y2hUaWVyIFxud2QgIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9ub3RlYm9va3MgXG5uYW1lICBZYW5nMV9kZWNsYXJhdGlvbjExX3N0eWwuUGl0Y2hUaWVyIFxuJGNhX3ZhX2Vfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJGNhX3ZhX2Zfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJGNhX3ZhX2hfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJEVsbGVfYWltZV9kYW5zZXJfZGVjbGFyYXRpb25fc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJEVsbGVfYWltZV9kYW5zZXJfaW50ZXJkaXJfc3R5bC5QaXRjaFRpZXJcbk5VTExcblxuJFlhbmcxX2RlY2xhcmF0aW9uMTFfc3R5bC5QaXRjaFRpZXJcbk5VTExcbiJ9 -->
 <pre><code>wd  /Users/xx/Github/GepetoR/notebooks 
@@ -1860,12 +1907,10 @@ NULL
 $Yang1_declaration11_styl.PitchTier
 NULL</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGF0aD1cIi4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy9cIlxuXG4jIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGVcbiMgSGVydHogZnJvbSBQaXRjaFRpZXIgaXMgY29udmVydGVkIHRvIFNlbWl0b25lcywgY2VudGVyZWQgb24gcmVmIHBpdGNoXG5waXRjaFRpZXJUb0pTT04gPC0gZnVuY3Rpb24obmFtZSkge1xuICAjZmlsZW5hbWUgPC0gcGFzdGUwKHBhdGgsIG5hbWUpXG4gICNjYXQoZ2V0d2QoKSwgZmlsZW5hbWUpXG4gICMgTG9hZCBQaXRjaFRpZXIgb2JqZWN0IHVzaW5nIHJQcmFhdFxuICBjYXQoXCJ3ZCBcIiwgZ2V0d2QoKSwgXCJcXG5cIilcbiAgY2F0KFwibmFtZSBcIiwgbmFtZSwgXCJcXG5cIilcbiAgbXkucHQgPSBwdC5yZWFkKHBhc3RlMChwYXRoLCBuYW1lKSlcbiAgI215LnB0ID0gcHQucmVhZChuYW1lKVxuICAjIFNhdmUgdGhlIHRpbWUgYW5kIGZyZXF1ZW5jeSBjb2x1bW5zIGFzIGRhdGFmcmFtZVxuICAjIGRpdmlkZSB0aW1lIGJ5IG1heCB0aW1lXG4gIHB0LmRmIDwtIGRhdGEuZnJhbWUodD1teS5wdCR0L215LnB0JHRtYXgsIGY9aGVydHpfdG9fc2VtaXRvbmVzKG15LnB0JGYsIHJlZikpICBcbiAgXG4gICMgQWRkIGEgcG9pbnQgdG8gdGhlIGJlZ2lubmluZzogdCA9IDAgKyAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gZmlyc3QgZlxuICBwdC5kZiA8LSByYmluZChjKDAuMDEsIHB0LmRmWzEsMl0pLCBwdC5kZilcbiAgXG4gICMgQWRkIGxhc3QgcG9pbnQ6IHQgPSB0bWF4IC0gMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGxhc3QgZlxuICBwdC5kZltucm93KHB0LmRmKSArIDEsXSA9IGMoMC45OCwgcHQuZGZbbnJvdyhwdC5kZiksMl0pXG4gIFxuICAjIE1ha2UgdGhlIGRhdGFmcmFtZSBpbnRvIGEgSlNPTiBvYmplY3RcbiAgbXkuSlNPTiA8LSB0b0pTT04ocHQuZGYpXG4gIFxuICAjIEdldCB0aGUgY29yZSBuYW1lIGZvciB0aGUgb3V0cHV0IGZpbGVuYW1lXG4gIG91dF9uYW1lIDwtIHN0cl9zcGxpdChuYW1lLCBcIl9zdHlsLlBpdGNoVGllclwiKVtbMV1dWzFdXG4gIFxuICAjIFdyaXRlIEpTT04gb2JqZWN0IGludG8gdGhlIHNhbWUgZGlyZWN0b3J5IGFzIHRoZSBvcmlnaW5hbCBmaWxlXG4gIHdyaXRlKG15LkpTT04sIHBhc3RlMChwYXRoLG91dF9uYW1lLCBcIi5qc29uXCIpKVxufVxuXG5gYGAifQ== -->
-<pre class="r"><code>path=&quot;../data/pitch-tier-tests/&quot;
-
-# Function to turn Praat's PitchTier into JSON file
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBGdW5jdGlvbiB0byB0dXJuIFByYWF0J3MgUGl0Y2hUaWVyIGludG8gSlNPTiBmaWxlXG4jIEhlcnR6IGZyb20gUGl0Y2hUaWVyIGlzIGNvbnZlcnRlZCB0byBTZW1pdG9uZXMsIGNlbnRlcmVkIG9uIHJlZiBwaXRjaFxucGl0Y2hUaWVyVG9KU09OMiA8LSBmdW5jdGlvbihuYW1lKSB7XG4gICNmaWxlbmFtZSA8LSBwYXN0ZTAocGF0aCwgbmFtZSlcbiAgI2NhdChnZXR3ZCgpLCBmaWxlbmFtZSlcbiAgIyBMb2FkIFBpdGNoVGllciBvYmplY3QgdXNpbmcgclByYWF0XG4gIGNhdChcIndkIFwiLCBnZXR3ZCgpLCBcIlxcblwiKVxuICBjYXQoXCJuYW1lIFwiLCBuYW1lLCBcIlxcblwiKVxuICBteS5wdCA9IHB0LnJlYWQocGFzdGUwKHBhdGgsIG5hbWUpKVxuICAjbXkucHQgPSBwdC5yZWFkKG5hbWUpXG4gICMgU2F2ZSB0aGUgdGltZSBhbmQgZnJlcXVlbmN5IGNvbHVtbnMgYXMgZGF0YWZyYW1lXG4gICMgZGl2aWRlIHRpbWUgYnkgbWF4IHRpbWVcbiAgcHQuZGYgPC0gZGF0YS5mcmFtZShzY3J1Yj1teS5wdCR0L215LnB0JHRtYXgsIGY9aGVydHpfdG9fc2VtaXRvbmVzKG15LnB0JGYsIHJlZikpICBcbiAgXG4gICMgQWRkIGEgcG9pbnQgdG8gdGhlIGJlZ2lubmluZzogdCA9IDAgKyAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gZmlyc3QgZlxuICBwdC5kZiA8LSByYmluZChjKDAuMDEsIHB0LmRmWzEsMl0pLCBwdC5kZilcbiAgXG4gICMgQWRkIGxhc3QgcG9pbnQ6IHQgPSB0bWF4IC0gMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGxhc3QgZlxuICBwdC5kZltucm93KHB0LmRmKSArIDEsXSA9IGMoMC45OCwgcHQuZGZbbnJvdyhwdC5kZiksMl0pXG4gIFxuICAjIEdldCB0aGUgY29yZSBuYW1lIGZvciB0aGUgb3V0cHV0IGZpbGVuYW1lXG4gIG91dF9uYW1lIDwtIHN0cl9zcGxpdChuYW1lLCBcIl9zdHlsLlBpdGNoVGllclwiKVtbMV1dWzFdXG4gIFxuICAjIEVYVFJBIFNURVAgZm9yIHRoaXMgdmVyc2lvbiwgbWFrZSBhIGxpc3RcbiAgcHQubGlzdCA8LSBsaXN0KHBvaW50cyA9IHB0LmRmLCByZWZlcmVuY2U9cmVmLCBuYW1lPW91dF9uYW1lKVxuICBcbiAgIyBNYWtlIHRoZSBkYXRhZnJhbWUgaW50byBhIEpTT04gb2JqZWN0XG4gIG15LkpTT04gPC0gdG9KU09OKHB0Lmxpc3QpXG4gIFxuICAjIFdyaXRlIEpTT04gb2JqZWN0IGludG8gdGhlIHNhbWUgZGlyZWN0b3J5IGFzIHRoZSBvcmlnaW5hbCBmaWxlXG4gIHdyaXRlKG15LkpTT04sIHBhc3RlMChwYXRoLG91dF9uYW1lLCBcIi5qc29uXCIpKVxufVxuXG5gYGAifQ== -->
+<pre class="r"><code># Function to turn Praat's PitchTier into JSON file
 # Hertz from PitchTier is converted to Semitones, centered on ref pitch
-pitchTierToJSON &lt;- function(name) {
+pitchTierToJSON2 &lt;- function(name) {
   #filename &lt;- paste0(path, name)
   #cat(getwd(), filename)
   # Load PitchTier object using rPraat
@@ -1875,7 +1920,7 @@ pitchTierToJSON &lt;- function(name) {
   #my.pt = pt.read(name)
   # Save the time and frequency columns as dataframe
   # divide time by max time
-  pt.df &lt;- data.frame(t=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
+  pt.df &lt;- data.frame(scrub=my.pt$t/my.pt$tmax, f=hertz_to_semitones(my.pt$f, ref))  
   
   # Add a point to the beginning: t = 0 + 0.01 (offset by a little), f = first f
   pt.df &lt;- rbind(c(0.01, pt.df[1,2]), pt.df)
@@ -1883,11 +1928,14 @@ pitchTierToJSON &lt;- function(name) {
   # Add last point: t = tmax - 0.01 (offset by a little), f = last f
   pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
   
-  # Make the dataframe into a JSON object
-  my.JSON &lt;- toJSON(pt.df)
-  
   # Get the core name for the output filename
   out_name &lt;- str_split(name, &quot;_styl.PitchTier&quot;)[[1]][1]
+  
+  # EXTRA STEP for this version, make a list
+  pt.list &lt;- list(points = pt.df, reference=ref, name=out_name)
+  
+  # Make the dataframe into a JSON object
+  my.JSON &lt;- toJSON(pt.list)
   
   # Write JSON object into the same directory as the original file
   write(my.JSON, paste0(path,out_name, &quot;.json&quot;))
@@ -1899,7 +1947,7 @@ pitchTierToJSON &lt;- function(name) {
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiU3ludGhlc2l6ZSBTdGltdWxpIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojIyMgQ29udmVydCBQaXRjaFRpZXIgdG8gSlNPTgoKUmVhZHMgYWxsIHRoZSAuUGl0Y2hUaWVyIGZpbGVzIGluICRwYXRoJCBhbmQgY29udmVydHMgdGhlbSB0byBKU09OIGZpbGVzCgpgYGB7cn0KbGlicmFyeSgiclByYWF0IikKbGlicmFyeSgianNvbmxpdGUiKQpzb3VyY2UoIi4uL3V0aWxzL2hlcnR6VG9TVC5SIikKCiMgTG93ZXN0IHBpdGNoCnJlZiA9IDEzMAojIFJlbGF0aXZlIHBhdGggdG8gd2hlcmUgdGhlIGZpbGVzIGFyZQpwYXRoPSIuLi9kYXRhL3BpdGNoLXRpZXItdGVzdHMvIgoKc2V0d2QocGF0aCkKZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPSJcXC5QaXRjaFRpZXIkIikKc2V0d2QoIi4uLy4uL25vdGVib29rcy8iKQpzYXBwbHkoZmlsZW5hbWVzLCBwaXRjaFRpZXJUb0pTT04pCgojIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGUKIyBIZXJ0eiBmcm9tIFBpdGNoVGllciBpcyBjb252ZXJ0ZWQgdG8gU2VtaXRvbmVzLCBjZW50ZXJlZCBvbiByZWYgcGl0Y2gKcGl0Y2hUaWVyVG9KU09OIDwtIGZ1bmN0aW9uKG5hbWUpIHsKICAjZmlsZW5hbWUgPC0gcGFzdGUwKHBhdGgsIG5hbWUpCiAgI2NhdChnZXR3ZCgpLCBmaWxlbmFtZSkKICAjIExvYWQgUGl0Y2hUaWVyIG9iamVjdCB1c2luZyByUHJhYXQKICBjYXQoIndkICIsIGdldHdkKCksICJcbiIpCiAgY2F0KCJuYW1lICIsIG5hbWUsICJcbiIpCiAgbXkucHQgPSBwdC5yZWFkKHBhc3RlMChwYXRoLCBuYW1lKSkKICAjbXkucHQgPSBwdC5yZWFkKG5hbWUpCiAgIyBTYXZlIHRoZSB0aW1lIGFuZCBmcmVxdWVuY3kgY29sdW1ucyBhcyBkYXRhZnJhbWUKICAjIGRpdmlkZSB0aW1lIGJ5IG1heCB0aW1lCiAgcHQuZGYgPC0gZGF0YS5mcmFtZSh0PW15LnB0JHQvbXkucHQkdG1heCwgZj1oZXJ0el90b19zZW1pdG9uZXMobXkucHQkZiwgcmVmKSkgIAogIAogICMgQWRkIGEgcG9pbnQgdG8gdGhlIGJlZ2lubmluZzogdCA9IDAgKyAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gZmlyc3QgZgogIHB0LmRmIDwtIHJiaW5kKGMoMC4wMSwgcHQuZGZbMSwyXSksIHB0LmRmKQogIAogICMgQWRkIGxhc3QgcG9pbnQ6IHQgPSB0bWF4IC0gMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGxhc3QgZgogIHB0LmRmW25yb3cocHQuZGYpICsgMSxdID0gYygwLjk4LCBwdC5kZltucm93KHB0LmRmKSwyXSkKICAKICAjIE1ha2UgdGhlIGRhdGFmcmFtZSBpbnRvIGEgSlNPTiBvYmplY3QKICBteS5KU09OIDwtIHRvSlNPTihwdC5kZikKICAKICAjIEdldCB0aGUgY29yZSBuYW1lIGZvciB0aGUgb3V0cHV0IGZpbGVuYW1lCiAgb3V0X25hbWUgPC0gc3RyX3NwbGl0KG5hbWUsICJfc3R5bC5QaXRjaFRpZXIiKVtbMV1dWzFdCiAgCiAgIyBXcml0ZSBKU09OIG9iamVjdCBpbnRvIHRoZSBzYW1lIGRpcmVjdG9yeSBhcyB0aGUgb3JpZ2luYWwgZmlsZQogIHdyaXRlKG15LkpTT04sIHBhc3RlMChwYXRoLG91dF9uYW1lLCAiLmpzb24iKSkKfQoKYGBgCgoKCgoK</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiU3ludGhlc2l6ZSBTdGltdWxpIgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojIyMgQ29udmVydCBQaXRjaFRpZXIgdG8gSlNPTiAtIE9uZSBhcHByb2FjaAoKUmVhZHMgYWxsIHRoZSAuUGl0Y2hUaWVyIGZpbGVzIGluICRwYXRoJCBhbmQgY29udmVydHMgdGhlbSB0byBKU09OIGZpbGVzLgpVc2luZyBqc29ubGl0ZSBwYWNrYWdlLiBBcnJheSBvZiBwb2ludHMuIElmIHdlIHdhbnQgdG8gcHV0IG90aGVyIGluZm8gaW4gSlNPTiBmaWxlIChlLmcuIHJlZiBmcmVxdWVuY3kpLCBuZWVkIHRvIHVzZSAkdG9KU09OKCkkIGZyb20gdGhlIHJqc29uIHBhY2thZ2UuCgpgYGB7cn0KbGlicmFyeSgiclByYWF0IikKbGlicmFyeSgianNvbmxpdGUiKQpzb3VyY2UoIi4uL3V0aWxzL2hlcnR6VG9TVC5SIikKCiMgTG93ZXN0IHBpdGNoCnJlZiA9IDEzMAojIFJlbGF0aXZlIHBhdGggdG8gd2hlcmUgdGhlIGZpbGVzIGFyZQpwYXRoPSIuLi9kYXRhL3BpdGNoLXRpZXItdGVzdHMvIgoKc2V0d2QocGF0aCkKZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPSJcXC5QaXRjaFRpZXIkIikKc2V0d2QoIi4uLy4uL25vdGVib29rcy8iKQpzYXBwbHkoZmlsZW5hbWVzLCBwaXRjaFRpZXJUb0pTT04pCgojIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGUKIyBIZXJ0eiBmcm9tIFBpdGNoVGllciBpcyBjb252ZXJ0ZWQgdG8gU2VtaXRvbmVzLCBjZW50ZXJlZCBvbiByZWYgcGl0Y2gKcGl0Y2hUaWVyVG9KU09OIDwtIGZ1bmN0aW9uKG5hbWUpIHsKICAjZmlsZW5hbWUgPC0gcGFzdGUwKHBhdGgsIG5hbWUpCiAgI2NhdChnZXR3ZCgpLCBmaWxlbmFtZSkKICAjIExvYWQgUGl0Y2hUaWVyIG9iamVjdCB1c2luZyByUHJhYXQKICBjYXQoIndkICIsIGdldHdkKCksICJcbiIpCiAgY2F0KCJuYW1lICIsIG5hbWUsICJcbiIpCiAgbXkucHQgPSBwdC5yZWFkKHBhc3RlMChwYXRoLCBuYW1lKSkKICAjbXkucHQgPSBwdC5yZWFkKG5hbWUpCiAgIyBTYXZlIHRoZSB0aW1lIGFuZCBmcmVxdWVuY3kgY29sdW1ucyBhcyBkYXRhZnJhbWUKICAjIGRpdmlkZSB0aW1lIGJ5IG1heCB0aW1lCiAgcHQuZGYgPC0gZGF0YS5mcmFtZShzY3J1Yj1teS5wdCR0L215LnB0JHRtYXgsIGY9aGVydHpfdG9fc2VtaXRvbmVzKG15LnB0JGYsIHJlZikpICAKICAKICAjIEFkZCBhIHBvaW50IHRvIHRoZSBiZWdpbm5pbmc6IHQgPSAwICsgMC4wMSAob2Zmc2V0IGJ5IGEgbGl0dGxlKSwgZiA9IGZpcnN0IGYKICBwdC5kZiA8LSByYmluZChjKDAuMDEsIHB0LmRmWzEsMl0pLCBwdC5kZikKICAKICAjIEFkZCBsYXN0IHBvaW50OiB0ID0gdG1heCAtIDAuMDEgKG9mZnNldCBieSBhIGxpdHRsZSksIGYgPSBsYXN0IGYKICBwdC5kZltucm93KHB0LmRmKSArIDEsXSA9IGMoMC45OCwgcHQuZGZbbnJvdyhwdC5kZiksMl0pCiAgCiAgIyBNYWtlIHRoZSBkYXRhZnJhbWUgaW50byBhIEpTT04gb2JqZWN0CiAgbXkuSlNPTiA8LSB0b0pTT04ocHQuZGYpCiAgCiAgIyBHZXQgdGhlIGNvcmUgbmFtZSBmb3IgdGhlIG91dHB1dCBmaWxlbmFtZQogIG91dF9uYW1lIDwtIHN0cl9zcGxpdChuYW1lLCAiX3N0eWwuUGl0Y2hUaWVyIilbWzFdXVsxXQogIAogICMgV3JpdGUgSlNPTiBvYmplY3QgaW50byB0aGUgc2FtZSBkaXJlY3RvcnkgYXMgdGhlIG9yaWdpbmFsIGZpbGUKICB3cml0ZShteS5KU09OLCBwYXN0ZTAocGF0aCxvdXRfbmFtZSwgIi5qc29uIikpCn0KCmBgYAoKIyMjIEFub3RoZXIgdmVyc2lvbgoKYGBge3J9CmxpYnJhcnkoInN0cmluZ3IiKQpsaWJyYXJ5KCJyUHJhYXQiKQpsaWJyYXJ5KCJyanNvbiIpCnNvdXJjZSgiLi4vdXRpbHMvaGVydHpUb1NULlIiKQoKIyBMb3dlc3QgcGl0Y2gKcmVmID0gMTMwCiMgUmVsYXRpdmUgcGF0aCB0byB3aGVyZSB0aGUgZmlsZXMgYXJlCnBhdGg9Ii4uL2RhdGEvcGl0Y2gtdGllci10ZXN0cy8iCgpzZXR3ZChwYXRoKQpmaWxlbmFtZXMgPC0gZGlyKHBhdHRlcm49IlxcLlBpdGNoVGllciQiKQpzZXR3ZCgiLi4vLi4vbm90ZWJvb2tzLyIpCnNhcHBseShmaWxlbmFtZXMsIHBpdGNoVGllclRvSlNPTjIpCgojIEZ1bmN0aW9uIHRvIHR1cm4gUHJhYXQncyBQaXRjaFRpZXIgaW50byBKU09OIGZpbGUKIyBIZXJ0eiBmcm9tIFBpdGNoVGllciBpcyBjb252ZXJ0ZWQgdG8gU2VtaXRvbmVzLCBjZW50ZXJlZCBvbiByZWYgcGl0Y2gKcGl0Y2hUaWVyVG9KU09OMiA8LSBmdW5jdGlvbihuYW1lKSB7CiAgI2ZpbGVuYW1lIDwtIHBhc3RlMChwYXRoLCBuYW1lKQogICNjYXQoZ2V0d2QoKSwgZmlsZW5hbWUpCiAgIyBMb2FkIFBpdGNoVGllciBvYmplY3QgdXNpbmcgclByYWF0CiAgY2F0KCJ3ZCAiLCBnZXR3ZCgpLCAiXG4iKQogIGNhdCgibmFtZSAiLCBuYW1lLCAiXG4iKQogIG15LnB0ID0gcHQucmVhZChwYXN0ZTAocGF0aCwgbmFtZSkpCiAgI215LnB0ID0gcHQucmVhZChuYW1lKQogICMgU2F2ZSB0aGUgdGltZSBhbmQgZnJlcXVlbmN5IGNvbHVtbnMgYXMgZGF0YWZyYW1lCiAgIyBkaXZpZGUgdGltZSBieSBtYXggdGltZQogIHB0LmRmIDwtIGRhdGEuZnJhbWUoc2NydWI9bXkucHQkdC9teS5wdCR0bWF4LCBmPWhlcnR6X3RvX3NlbWl0b25lcyhteS5wdCRmLCByZWYpKSAgCiAgCiAgIyBBZGQgYSBwb2ludCB0byB0aGUgYmVnaW5uaW5nOiB0ID0gMCArIDAuMDEgKG9mZnNldCBieSBhIGxpdHRsZSksIGYgPSBmaXJzdCBmCiAgcHQuZGYgPC0gcmJpbmQoYygwLjAxLCBwdC5kZlsxLDJdKSwgcHQuZGYpCiAgCiAgIyBBZGQgbGFzdCBwb2ludDogdCA9IHRtYXggLSAwLjAxIChvZmZzZXQgYnkgYSBsaXR0bGUpLCBmID0gbGFzdCBmCiAgcHQuZGZbbnJvdyhwdC5kZikgKyAxLF0gPSBjKDAuOTgsIHB0LmRmW25yb3cocHQuZGYpLDJdKQogIAogICMgR2V0IHRoZSBjb3JlIG5hbWUgZm9yIHRoZSBvdXRwdXQgZmlsZW5hbWUKICBvdXRfbmFtZSA8LSBzdHJfc3BsaXQobmFtZSwgIl9zdHlsLlBpdGNoVGllciIpW1sxXV1bMV0KICAKICAjIEVYVFJBIFNURVAgZm9yIHRoaXMgdmVyc2lvbiwgbWFrZSBhIGxpc3QKICBwdC5saXN0IDwtIGxpc3QocG9pbnRzID0gcHQuZGYsIHJlZmVyZW5jZT1yZWYsIG5hbWU9b3V0X25hbWUpCiAgCiAgIyBNYWtlIHRoZSBkYXRhZnJhbWUgaW50byBhIEpTT04gb2JqZWN0CiAgbXkuSlNPTiA8LSB0b0pTT04ocHQubGlzdCkKICAKICAjIFdyaXRlIEpTT04gb2JqZWN0IGludG8gdGhlIHNhbWUgZGlyZWN0b3J5IGFzIHRoZSBvcmlnaW5hbCBmaWxlCiAgd3JpdGUobXkuSlNPTiwgcGFzdGUwKHBhdGgsb3V0X25hbWUsICIuanNvbiIpKQp9CgpgYGAKCgoKCg==</div>
 
 
 
