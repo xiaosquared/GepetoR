@@ -4,4 +4,5 @@
 .Ruserdata
 *.Rproj
 *.h5
+*.wav
 .DS_Store

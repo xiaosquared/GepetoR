@@ -1,12 +1,14 @@
 ---
-title: "Synthesize Stimuli"
+title: "PitchTier to JSON"
 output: html_notebook
 ---
+
+Utility 
 
 ### Convert PitchTier to JSON - One approach
 
 Reads all the .PitchTier files in $path$ and converts them to JSON files.
-Using jsonlite package. Array of points. If we want to put other info in JSON file (e.g. ref frequency), need to use $toJSON()$ from the rjson package.
+Using jsonlite package. Array of points.
 
 ```{r}
 library("rPraat")
@@ -57,6 +59,7 @@ pitchTierToJSON <- function(name) {
 ```
 
 ### Another version
+With reference frequency. Need to use $toJSON()$ from the rjson package rather than the jsonlite package in order to put this extra info about ref frequency in JSON file.
 
 ```{r}
 library("stringr")
