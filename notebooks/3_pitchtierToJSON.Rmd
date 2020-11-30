@@ -1,6 +1,6 @@
 ---
 title: "PitchTier to JSON"
-output: html_notebook
+output:
 ---
 
 Utility 
