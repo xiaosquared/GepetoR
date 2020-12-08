@@ -1,0 +1,45 @@
+---
+title: "Offline Resynthesis from Gepeto Saved Gesture"
+output: html_notebook
+---
+
+Takes saved gesture from Gepeto App (.gest) and converts it to a text file that can be used by Grégoire Locqueville's reprosody program to generate resynthesized file. Files for reprosody take the following format:
+t_out t_in f. t_out specifies timestamp in seconds in output file, t_in specifies timestamp in seconds of original file. f specifies the frequency we want in hertz. 
+
+This script can be used to study students' gesture inputs in a perceptual test
+
+## Potential Improvements
+
+Currently, Gepeto app does not store the length of sound files, so I need to get the length of the original file separately. It would be helpful to specify the scrub time (0 to 1) in the original file rather than the hardcoded time.
+
+Also, it would be good to do this for a bunch of files at a time.
+
+```{r}
+library("tidyverse")
+library("jsonlite")
+source("../utils/hertzToST.R")
+
+path="../data/gepeto-offline-resynth/"
+name="elle_aime_danser.gest" 
+
+# Currently these are hardcoded, but it would be better if they were not
+ref_freq = 130
+length = .877868 
+
+# Read JSON into tibble
+data <- fromJSON(paste0(path, name)) %>% as_tibble() %>%
+# Change output time from millis to seconds
+mutate(t_out=round(t_init/1000, 4)) %>%
+# Scrub to input time (time in original file)
+mutate(t_in=round(scrub*length, 4)) %>%
+# Change frequency to Hz
+mutate(f_hertz=round(semitones_to_hertz(f, ref_freq), 4)) %>%
+# Only keep the columns we need
+select(t_out, t_in, f_hertz)
+
+write.table(data, paste0(path, "elle_aime_danser_gest.txt"), col.names=FALSE, row.names=FALSE)
+
+```
+
+
+
