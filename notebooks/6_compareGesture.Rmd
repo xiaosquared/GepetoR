@@ -1,0 +1,153 @@
+---
+title: "Compare Gesture"
+output: html_notebook
+---
+
+The goal is to compare frequency curves using correlation and root mean square (RMS). Both of these functions take two time series as input. Therefore, it is necessary to convert both the reference pitch curve and gestures from the Gepeto interface into time series data.
+
+The following is a function that takes a tibble with unevenly spaced points of frequency data (on a 0 to 1 scale) and converts it to a tibble with a certain number of evenly spaced points whose values are interpolated from the original data.
+
+```{r}
+library("zoo")
+library("timetk")
+library("tidyverse")
+library("jsonlite")
+
+# To see everything while debugging
+options(tibble.print_max = Inf)
+
+# args: data - tibble with columns: percent (% of way through signal) & f (frequency at that point), 
+# num_samples - # equally spaced points in outpt
+# returns: tibble with coluumns index & value. index has num_samples equally spaced points from 0 to 1
+# values are interplolated from f
+get_interpolated_data <- function(data, num_samples) {
+  # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
+  if (! 0 %in% data$percent) {
+    data <- add_row(data, percent=0, f=data$f[1], .before=1)
+  }
+  if (! (1 %in% data$percent)) {
+    data <- add_row(data, percent=1, f=tail(data$f, 1))
+  }
+          
+  # Create a tibble with all the points we are interested in, with NA values
+  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), f=NA) 
+  
+  # Add all the sample points whose scrub value doesn't already exist in data
+  data2 <- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %>%
+    # Then sort by scrub columns  
+    arrange(percent)
+  
+  # Transform into zoo object to fill the NAs with interpolated values
+  z <- read.zoo(data2) %>% na.approx %>%
+   tk_tbl(preserve_index=TRUE, rename_index="index") %>%
+   filter(index %in% sample_points$percent)
+  
+  return(z)
+}
+
+# An exgtra step to prep gesture data
+# Convert t_init for each point to a value between 0 to 1 based on the length of the gesture
+prep_gest <- function(gest) {
+  max_time <-tail(gest$t_end, 1)
+  gest <- gest %>% mutate(percent=t_init/max_time) %>%
+             # only keep local scrub time and the freq values 
+             select(percent, f)
+  return(gest)
+}
+
+```
+
+References contain information about the stylized pitch curve of a phrase. The stylization is done by Prosogram, an extension to Praat based on a perceptual model detailed by d'Allessandro and Mertens 1995. The stylization is originally generated as PitchTier files by Prosogram but are converted to JSON by [Script 3: pitchtierToJSON](notebooks/3_pitchtierToJSON.Rmd).
+
+The code below loads all the available reference files but only looks at the first one as a test.
+
+```{r, fig.keep='all'}
+
+num_samples = 100
+
+path="../data/20_12_15-pilot_gestures/ambiguous/references/"
+setwd(path)
+ref_filenames <- dir(pattern="\\.json$")
+ref_name <- ref_filenames[1]
+
+# Need to change to normal working directory for code to work
+setwd("../../../../notebooks/")
+ref_data <- fromJSON(paste0(path, ref_name)) %>% as_tibble() %>% 
+            # To avoid confusion, create new column called percent
+            mutate(percent = scrub) %>% select(percent, f)
+
+ref_interp <- get_interpolated_data(ref_data, num_samples)
+ref_ts <- ref_interp$value
+ 
+# Plot results
+ggplot(data=ref_data, aes(x=percent, y=f)) +
+      geom_point(size=3, aes(color="Original points")) +
+      scale_color_discrete(name = "Data source") +
+      geom_point(data=ref_interp, aes(x=index, y=value, color="Interpolated"), size=0.55) +
+      labs(title="Interpolated reference pitch curve", 
+           subtitle=paste("Phrase:",str_split(ref_name, '.json')[[1]][1]),
+           y="frequency (semitones from 130hz)")
+
+# Finally, the time series is the values vector
+# This will be used in the comparison algorithms
+ref_ts <- ref_interp$value
+
+```
+
+The gestures are collected from non-native speakers enrolled in a class on French rhythm and intonation. Once again, the code just loads the first gesture as a test.
+
+The resulting gesture is plotted with its reference overlaid. In this analysis, the phonemes of the gesture are not aligned with those of the reference. It's 
+
+```{r, fig.keep='all'}
+# Load first gesture
+path="../data/20_12_15-pilot_gestures/ambiguous/gestures/"
+setwd(path)
+gest_filenames <- dir(pattern="\\.gest$")
+name <- gest_filenames[1]
+setwd("../../../../notebooks/")
+gest_data <- fromJSON(paste0(path, name)) %>% as_tibble()
+
+gest_data_timing_interp <- get_interpolated_data(prep_gest(gest_data), num_samples)
+
+# Plot results
+# Dotted is reference
+ggplot(data=gest_data_timing_interp, aes(x=index, y=value, color="gesture")) + 
+      scale_color_discrete(name = "Data source") +
+      geom_point(size=0.5) + 
+      geom_point(data=ref_interp, aes(x=index, y=value, color="reference"), size=0.5) +
+      labs(title="A gesture and its reference", 
+           subtitle=paste("Phrase:",str_split(ref_name, '.json')[[1]][1]),
+           y="frequency (semitones from 130hz)",
+           x="percent")
+
+
+# Finally, the time series is the values vector
+# This will be used in the comparison algorithms
+gest_ts <- gest_data_timing_interp$value
+
+```
+
+Now we are ready to quantitatively compare a gesture and its reference. One method is Pearson's Correlation, which check's the similarity between the two curves. A value of 1 means identical curves. Note that the mean is subtracted from each curve, so larger gaps between the curves should not decrease the correlation value.
+
+$r = \frac{{}\sum_{i=1}^{n} (x_i - \overline{x})(y_i - \overline{y})} {\sqrt{\sum_{i=1}^{n} (x_i - \overline{x})^2(y_i - \overline{y})^2}}$
+
+Another method is Root Mean Square Error (RMS), which meansures the dissiminlarity between the two curves. The higher the number means there is more difference.
+
+$R = \sum_{i=1}^n \sqrt{ ((x_i - \overline{x}) - (y_i - \overline{y}))^2 ) } $
+
+In the 2011 paper evaluating chironomy, both of these measures are weighed by the intensity of the reference audio. For now I'm leaving that weighting out.
+
+
+```{r}
+cor(ref_ts, gest_ts,  method = "pearson")
+```
+
+```{r}
+rmse <- function(a, b) {
+  return(sqrt(sum( ((a-mean(a)) - (b-mean(b))) ^2 )))
+}
+
+rmse(ref_ts, gest_ts)
+```
+
+These numbers for an individual curve are not that informative. Let's look at some different versions of gestures for each reference.

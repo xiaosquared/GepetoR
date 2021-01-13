@@ -19,25 +19,53 @@ library("tidyverse")
 library("jsonlite")
 source("../utils/hertzToST.R")
 
-path="../data/gepeto-offline-resynth/"
-name="elle_aime_danser.gest" 
+options(digits=6)
+options(scipen=999)
+options(tibble.print_max = Inf)
 
-# Currently these are hardcoded, but it would be better if they were not
+# Gesture files are in two places. Uncomment one at a time and run thhe whole thing
+#path="../data/20_12_15-pilot_gestures/modalities/gestures/"
+path="../data/20_12_15-pilot_gestures/ambiguous/gestures/"
 ref_freq = 130
-length = .877868 
 
-# Read JSON into tibble
-data <- fromJSON(paste0(path, name)) %>% as_tibble() %>%
-# Change output time from millis to seconds
-mutate(t_out=round(t_init/1000, 4)) %>%
-# Scrub to input time (time in original file)
-mutate(t_in=round(scrub*length, 4)) %>%
-# Change frequency to Hz
-mutate(f_hertz=round(semitones_to_hertz(f, ref_freq), 4)) %>%
-# Only keep the columns we need
-select(t_out, t_in, f_hertz)
+setwd(path)
+filenames <- dir(pattern="\\.gest$")
+setwd("../../../../notebooks/")
+getwd()
+out<-sapply(filenames, gestToReprosody)
+#out <- gestToReprosody(filenames[1])
 
-write.table(data, paste0(path, "elle_aime_danser_gest.txt"), col.names=FALSE, row.names=FALSE)
+gestToReprosody <- function(name) {
+  # Read JSON into tibble
+  data <- fromJSON(paste0(path, name)) %>% as_tibble()
+  
+  # Modify the data
+  data <- data %>%
+  # Convert t_out from millis to seconds
+  mutate(t_out=round(t_init/1000, 4)) %>%
+  # Keep t_in is scrub
+  mutate(t_in=round(scrub, 2)) %>%
+  # Change frequency to Hz
+  mutate(f_hertz=round(semitones_to_hertz(f, ref_freq), 2)) %>%
+  # Compute difference between t_out at position n & position n-1  
+  mutate(t_out_diff = t_out - lag(t_out)) %>%
+  # Remove any line where t_out_diff <= 0.005
+  filter(t_out_diff > 0.005) %>%
+  # Only keep the columns we need
+  select(t_out, t_in, f_hertz)
+
+  # Prepare to write output file
+  # Get the part of the name before .gest
+  # "." is special character, so we use \\.
+  core_name <- str_split(name, "\\.")[[1]][1]
+  filename_out <- paste0(path, "../for_voks/", core_name, ".txt")
+
+  # Write the output
+  cat("SCRUB", "\n", file=filename_out)
+  write.table(data, filename_out, append=TRUE, col.names=FALSE, row.names=FALSE)
+}
+
+
 
 ```
 
