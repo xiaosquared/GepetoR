@@ -1,13 +1,33 @@
 ---
 title: "Compare Gesture"
-output: html_notebook
+author: "Xiao Xiao"
+date: "`r format(Sys.time(), '%d %B, %Y')`" 
+output: 
+ html_document:
+    number_sections: true
+    df_print: paged
+    toc: yes
+ html_notebook:
+    depth: 4
+    number_sections: true
+    theme: united
+    toc: yes
+ 
 ---
 
-The goal is to compare frequency curves using correlation and root mean square (RMS). Both of these functions take two time series as input. Therefore, it is necessary to convert both the reference pitch curve and gestures from the Gepeto interface into time series data.
+This document is a first attempt to quantitatively compare gestures made using the Gepeto app with their corresponding reference gestures. Following the model of d'allessandro et al 2011, we use Pearson's correlation and Root Mean Square Error (RMSE) are computed. Results are presented along with plots of the gesture scaled to and overlaid with its reference. Audio of both are also included.
+
+The original paper weighed the correlation and RMSE with the signal power. For simplicity, I am not doing that for now, but results still seem ok. The original paper also used dynamic time warping to modify signals of uneven lengths. I am just doing a linear scaling, which does not warp the rhythm of the signal. It is important to retain the actual rhythm of the gesture because the correct pronunciation of the corpus phrases depend on correct rhythm.
+
+Right now, I'm only comparing the output f0 curves without taking into consideration where the syllables are. For some gestures that sound distorted yet still have high scores, this could be a way to have more accurate scoring.
+
+# Helper functions for evenly spaced curve
+
+Both correlation and RMSE take two time series as input. Therefore, it is necessary to convert both the reference pitch curve and gestures from the Gepeto interface into time series data.
 
 The following is a function that takes a tibble with unevenly spaced points of frequency data (on a 0 to 1 scale) and converts it to a tibble with a certain number of evenly spaced points whose values are interpolated from the original data.
 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library("zoo")
 library("timetk")
 library("tidyverse")
@@ -57,11 +77,13 @@ prep_gest <- function(gest) {
 
 ```
 
+# Loading reference pitch curves
+
 References contain information about the stylized pitch curve of a phrase. The stylization is done by Prosogram, an extension to Praat based on a perceptual model detailed by d'Allessandro and Mertens 1995. The stylization is originally generated as PitchTier files by Prosogram but are converted to JSON by [Script 3: pitchtierToJSON](notebooks/3_pitchtierToJSON.Rmd).
 
 The code below loads all the available reference files but only looks at the first one as a test.
 
-```{r, fig.keep='all'}
+```{r, fig.keep='all', message=FALSE, echo=FALSE, warning=FALSE}
 
 num_samples = 100
 
@@ -94,11 +116,47 @@ ref_ts <- ref_interp$value
 
 ```
 
-The gestures are collected from non-native speakers enrolled in a class on French rhythm and intonation. Once again, the code just loads the first gesture as a test.
+## Loading all phrases
+
+Now let's do the same thing to all the reference files
+
+```{r}
+# Original data for each reference, in terms of:
+# percent : percentage time (i.e. scrub)
+# f : frequency in ST with 130 hz reference
+ref_originals <- lapply(ref_filenames, function(elt) {
+  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+            # To avoid confusion, create new column called percent
+            mutate(percent = scrub) %>% select(percent, f)
+})
+
+# Interpolated time series data of just the f values
+ref_tss <- lapply(ref_originals, function(elt) {
+  ref_interp<-get_interpolated_data(elt, num_samples)
+  ref_interp$value
+})
+
+# A vector with just the names of the phrases (w/o .json extension)
+ref_phrases <- do.call("rbind", lapply(ref_filenames, function(elt) {
+  str_split(elt, '.json')[[1]][1]
+}))[,1]
+
+# Returns the reference time series f values given the phrase name
+get_ref_ts <- function(phrase_name) {
+  index <- match(phrase_name, ref_phrases)
+  if (is.na(index)) { return(NULL) }
+  return(ref_tss[[index]])
+}
+```
+
+
+# Loading gestures
+
+The gestures are collected from non-native speakers enrolled in a class on French rhythm and intonation. First, just load and plot one gesture as a test.
 
 The resulting gesture is plotted with its reference overlaid. In this analysis, the phonemes of the gesture are not aligned with those of the reference. It's 
 
-```{r, fig.keep='all'}
+```{r, fig.keep='all', message=FALSE, echo=FALSE, warning=FALSE}
 # Load first gesture
 path="../data/20_12_15-pilot_gestures/ambiguous/gestures/"
 setwd(path)
@@ -107,11 +165,11 @@ name <- gest_filenames[1]
 setwd("../../../../notebooks/")
 gest_data <- fromJSON(paste0(path, name)) %>% as_tibble()
 
-gest_data_timing_interp <- get_interpolated_data(prep_gest(gest_data), num_samples)
+gest_data_interp <- get_interpolated_data(prep_gest(gest_data), num_samples)
 
 # Plot results
 # Dotted is reference
-ggplot(data=gest_data_timing_interp, aes(x=index, y=value, color="gesture")) + 
+ggplot(data=gest_data_interp, aes(x=index, y=value, color="gesture")) + 
       scale_color_discrete(name = "Data source") +
       geom_point(size=0.5) + 
       geom_point(data=ref_interp, aes(x=index, y=value, color="reference"), size=0.5) +
@@ -123,9 +181,41 @@ ggplot(data=gest_data_timing_interp, aes(x=index, y=value, color="gesture")) +
 
 # Finally, the time series is the values vector
 # This will be used in the comparison algorithms
-gest_ts <- gest_data_timing_interp$value
+gest_ts <- gest_data_interp$value
 
 ```
+
+## Loading all gestures
+
+Now, convert all the gestures into time series.
+
+```{r}
+# Original data for each gesture, in terms of:
+# percent : percentage time (i.e. scrub)
+# f : frequency in ST with 130 hz reference
+gest_originals <- lapply(gest_filenames, function(elt) {
+  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+    # NOTE THIS EXTRA STEP      
+    prep_gest()
+})
+
+# Interpolated time series data of just the f values
+gest_tss <- lapply(gest_originals, function(elt) {
+  gest_interp<-get_interpolated_data(elt, num_samples)
+  gest_interp$value
+})
+
+# Returns the gesture time series f values given the phrase name
+get_gest_ts <- function(gest_name) {
+  index <- match(gest_name, gests)
+  if (is.na(index)) { return(NULL) }
+  return(gest_tss[[index]])
+}
+
+```
+
+
+# Testing comparison functions
 
 Now we are ready to quantitatively compare a gesture and its reference. One method is Pearson's Correlation, which check's the similarity between the two curves. A value of 1 means identical curves. Note that the mean is subtracted from each curve, so larger gaps between the curves should not decrease the correlation value.
 
@@ -133,7 +223,7 @@ $r = \frac{{}\sum_{i=1}^{n} (x_i - \overline{x})(y_i - \overline{y})} {\sqrt{\su
 
 Another method is Root Mean Square Error (RMS), which meansures the dissiminlarity between the two curves. The higher the number means there is more difference.
 
-$R = \sum_{i=1}^n \sqrt{ ((x_i - \overline{x}) - (y_i - \overline{y}))^2 ) } $
+$ RMS = \sqrt{ \sum_{i=1}^{n} ((x_i - \overline{x}) - (y_i - \overline{y}))^2 ) } $
 
 In the 2011 paper evaluating chironomy, both of these measures are weighed by the intensity of the reference audio. For now I'm leaving that weighting out.
 
@@ -150,4 +240,468 @@ rmse <- function(a, b) {
 rmse(ref_ts, gest_ts)
 ```
 
-These numbers for an individual curve are not that informative. Let's look at some different versions of gestures for each reference.
+
+## Calculating comparison functions for all gestures
+
+```{r}
+
+# A vector with just the names of the phrases (w/o .json extension)
+gests <- do.call("rbind", lapply(gest_filenames, function(elt) {
+  str_split(elt, '.gest')[[1]][1]
+}))[,1]
+
+# Just the name of subjects
+gest_subjects <- do.call("rbind", lapply(gests, function(elt) {
+  tail(str_split(elt, '-')[[1]], 1)
+}))[,1]
+# Just the name of phrases
+gest_phrases <- do.call("rbind", lapply(gests, function(elt) {
+  str_split(elt, '-')[[1]]
+}))[,1]
+
+# Extract the reference phrase from the whole gesture name
+get_ref_name <- function(gest_name) {
+  return(str_split(gest_name, '-')[[1]][1])
+}
+
+# Compute the correlatoin and rms given the entire gesture name
+get_corr <- function(gest_name) {
+  ref_ts <- get_ref_ts(get_ref_name(gest_name))
+  gest_ts <- get_gest_ts(gest_name)
+  return(cor(ref_ts, gest_ts, method="pearson"))
+}
+
+get_rms <- function(gest_name) {
+  ref_ts <- get_ref_ts(get_ref_name(gest_name))
+  gest_ts <- get_gest_ts(gest_name)
+  return(rmse(ref_ts, gest_ts))
+}
+
+corr_all <- do.call("rbind", lapply(gests, function(elt) {
+  get_corr(elt)
+}))[,1]
+
+rmse_all <- do.call("rbind", lapply(gests, function(elt) {
+  get_rms(elt)
+}))[,1]
+
+# Combine the above vectors into a tibble
+gest_tibble <- tibble(gest=gests, corr=corr_all, rmse=rmse_all)
+print(as.matrix(gest_tibble), quote = FALSE)
+```
+
+## Plotting
+
+Let see if our numbers make sense. In Christophe's previous evaluation, they primarily looked at the correlation value and only looked at the RMS if the correlation was the same for two stimuli.
+
+```{r}
+
+plot_gest_and_ref <- function(gest_name) {
+  ref_phrase <- get_ref_name(gest_name)
+  ref_ts <- get_ref_ts(ref_phrase)
+  gest_ts <- get_gest_ts(gest_name)
+  
+  row <- filter(gest_tibble, gest==gest_name)
+  corr <- round(row$corr, 4)
+  rmse <- round(row$rmse, 4)
+  
+  my_data <- tibble(gest=gest_ts, ref=ref_ts, percent=seq(0, 1, length.out=num_samples))
+  
+  my_plot <- ggplot(data=my_data, aes(x=percent, y=gest, color="gesture")) +
+    scale_color_discrete(name = "Data source") +
+    geom_point(size=0.5) +
+    geom_point(data=my_data, aes(x=percent, y=ref, color="reference"), size=0.5) +
+    labs(title=paste(gest_name, "with its reference"), 
+            subtitle=paste("Corr:", corr, "RMSE:", rmse),
+            y="frequency (semitones from 130hz)",
+            x="percent time")
+  return(my_plot)
+}
+
+# Plot everything and store plots in a list
+plots_all<-lapply(gests, plot_gest_and_ref)
+```
+
+Now, let's divide the gestures by score ranges and plot them. There are some exceptions for the mid values, but in general, the highest scoring gestures are the most accurate and the lowest scoring the least accurate.
+
+### Highest scoring gestures (> 0.9)
+
+```{r, fig.keep='all'}
+plots_all[[7]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13_la_belle_ferme_le_voile-c2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13_la_belle_ferme_le_voile.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was displayed for this trial.
+
+<br/>
+
+```{r, fig.keep='all'}
+plots_all[[9]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13bis_la_belle_ferme__le_voile-g2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13bis_la_belle_ferme__le_voile.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was displayed for this trial.
+
+<br/>
+
+```{r, fig.keep='all'}
+plots_all[[13]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2_tu_parais_tres_soucieux-b_s.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2_tu_parais_tres_soucieux.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was not displayed for this trial. This one is unmistakably pronouncing the correct phrase, but it sounds like it has a bit of an accent.
+
+<br/>
+
+### Highish scores (.7 to .9)
+
+```{r}
+plots_all[[2]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1_Il_nait_tres_premature-b_m.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1_Il_nait_tres_premature.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct to me.
+
+<br/>
+
+```{r}
+plots_all[[5]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10bis_jenseigne_beaucoup-l2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10bis_jenseigne_beaucoup.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct to me.
+
+<br/>
+
+```{r}
+plots_all[[11]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature-b_g.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct but a bit odd.
+
+<br/>
+
+```{r}
+plots_all[[12]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2_tu_parais_tres_soucieux-a_c.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2_tu_parais_tres_soucieux.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct but the rhythm is quite off
+
+<br/>
+
+```{r}
+plots_all[[18]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques-y2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct to me.
+
+<br/>
+
+```{r}
+plots_all[[20]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets-v2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct to me.
+
+<br/>
+
+```{r}
+plots_all[[23]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets-m2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds a bit weird with rhythm in the end.
+
+<br/>
+
+```{r}
+plots_all[[24]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets-m3.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+Sounds correct to me.
+
+<br/>
+
+### Midish scores (.5 to .7)
+
+```{r}
+plots_all[[15]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques-s2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+With visual guide. Sounds correct to me.
+
+<br/>
+
+
+```{r}
+plots_all[[16]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques-s3.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+With visual guide. Sounds correct.
+
+<br/>
+
+```{r}
+plots_all[[21]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets-v3.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+With visual guide. Sounds a bit ambiguous.
+
+<br/>
+
+
+```{r}
+plots_all[[25]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux-a_g.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux.mp3" type="audio/mp3">
+</audio></html>
+
+Without visual guide. Most likely correct but could be a bit ambiguous.
+
+<br/>
+
+### Lowish scores (.3 to .5)
+```{r}
+plots_all[[1]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1_Il_nait_tres_premature-a_c.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1_Il_nait_tres_premature.mp3" type="audio/mp3">
+</audio></html>
+
+Without visual guide. Sounds correct to me.
+
+<br/>
+
+
+```{r}
+plots_all[[4]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10bis_jenseigne_beaucoup-l1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10bis_jenseigne_beaucoup.mp3" type="audio/mp3">
+</audio></html>
+
+Without visual guide. Could be heard as correct phrase but ambiguous.
+
+<br/>
+
+
+```{r}
+plots_all[[19]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets-v1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+Without visual guide. Sounds very ambiguous.
+
+<br/>
+
+
+```{r}
+plots_all[[26]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux-b_y.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux.mp3" type="audio/mp3">
+</audio></html>
+
+Without visual guide. Sounds incorrect or ambiguous.
+
+<br/>
+
+### Lowest scores(< 0)
+
+```{r}
+plots_all[[3]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10_jean_saigne_beaucoup-a_m.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10_jean_saigne_beaucoup.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was not displayed for this trial. The gesture sounds like the other meaning of the phrase.
+
+<br/>
+
+```{r}
+plots_all[[10]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature-a_y.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was not displayed for this trial. I think this would still be heard as the correct phrase, but its intonation deviates enormously from the target.
+
+<br/>
+
+```{r}
+plots_all[[17]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques-y1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was not displayed for this trial. The gesture sounds quite ambiguous. Could sometimes get heard incorrectly.
+
+<br/>
+
+```{r}
+plots_all[[14]]
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques-s1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20_jean_pierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+A visual guide was not displayed for this trial. Despite the low correlation score, I think this phrase would probably be heard correctly.
+
+<br/>
