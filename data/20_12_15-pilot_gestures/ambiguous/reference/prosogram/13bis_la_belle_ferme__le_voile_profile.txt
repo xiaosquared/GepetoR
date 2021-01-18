@@ -1,0 +1,50 @@
+Prosodic profile for input file: /Users/xx/Github/GepetoR/data/20_12_15-pilot_gestures/ambiguous/reference/wav/13bis_la_belle_ferme__le_voile.wav
+Prosogram version: Prosogram v3.00b, (c) Piet Mertens
+Date (of analysis): Fri Jan 15 18:02:03 2021
+
+Segmentation type: asyll
+Nucleus: 8 nuclei in signal
+
+ WARNING: The global measures below are only meaningful for speech samples of at least 100 nuclei (syllables).
+
+
+Pitch range of speaker(s): (based on 2 stylization values per nucleus)
+     Speaker label: Range, Bottom, Mean, Median, Top, MeanOfST, StdevOfST
+     ANON         : 13.6ST, 130Hz (84.3ST), 183Hz (90.2ST), 170Hz (88.9ST), 286Hz (97.9ST), 89.8ST, 4.2ST
+
+Pitch range of speaker(s): (based on 2 raw F0 values per nucleus)
+     Speaker label: P02, Mean, Median, P98
+     ANON         : 130Hz, 183Hz, 170Hz, 286Hz
+
+Pitch variability of speaker(s):
+     Speaker label: TrajIntra, TrajInter, TrajPhon, TrajIntraZ, TrajInterZ, TrajPhonZ, PropLevel, Gliss, Rises, Falls
+     ANON         : 6.8 ST/s, 33.5 ST/s, 17.5 ST/s, 1.6 sd/s, 8.0 sd/s, 4.2 sd/s, 87.5%, 12.5%, 0%, 12.5% 
+
+Temporal profile of speaker(s):
+     Speaker label: SpeechRate, TotalDur, %Phonation, %Pauses, PhonTime, NuclDur, InterNuclDur, PauseDur
+     ANON         : 5.80 syll/s, 416.511 s, 99.9%, 0.1%, 416.000 s, 130.000 s, 286.000 s, 0.51 s 
+
+Duration variability of speaker(s):
+     Speaker label: NuclDurMean, NuclDurStdev, nPVI_nucldur, nPVI_voweldur, nPVI_sylldur
+     ANON         : 0.103 s, 0.044, 39.65, 0, 0 
+
+
+TotalDur   = total speech time (in s) = internucleus time + intranucleus time + pause time
+PhonTime   = phonation time (in s) = without pauses = internucleus time + intranucleus time
+%Phonation = proportion (%) of estimated phonation time (= internucleus time + intranucleus time) to speech time
+%Pauses    = proportion (%) of estimated pause time (= when internucleus time >= 0.3) to speech time
+SpeechRate = estimated speech rate (in syll/s) = nrof_nuclei/phonation_time
+MeanOfST   = mean of pitch values, where values are min and max pitch in ST for each syllable
+StdevOfST  = stdev of pitch values, where values are min and max pitch in ST for each syllable
+PitchRange = estimated pitch range (in ST) (2%-98% percentiles of data in nuclei without discontinuities)
+Gliss      = proportion (%) of syllables with large pitch movement (abs(distance) >= 4ST)
+Rises      = proportion (%) of syllables with pitch rise (>= 4ST)
+Falls      = proportion (%) of syllables with pitch fall (<= -4ST)
+NuclDur    = sum of durations for nuclei for this speaker
+InterNuclDur = sum of durations between successive nuclei for this speaker
+TrajIntra  = pitch trajectory (sum of absolute intervals) within syllabic nuclei, divided by duration (in ST/s)
+TrajInter  = pitch trajectory (sum of absolute intervals) between syllabic nuclei (except pauses or speaker turns), divided by duration (in ST/s)
+TrajPhon   = sum of TrajIntra and TrajInter, divided by phonation time (in ST/s)
+TrajIntraZ = as TrajIntra, but for pitch trajectory in standard deviation units on ST scale (z-score) (in sd/s)
+TrajInterZ = as TrajInter, but for pitch trajectory in standard deviation units on ST scale (z-score) (in sd/s)
+TrajPhonZ  = as TrajPhon,  but for pitch trajectory in standard deviation units on ST scale (z-score) (in sd/s)

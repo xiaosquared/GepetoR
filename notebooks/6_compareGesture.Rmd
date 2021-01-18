@@ -3,23 +3,23 @@ title: "Compare Gesture"
 author: "Xiao Xiao"
 date: "`r format(Sys.time(), '%d %B, %Y')`" 
 output: 
- html_document:
-    number_sections: true
-    df_print: paged
-    toc: yes
+ 
  html_notebook:
     depth: 4
     number_sections: true
     theme: united
     toc: yes
- 
+ html_document:
+    number_sections: true
+    df_print: paged
+    toc: yes
 ---
 
 This document is a first attempt to quantitatively compare gestures made using the Gepeto app with their corresponding reference gestures. Following the model of d'allessandro et al 2011, we use Pearson's correlation and Root Mean Square Error (RMSE) are computed. Results are presented along with plots of the gesture scaled to and overlaid with its reference. Audio of both are also included.
 
 The original paper weighed the correlation and RMSE with the signal power. For simplicity, I am not doing that for now, but results still seem ok. The original paper also used dynamic time warping to modify signals of uneven lengths. I am just doing a linear scaling, which does not warp the rhythm of the signal. It is important to retain the actual rhythm of the gesture because the correct pronunciation of the corpus phrases depend on correct rhythm.
 
-Right now, I'm only comparing the output f0 curves without taking into consideration where the syllables are. For some gestures that sound distorted yet still have high scores, this could be a way to have more accurate scoring.
+Right now, I'm only comparing the output f0 curves without taking into consideration where the syllables are. For some gestures that sound distorted yet still have high scores, taking rhythm into account should yield more accurate scores.
 
 # Helper functions for evenly spaced curve
 
@@ -87,14 +87,14 @@ The code below loads all the available reference files but only looks at the fir
 
 num_samples = 100
 
-path="../data/20_12_15-pilot_gestures/ambiguous/references/"
-setwd(path)
+path="../data/20_12_15-pilot_gestures/ambiguous/reference/"
+setwd(paste0(path, "prosogram_pt"))
 ref_filenames <- dir(pattern="\\.json$")
 ref_name <- ref_filenames[1]
 
 # Need to change to normal working directory for code to work
-setwd("../../../../notebooks/")
-ref_data <- fromJSON(paste0(path, ref_name)) %>% as_tibble() %>% 
+setwd("../../../../../notebooks/")
+ref_data <- fromJSON(paste0(path,"prosogram_pt/",ref_name)) %>% as_tibble() %>% 
             # To avoid confusion, create new column called percent
             mutate(percent = scrub) %>% select(percent, f)
 
@@ -125,7 +125,7 @@ Now let's do the same thing to all the reference files
 # percent : percentage time (i.e. scrub)
 # f : frequency in ST with 130 hz reference
 ref_originals <- lapply(ref_filenames, function(elt) {
-  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+  result <- fromJSON(paste0(path,"prosogram_pt/", elt)) %>% as_tibble() %>% 
             # To avoid confusion, create new column called percent
             mutate(percent = scrub) %>% select(percent, f)
 })
@@ -264,7 +264,7 @@ get_ref_name <- function(gest_name) {
   return(str_split(gest_name, '-')[[1]][1])
 }
 
-# Compute the correlatoin and rms given the entire gesture name
+# Compute the correlation and rms given the entire gesture name
 get_corr <- function(gest_name) {
   ref_ts <- get_ref_ts(get_ref_name(gest_name))
   gest_ts <- get_gest_ts(gest_name)

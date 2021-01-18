@@ -1,0 +1,741 @@
+---
+title: "Compare Gestures Part II: Intensity weighting, timing distance"
+author: "Xiao Xiao"
+date: "`r format(Sys.time(), '%d %B, %Y')`" 
+output: 
+ 
+ html_document:
+    number_sections: true
+    df_print: paged
+    toc: yes
+ html_notebook:
+    depth: 4
+    number_sections: true
+    theme: united
+    toc: yes
+---
+
+The goal of this notebook is to figure out the best way to compare subjects' gestures with their references. Some questions of interest:
+
+* Compare with original pitch curve or Prosogram stylization?
+* How much difference does it make when taking into account of intensity?
+* What happens when we also compare scrub?
+
+# Loading PitchTier & IntensityTier files
+
+Using rPraat, load a the Praat PitchTier, Prosogram PitchTier, and IntensityTier of an example file, interpolate to get the f0 and intensity values every 10ms and plot. Comparing at 10 ms intervals comes from d'Alessandro et al 2011.
+
+In 6_compareGesture, I used the JSON versions of the Prosogram pitch tiers, but it's actually better to directly use the _styl.PitchTier files because rPraat can do interpolation automatically.
+
+```{r, fig.keep='all'}
+library("zoo")
+library("rPraat")
+library("tidyverse")
+
+path="../data/20_12_15-pilot_gestures/ambiguous/reference/"
+
+# Find intensity files
+setwd(paste0(path, "intensity"))
+it_filenames <- dir(pattern="\\.IntensityTier$")
+
+# Find pitchTier files 
+setwd("../pitchtier")
+pt_filenames <- dir(pattern="\\.PitchTier$")
+
+# Find Prosogram PitchTier files
+setwd("../prosogram_pt")
+psg_filenames <- dir(pattern="\\.PitchTier$")
+
+# Interpolate pitch and intensity for one phrase and plot
+setwd("../../../../../notebooks/")
+
+it1 <- it.read(paste0(path, "intensity/", it_filenames[1]))
+it1_interp <- it.interpolate(it1, seq(0, it1$tmax, by=0.01))
+
+pt1 <- pt.read(paste0(path, "pitchtier/", pt_filenames[1]))
+pt1_interp <- pt.interpolate(pt1, seq(0, pt1$tmax, by=0.01))
+
+psg1 <- pt.read(paste0(path, "prosogram_pt/", psg_filenames[1]))
+psg1_interp <- pt.interpolate(psg1, seq(0, psg1$tmax, by=0.01))
+
+ref_data <- tibble(t=pt1_interp$t, f=pt1_interp$f, psg.f=psg1_interp$f, i=it1_interp$i)
+
+# Plot
+name <- str_split(it_filenames[1], '.IntensityTier')[[1]][1]
+ggplot(data=ref_data, aes(x=t, y=f)) +
+      geom_line(aes(color="Praat Pitch")) +
+      scale_color_discrete(name = "Data")  +
+      geom_line(aes(x=t, y=i, color="Intensity")) +
+      geom_line(aes(x=t, y=psg.f, color="Prosogram Pitch")) +
+      labs(title="Interpolated pitch tier and intensity tiers", subtitle=paste("Phrase:",name),
+          x="time (seconds)",
+          y="Frequency (Hz) for pitch, \nunspecified for intensity")
+
+```
+
+Interestingly, the Praat Pitch curve and the Prosogram one for this particular phrase differ by way more than I had expected. The pitch goes way too high in Praat's analysis. I think those are artifacts.
+
+# Compare original pitch curve with Prosogram stylization
+
+**Summary:** Use Prosogram stylization. Praat's pitch analysis has some artifacts and weird microprosody. Weighing by intensity doesn't seem to make a huge difference, but it doesn't take so much more work. Also, since d'Alessandro et al 2011 used it, it's good to be consistent.
+
+**Process:** 
+Now let's compare the Praat Pitch curve and Prosogram pitch curve for all the files.
+
+In 6_compareGesture, I arbitrarily picked 100 as the number of data points to compare. Now we can compare every 10ms. This means that the curves for each file has a different number of points.
+
+First, get the interpolated time series values for all the original phrases. The pitch values are converted to semitones with a reference of 130Hz to match the input gestures.
+
+
+```{r}
+source("../utils/hertzToST.R")
+
+# A vector with all the phrases
+ref_phrases <- do.call("rbind", lapply(psg_filenames, function(elt) {
+  str_split(elt, '.json')[[1]][1]
+}))[,1]
+
+# Put all the reference pitch tiers into a list
+ref_pts_interp <- lapply(pt_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "pitchtier/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f, 130)
+  interpolated
+})
+
+# Put all the Prosogram pitch tiers into a list
+ref_psgs_interp <- lapply(psg_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "prosogram_pt/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f, 130)
+  interpolated
+})
+
+# Put all the reference intensity tiers into a list
+ref_its_interp <- lapply(it_filenames, function(elt) {
+  my_it <- it.read(paste0(path, "intensity/", elt))
+  it.interpolate(my_it, seq(0, my_it$tmax, by=0.01))
+})
+
+# Get the times of each phrase
+ref_times <- do.call("rbind", lapply(ref_pts_interp, function(elt) {
+  elt$tmax
+}))[,1]
+
+# A tibble containing each phrase and its duration
+ref_info <- tibble(phrase=ref_phrases, duration=ref_times)
+
+# A function that gets the ruation given the phrase name
+get_ref_duration <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_info$duration[index])
+}
+
+# Get the times stamps for interpolation given the phrase name
+get_ref_timestamps <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$t)
+}
+
+# Get the interpolated frequency values given the phrase name
+# (frequency time series)
+get_ref_tsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$f)
+}
+
+# Get the interpolated prosogram frequency values given the phrase name
+# (prosogram frequency time series)
+get_ref_ptsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_psgs_interp[[index]]$f)
+}
+
+# Get the interpolated intensity values given the phrase name
+# (intensity time series)
+get_ref_tsi <-function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_its_interp[[index]]$i)
+}
+```
+
+Now let's compare the Praat Pitch curve with the Prosogram pitch curve for each phrase:
+
+```{r}
+# Helper function to find the straight up correlation between the praat and prosogram frequency curves
+get_corr_praat_psg <- function(gest_name) {
+  praat_pitch <- get_ref_tsf(gest_name)
+  prosogram_pitch <- get_ref_ptsf(gest_name)
+  return(cor(praat_pitch, prosogram_pitch, method="pearson"))
+}
+
+corr_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
+  get_corr_praat_psg(elt)
+}))[,1]
+
+results_corr_praat_prosogram <- tibble(phrase=ref_phrases, corr.praat.psg=corr_praat_psg_refs)
+print(as.matrix(results_corr_praat_prosogram), quote = FALSE)
+
+```
+```{r}
+mean(results_corr_praat_prosogram$corr.praat.psg)
+```
+
+Does it make a difference if we weigh by intensity?
+```{r}
+library("wCorr") # for the weighted correlation function
+
+
+get_weighted_corr_praat_psg <- function(phrase_name) {
+  praat_pitch <- get_ref_tsf(phrase_name)
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  
+  wc <- weightedCorr(praat_pitch, prosogram_pitch, method = "Pearson", 
+               weights = intensity, ML = FALSE, fast = TRUE)
+  return(wc)
+}
+
+wcorr_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
+  get_weighted_corr_praat_psg(elt)
+}))[,1]
+
+results_wcorr_praat_prosogram <- tibble(phrase=ref_phrases, corr.praat.psg=corr_praat_psg_refs,
+                                        wcorr.praat.psg=wcorr_praat_psg_refs)
+print(as.matrix(results_wcorr_praat_prosogram), quote = FALSE)
+
+```
+
+```{r}
+mean(results_wcorr_praat_prosogram$wcorr.praat.psg)
+```
+
+The mean of the weighted correlation is a little higher but not by much.
+
+# Plotting some more examples
+
+```{r}
+
+plot_ref_curves <- function(phrase_name) {
+  # first get the info
+  praat_pitch <- get_ref_tsf(phrase_name)
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  timestamps <- get_ref_timestamps(phrase_name)
+  
+  # combine into a tibble
+  ref_data <- tibble(f=praat_pitch, i=intensity, psg.f=prosogram_pitch, t=timestamps)
+  
+  # plot
+  ggplot(data=ref_data, aes(x=t, y=f)) +
+      geom_line(aes(color="Praat Pitch")) +
+      scale_color_discrete(name = "Data")  +
+      geom_line(aes(x=t, y=i, color="Intensity")) +
+      geom_line(aes(x=t, y=psg.f, color="Prosogram Pitch")) +
+      labs(title="Interpolated pitch tier and intensity tiers", subtitle=paste("Phrase:",phrase_name),
+          x="time (seconds)",
+          y="Frequency (Hz) for pitch, \nunspecified for intensity")  
+}
+
+```
+
+The most different. Here I think Prosogram is more accurate. The part that goes really low and really high in Praat's pitch curve seem to be artifacts.
+
+```{r, fig.keep='all'}
+plot_ref_curves(ref_phrases[6])
+```
+
+The most similar
+
+```{r}
+plot_ref_curves(ref_phrases[10])
+```
+
+# Weighted comparison of Prosogram pitch curve with learners' gestures
+
+Load gestures. Interpolate based on the number of points in the reference gesture. The index indicates time in terms of a percentage from 0 to 1.
+
+```{r}
+library("jsonlite")
+library("timetk")
+
+# Get all the filenames of the gestures
+path="../data/20_12_15-pilot_gestures/ambiguous/gestures/"
+setwd(path)
+gest_filenames <- dir(pattern="\\.gest$")
+name <- gest_filenames[1]
+
+# Extract the reference phrase from the whole gesture name
+get_ref_name <- function(gest_name) {
+  return(str_split(gest_name, '-')[[1]][1])
+}
+
+# Finds the number of samples in the reference for the particular gesture
+get_num_samples <-function(gest_name) {
+# Find how many samples are in the ref file
+  ref_phrase <- get_ref_name(gest_name)  
+  return(length(get_ref_timestamps(ref_phrase)))
+}
+
+# Load gest data and convert time
+prep_gest<-function(gest) {
+  # Convert time to percentage
+  max_time <- tail(gest$t_end, 1)
+  gest <- gest %>% mutate(percent=t_init/max_time) %>%
+             # only keep local scrub time and the freq values 
+             select(percent, f, scrub)
+  return(gest)
+}
+
+# args: data - tibble with columns: percent (% of way through signal) & f (frequency at that point), 
+# num_samples - # equally spaced points in outpt
+# returns: tibble with coluumns index & value. index has num_samples equally spaced points from 0 to 1
+# values are interplolated from f
+get_interpolated_data <- function(data, num_samples) {
+  # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
+  if (! 0 %in% data$percent) {
+    data <- add_row(data, percent=0, f=data$f[1], scrub=data$scrub[1], .before=1)
+  }
+  if (! (1 %in% data$percent)) {
+    data <- add_row(data, percent=1, f=tail(data$f, 1), scrub=tail(data$scrub, 1))
+  }
+          
+  # Create a tibble with all the points we are interested in, with NA values
+  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA) 
+  
+  # Add all the sample points whose scrub value doesn't already exist in data
+  data2 <- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %>%
+    # Then sort by scrub columns  
+    arrange(percent)
+  
+  # Transform into zoo object to fill the NAs with interpolated values
+  z <- read.zoo(data2) %>% na.approx %>%
+   tk_tbl(preserve_index=TRUE, rename_index="index") %>%
+   filter(index %in% sample_points$percent)
+  
+  return(z)
+}
+
+setwd("../../../../notebooks/")
+
+# A vector with just the names of the phrases (w/o .json extension)
+gests <- do.call("rbind", lapply(gest_filenames, function(elt) {
+  str_split(elt, '.gest')[[1]][1]
+}))[,1]
+
+# Original gestures
+gest_originals <- lapply(gest_filenames, function(elt) {
+  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+  # NOTE THIS EXTRA STEP      
+  prep_gest()
+})
+
+# Returns the index of the gesture
+get_gest_index <- function(gest_name) {
+  index <- match(gest_name, gests)
+  if (is.na(index)) { return(NULL) }
+  return(index)
+}
+
+# Interpolated time series data of f & scrub value
+gest_interps <- lapply(gests, function(elt) {
+  # Elt is the name of a gesture. We want to find its index first
+  index<-get_gest_index(elt)
+  
+  # In order to get the actual gesture data
+  gest_orig<-gest_originals[[index]]
+  
+  # Gets number of samples for the gest, which is computed from the reference
+  num_samples<-get_num_samples(elt)
+  
+  # Do the interpolation  
+  gest_interp<-get_interpolated_data(gest_orig, num_samples)
+  
+  return(gest_interp)
+})
+
+
+```
+
+## Comparing with reference
+```{r}
+# Compute the correlation and rms given the entire gesture name
+get_corr <- function(gest_name, weights=FALSE) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the freq of the gesture
+  gest_pitch <- gest_interps[[index]]$f
+  
+  # Get the reference phrase
+  phrase_name <- get_ref_name(gest_name)    
+  # Use it to get the prosogram pitch ref and the intensity
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  
+  # If using weights, get the intensity of the ref phrase
+  if (weights) {  
+    intensity <- get_ref_tsi(phrase_name)
+  
+    wc <- weightedCorr(gest_pitch, prosogram_pitch, method = "Pearson", 
+               weights = intensity, ML = FALSE, fast = TRUE)
+    return(wc)
+  } else {
+    return(cor(gest_pitch, prosogram_pitch, method="pearson"))
+  }
+}
+
+# Get the weighted correlation
+wcorr_all <- do.call("rbind", lapply(gests, function(elt) {
+  get_corr(elt, weights=TRUE)
+}))[,1]
+# And the normal correlation just for comparison
+corr_all <- do.call("rbind", lapply(gests, function(elt) {
+  get_corr(elt)
+}))[,1]
+
+gest_scores <- tibble(gest=gests, wcorr=wcorr_all, corr=corr_all) %>%
+                mutate(corr_diff=wcorr-corr)
+print(as.matrix(gest_scores), quote = FALSE)
+```
+There doesn't seem to be a huge amount of difference when intensity is taken into account. I'm not sure that the weighted correlation is more accurate.
+
+```{r}
+mean(gest_scores$corr_diff)
+```
+```{r}
+max(gest_scores$corr_diff)
+```
+```{r}
+min(gest_scores$corr_diff)
+```
+```{r}
+sd(gest_scores$corr_diff)
+```
+
+Just for completeness, let's make some plots...
+```{r}
+plot_gest_and_ref <- function(gest_name) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the freq of the gesture
+  gest_pitch <- gest_interps[[index]]$f
+  
+  # Get the reference phrase
+  phrase_name <- get_ref_name(gest_name)    
+  # Use it to get the prosogram pitch ref and the intensity
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  
+  row <- filter(gest_scores, gest==gest_name)
+  wcorr <- round(row$wcorr, 4)
+  corr <- round(row$corr, 4)
+  
+  my_data <- tibble(gest=gest_pitch, ref=prosogram_pitch, i=intensity, 
+                    percent=gest_interps[[index]]$index)
+  
+  my_plot <- ggplot(data=my_data, aes(x=percent, y=gest, color="gesture")) +
+    scale_color_discrete(name = "Data source") +
+    geom_line() +
+    geom_line(data=my_data, aes(x=percent, y=ref, color="reference")) +
+    geom_line(data=my_data, aes(x=percent, y=i, color="intensity")) +
+    labs(title=paste(gest_name, "with its reference"), 
+            subtitle=paste("Weighted Correlation:", wcorr, "Non-weighted:", corr),
+            y="frequency (semitones from 130hz) \nunspecified for intensity",
+            x="percent time")
+  return(my_plot)
+}
+
+```
+
+
+# Comparison of scrub
+
+## Correlation
+
+Scrub should go as linearly as possible, so we can compare it with the index (percent time).
+First look at correlation.
+
+```{r}
+
+# Get the correlation of the scrub
+get_corr_timing <- function(gest_name, weights=FALSE) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the scrub
+  gest_scrub <- gest_interps[[index]]$scrub
+  # Use it to get the percent time (index)
+  gest_time <- gest_interps[[index]]$index
+  
+  # Get the reference phrase
+  phrase_name <- get_ref_name(gest_name)    
+
+  # If using weights, get the intensity of the ref phrase
+  if (weights) {  
+    intensity <- get_ref_tsi(phrase_name)
+  
+    wc <- weightedCorr(gest_time, gest_scrub, method = "Pearson", 
+               weights = intensity, ML = FALSE, fast = TRUE)
+    return(wc)
+  } else {
+    return(cor(gest_time, gest_scrub, method="pearson"))
+  }
+}
+
+# Get the correlation. It's unweighted because it's time, not frequency.
+corr_all_timing <- do.call("rbind", lapply(gests, function(elt) {
+  get_corr_timing(elt)
+}))[,1]
+
+gest_scores_timing <- tibble(gest=gests, corr_timing=corr_all_timing)
+print(as.matrix(gest_scores_timing), quote=FALSE)
+
+```
+
+They are all very high, but within that range we can still check out the gestes with lower score. 23 and 17 are the only ones that are lower than .98.
+
+** 23 **
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets-m2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+<br/>
+
+** 17 **
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques-y1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+These definitely have more problematic rhythms. But it's really hard to draw the line on what is good and what is bad.
+
+## Distance
+
+Let's try another measurement. Correlation and RMSE subtracts the mean, but the mean doesn't have much sense when we talk about timing. So let's just sum up all the distance between all the points. A higher number means less accurate timing. 
+
+One issue is that longer phrases have more points. This is problematic because longer phrases will generally have a larger total distance. We can try to mitigate that by taking the average, but that's also problematic because a longer phrase with inaccurate timing in one place will not necessarily show.
+
+So we have to resample the gestures such that they all have the same number of points.
+
+```{r}
+
+# Interpolated time series data
+num_samples <- 100
+gest_interps2 <- lapply(gests, function(elt) {
+  # Elt is the name of a gesture. We want to find its index first
+  index<-get_gest_index(elt)
+  
+  # In order to get the actual gesture data
+  gest_orig<-gest_originals[[index]]
+  
+  # Do the interpolation  
+  gest_interp<-get_interpolated_data(gest_orig, num_samples)
+  
+  return(gest_interp)
+})
+
+
+dist <- function(a, b) {
+  return(sqrt(sum( (a - b) ^2 )))
+}
+
+get_dist_timing <- function(gest_name) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the scrub
+  gest_scrub <- gest_interps2[[index]]$scrub
+  # Use it to get the percent time (index)
+  gest_time <- gest_interps2[[index]]$index
+  
+  return(dist(gest_scrub, gest_time))
+}
+
+# Get the timing rmse for all gestures
+dist_all_timing <- do.call("rbind", lapply(gests, function(elt) {
+  get_dist_timing(elt)
+}))[,1]
+
+
+gest_scores_timing2 <- tibble(gest=gests, corr_timing=corr_all_timing, dist_timing=dist_all_timing)
+print(as.matrix(gest_scores_timing2), quote=FALSE)
+
+```
+
+```{r}
+plot_gest_and_ref_timing <- function(gest_name) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the freq of the gesture
+  gest_scrub <- gest_interps[[index]]$scrub
+  gest_index <- gest_interps[[index]]$index
+
+  row <- filter(gest_scores_timing2, gest==gest_name)
+  corr <- round(row$corr_timing, 4)
+  dist <- round(row$dist_timing, 4)
+  
+  my_data <- tibble(gest=gest_scrub, ref=gest_index, percent=gest_index)
+  
+  my_plot <- ggplot(data=my_data, aes(x=percent, y=gest, color="gesture")) +
+    scale_color_discrete(name = "Data source") +
+    geom_line() +
+    geom_line(data=my_data, aes(x=percent, y=ref, color="ideal")) +
+    labs(title=paste("Timing of", gest_name, "compared with ideal linear time"), 
+            subtitle=paste("Correlation:", corr, "Distance:", dist),
+            y="Scrub percentage",
+            x="percent time")
+  return(my_plot)
+}
+```
+
+## Best timing scores (<0.5)
+
+```{r}
+plot_gest_and_ref_timing(gests[[22]])
+plot_gest_and_ref(gests[[22]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets-m1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27bis_la_bonne_cuisine__avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+This is actually quite good. The pitch curve can be closer to the original, but it has the right overall contour.
+
+<br/>
+
+```{r}
+plot_gest_and_ref_timing(gests[[3]])
+plot_gest_and_ref(gests[[3]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10_jean_saigne_beaucoup-a_m.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/10_jean_saigne_beaucoup.mp3" type="audio/mp3">
+</audio></html>
+
+Even though the timing follows very closely the linear idea, this does not sound right because the frequency curve is incorrect.
+
+<br/>
+
+## Quite good scores (<0.1)
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[7]])
+plot_gest_and_ref(gests[[7]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13_la_belle_ferme_le_voile-c2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13_la_belle_ferme_le_voile.mp3" type="audio/mp3">
+</audio></html>
+
+This is a very good gesture. The timing is not exactly linear, but it's close enough.
+
+<br/>
+
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[9]])
+plot_gest_and_ref(gests[[9]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13bis_la_belle_ferme__le_voile-g2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/13bis_la_belle_ferme__le_voile.mp3" type="audio/mp3">
+</audio></html>
+
+This is also a very good gesture for both frequency and timing. Timing is not perfect, once again, but it's good enough.
+
+<br/>
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[20]])
+plot_gest_and_ref(gests[[20]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets-v2.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/27_la_bonne__cuisine_avec_des_navets.mp3" type="audio/mp3">
+</audio></html>
+
+This sounds a bit exaggerated, but it's still definitely correct.
+
+<br/>
+
+## Worst timing scores (>1)
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[17]])
+plot_gest_and_ref(gests[[17]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques-y1.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/20bis_jeanpierre_et_jacques.mp3" type="audio/mp3">
+</audio></html>
+
+This gesture does not score well for either pitch or timing.
+
+<br/>
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[11]])
+plot_gest_and_ref(gests[[11]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature-b_g.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/1bis_Il_naitrait_premature.mp3" type="audio/mp3">
+</audio></html>
+
+While this one has a very good score for pitch, taking the timing score into account gives a score that more accurately reflect the strangeness that I hear.
+
+<br/>
+
+```{r, fig.keep='all'}
+plot_gest_and_ref_timing(gests[[25]])
+plot_gest_and_ref(gests[[25]])
+```
+
+Gesture <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux-a_g.mp3" type="audio/mp3">
+</audio></html>
+
+Original <html><audio controls>
+<source src="../data/20_12_15-pilot_gestures/ambiguous/audio/2bis_tu_paraitrais_soucieux.mp3" type="audio/mp3">
+</audio></html>
+
+This has an ok score for pitch, but the timing score reflects how weirdly it sounds.
+
+<br/>
