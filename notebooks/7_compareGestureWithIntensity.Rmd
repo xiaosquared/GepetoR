@@ -384,7 +384,8 @@ get_corr <- function(gest_name, weights=FALSE) {
                weights = intensity, ML = FALSE, fast = TRUE)
     return(wc)
   } else {
-    return(cor(gest_pitch, prosogram_pitch, method="pearson"))
+    return(weightedCorr(gest_pitch, prosogram_pitch, method = "Pearson", 
+               weights = rep(1, length(gest_pitch)), ML = FALSE, fast = TRUE))
   }
 }
 
@@ -583,12 +584,12 @@ plot_gest_and_ref_timing <- function(gest_name) {
   corr <- round(row$corr_timing, 4)
   dist <- round(row$dist_timing, 4)
   
-  my_data <- tibble(gest=gest_scrub, ref=gest_index, percent=gest_index)
+  my_data <- tibble(gest=gest_scrub, ref=gest_index)
   
-  my_plot <- ggplot(data=my_data, aes(x=percent, y=gest, color="gesture")) +
+  my_plot <- ggplot(data=my_data, aes(x=ref, y=gest, color="gesture")) +
     scale_color_discrete(name = "Data source") +
     geom_line() +
-    geom_line(data=my_data, aes(x=percent, y=ref, color="ideal")) +
+    geom_line(data=my_data, aes(x=ref, y=ref, color="ideal")) +
     labs(title=paste("Timing of", gest_name, "compared with ideal linear time"), 
             subtitle=paste("Correlation:", corr, "Distance:", dist),
             y="Scrub percentage",
