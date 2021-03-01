@@ -1,0 +1,534 @@
+---
+title: "Compare Gestures III.1: February 2020 pilot data"
+output: html_notebook
+---
+
+# Reference Data
+
+Load pitch and intensity info for the ref phrases:
+
+```{r, message=FALSE, warn=FALSE}
+library("zoo")
+library("rPraat")
+library("tidyverse")
+
+path="../data/21_02-study/reference/"
+ref_freq <- 116.54
+
+# Find intensity files
+setwd(paste0(path, "_intensity"))
+it_filenames <- dir(pattern="\\.IntensityTier$")
+
+# Find pitchTier files 
+setwd("../_pitchtier")
+pt_filenames <- dir(pattern="\\.PitchTier$")
+
+# Find Prosogram PitchTier files
+setwd("../_prosogram_pt")
+psg_filenames <- dir(pattern="\\.PitchTier$")
+
+# Interpolate pitch and intensity for one phrase and plot
+setwd("../../../../notebooks/")
+
+# A vector with all the phrases
+ref_phrases <- do.call("rbind", lapply(pt_filenames, function(elt) {
+  str_split(elt, '.PitchTier')[[1]][1]
+}))[,1]
+
+# Put all the reference pitch tiers into a list
+ref_pts_interp <- lapply(pt_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f, ref_freq)
+  interpolated
+})
+
+# Put all the Prosogram pitch tiers into a list
+ref_psgs_interp <- lapply(psg_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_prosogram_pt/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f,ref_freq)
+  interpolated
+})
+
+# Put all the reference intensity tiers into a list
+ref_its_interp <- lapply(it_filenames, function(elt) {
+  my_it <- it.read(paste0(path, "_intensity/", elt))
+  it.interpolate(my_it, seq(0, my_it$tmax, by=0.01))
+})
+
+# Get the times of each phrase
+ref_times <- do.call("rbind", lapply(ref_pts_interp, function(elt) {
+  elt$tmax
+}))[,1]
+
+# A tibble containing each phrase and its duration
+ref_info <- tibble(phrase=ref_phrases, duration=ref_times)
+
+```
+
+Some helper functions to get duration, time stamps, interpolated f0 (stylized or not) values, interpolated intensity values given the phrase name:
+
+```{r}
+
+# Gets the interpolated prosogram object
+get_ref_psgs_interp <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_psgs_interp[[index]])
+}
+
+# A function that gets the duration given the phrase name
+get_ref_duration <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_info$duration[index])
+}
+
+# Get the times stamps for interpolation given the phrase name
+get_ref_timestamps <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$t)
+}
+
+# Get the interpolated frequency values given the phrase name
+# (frequency time series)
+get_ref_tsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$f)
+}
+
+# Get the interpolated prosogram frequency values given the phrase name
+# (prosogram frequency time series)
+get_ref_ptsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_psgs_interp[[index]]$f)
+}
+
+# Get the interpolated intensity values given the phrase name
+# (intensity time series)
+get_ref_tsi <-function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_its_interp[[index]]$i)
+}
+```
+
+
+Compare the Pearson's Correlation values between Praat and Prosogoram frequency curves
+
+```{r}
+library("wCorr") # for the weighted correlation function
+
+# Helper function to find the straight up correlation between the praat and prosogram frequency curves
+get_corr_praat_psg <- function(gest_name) {
+  praat_pitch <- get_ref_tsf(gest_name)
+  prosogram_pitch <- get_ref_ptsf(gest_name)
+  return(cor(praat_pitch, prosogram_pitch, method="pearson"))
+}
+
+corr_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
+  get_corr_praat_psg(elt)
+}))[,1]
+
+# Helper function to find the weighted correlation between the praat and prosogram frequency curves
+get_weighted_corr_praat_psg <- function(phrase_name) {
+  praat_pitch <- get_ref_tsf(phrase_name)
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  
+  wc <- weightedCorr(praat_pitch, prosogram_pitch, method = "Pearson", 
+               weights = intensity, ML = FALSE, fast = TRUE)
+  return(wc)
+}
+
+wcorr_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
+  get_weighted_corr_praat_psg(elt)
+}))[,1]
+
+results_wcorr_praat_prosogram <- tibble(phrase=ref_phrases, corr.praat.psg=corr_praat_psg_refs,
+                                        wcorr.praat.psg=wcorr_praat_psg_refs)
+print(as.matrix(results_wcorr_praat_prosogram), quote = FALSE)
+
+```
+All of these values are quite high.
+
+Let's plot the graphs with the lowest correlation value:
+
+```{r}
+plot_ref_curves <- function(phrase_name) {
+  # first get the info
+  praat_pitch <- get_ref_tsf(phrase_name)
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  timestamps <- get_ref_timestamps(phrase_name)
+  
+  # combine into a tibble
+  ref_data <- tibble(f=praat_pitch, i=intensity, psg.f=prosogram_pitch, t=timestamps)
+  
+  # plot
+  ggplot(data=ref_data, aes(x=t, y=f)) +
+      geom_line(aes(color="Praat Pitch")) +
+      scale_color_discrete(name = "Data")  +
+      geom_line(aes(x=t, y=i, color="Intensity")) +
+      geom_line(aes(x=t, y=psg.f, color="Prosogram Pitch")) +
+      labs(title="Interpolated pitch tier and intensity tiers", subtitle=paste("Phrase:",phrase_name),
+          x="time (seconds)",
+          y="Frequency (Hz) for pitch, \nunspecified for intensity")  
+}
+```
+
+These two curves had the lowest correlation: 0.87
+
+```{r, fig.keep='all'}
+plot_ref_curves(ref_phrases[1])
+```
+
+# Comparing Gestures
+
+```{r}
+library("jsonlite")
+library("timetk")
+
+# Get all the filenames of the gestures
+path="../data/21_02-study/all_gestures/"
+setwd(path)
+gest_filenames <- dir(pattern="\\.gest$")
+name <- gest_filenames[1]
+
+# Extract the reference phrase from the whole gesture name
+get_ref_name <- function(gest_name) {
+  return(str_split(gest_name, '-')[[1]][3])
+}
+
+# Finds the number of samples in the reference for the particular gesture
+get_num_samples <-function(gest_name) {
+# Find how many samples are in the ref file
+  ref_phrase <- get_ref_name(gest_name)  
+  return(length(get_ref_timestamps(ref_phrase)))
+}
+
+# Load gest data and convert time
+prep_gest<-function(gest) {
+  # Convert time to percentage
+  max_time <- tail(gest$t_end, 1)
+  gest <- gest %>% mutate(percent=t_init/max_time) %>%
+             # only keep local scrub time and the freq values 
+             select(percent, f, scrub)
+  return(gest)
+}
+
+# args: data - tibble with columns: percent (% of way through signal) & f (frequency at that point), 
+# num_samples - # equally spaced points in outpt
+# returns: tibble with coluumns index & value. index has num_samples equally spaced points from 0 to 1
+# values are interplolated from f
+get_interpolated_data <- function(data, num_samples) {
+  # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
+  if (! 0 %in% data$percent) {
+    data <- add_row(data, percent=0, f=data$f[1], scrub=data$scrub[1], .before=1)
+  }
+  if (! (1 %in% data$percent)) {
+    data <- add_row(data, percent=1, f=tail(data$f, 1), scrub=tail(data$scrub, 1))
+  }
+          
+  # Create a tibble with all the points we are interested in, with NA values
+  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA) 
+  
+  # Add all the sample points whose scrub value doesn't already exist in data
+  data2 <- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %>%
+    # Then sort by scrub columns  
+    arrange(percent)
+  
+  # Transform into zoo object to fill the NAs with interpolated values
+  z <- read.zoo(data2) %>% na.approx %>%
+   tk_tbl(preserve_index=TRUE, rename_index="index") %>%
+   filter(index %in% sample_points$percent)
+  
+  return(z)
+}
+
+setwd("../../../notebooks/")
+
+# A vector with just the names of the phrases (w/o .json extension)
+gests <- do.call("rbind", lapply(gest_filenames, function(elt) {
+  str_split(elt, '.gest')[[1]][1]
+}))[,1]
+
+# Original gestures
+gest_originals <- lapply(gest_filenames, function(elt) {
+  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+  # NOTE THIS EXTRA STEP      
+  prep_gest()
+})
+
+# Returns the index of the gesture
+get_gest_index <- function(gest_name) {
+  index <- match(gest_name, gests)
+  if (is.na(index)) { return(NULL) }
+  return(index)
+}
+
+# Interpolated time series data of f & scrub value
+gest_interps <- lapply(gests, function(elt) {
+  # Elt is the name of a gesture. We want to find its index first
+  index<-get_gest_index(elt)
+  
+  # In order to get the actual gesture data
+  gest_orig<-gest_originals[[index]]
+  
+  # Gets number of samples for the gest, which is computed from the reference
+  num_samples<-get_num_samples(elt)
+  
+  # Do the interpolation  
+  gest_interp<-get_interpolated_data(gest_orig, num_samples)
+  
+  return(gest_interp)
+})
+
+```
+
+Organize gestures into a Tibble
+
+```{r}
+gests_data <- do.call("rbind", lapply(gests, function(elt) {
+  parts<-str_split(elt, '-')[[1]]
+  ref_phrase <- parts[3]
+  phrase_id <- str_split(ref_phrase, '_')[[1]][1]
+  tibble(phrase=ref_phrase, pid=phrase_id, type=parts[2], subject=parts[4], order=parts[1], gest_name=elt)
+})) %>% mutate(id = row_number()) %>%
+  select(subject, type, pid, order,gest_name, phrase, id)
+```
+
+Let's compute some stuff and add to the tibble
+```{r}
+
+# Compute the correlation and rms given the entire gesture name
+get_corr <- function(gest_name, weights=FALSE) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the freq of the gesture
+  gest_pitch <- gest_interps[[index]]$f
+  
+  # Get the reference phrase
+  phrase_name <- get_ref_name(gest_name)    
+  # Use it to get the prosogram pitch ref and the intensity
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  
+  # If using weights, get the intensity of the ref phrase
+  if (weights) {  
+    intensity <- get_ref_tsi(phrase_name)
+  
+    wc <- weightedCorr(gest_pitch, prosogram_pitch, method = "Pearson", 
+               weights = intensity, ML = FALSE, fast = TRUE)
+    return(wc)
+  } else {
+    return(weightedCorr(gest_pitch, prosogram_pitch, method = "Pearson", 
+               weights = rep(1, length(gest_pitch)), ML = FALSE, fast = TRUE))
+  }
+}
+
+wcorr_all <- do.call("rbind", lapply(gests, function(elt) {
+  get_corr(elt, weights=TRUE)
+}))[,1]
+
+gests_data <- add_column(gests_data, wcorr=wcorr_all)
+```
+
+
+Make some filtering functions:
+
+```{r}
+get_gests_by_subject <- function(s, t) {
+  if (missing(s) & missing(t)) {
+    return(gests_data %>% filter(subject==subject, type==type))
+  } else if (missing(s)) {
+    return(gests_data %>% filter(subject==subject, type==t))
+  } else if (missing(t)) {
+    return(gests_data %>% filter(subject==s, type==type))
+  }
+  return(gests_data %>% filter(subject==s, type==t))
+}
+
+get_gests_by_phrase <- function(p_id, t) {
+  if (missing(p_id) & missing(t)) {
+    return(gests_data %>% filter(pid==pid, type==type))
+  } else if (missing(p_id)) {
+    return(gests_data %>% filter(pid==pid, type==t))
+  } else if (missing(t)) {
+    return(gests_data %>% filter(pid==p_id, type==type))
+  }
+  return(gests_data %>% filter(pid==p_id, type==t))
+}
+
+```
+
+
+By phrase
+
+```{r}
+# Get the unique pids
+p_ids <- c('2', '2bis', '7', '7bis', '8', '8bis', '10', '10bis', '11', '11bis', '21', '21bis')
+
+wcorr_p_blind <- do.call("rbind", lapply(p_ids, function(elt) {
+  mean(get_gests_by_phrase(p_id=elt, t='blind')$wcorr)
+}))[,1]
+
+wcorr_p_guide <- do.call("rbind", lapply(p_ids, function(elt) {
+  mean(get_gests_by_phrase(p_id=elt, t='guide')$wcorr)
+}))[,1]
+
+wcorr_by_pid <- tibble(pid = p_ids, wcorr_blind = wcorr_p_blind, wcorr_guide = wcorr_p_guide) %>%
+                arrange(pid)
+
+```
+
+
+
+```{r}
+# Boxplots of wcorr by phrase
+gests_data %>%
+  ggplot(aes(x=pid, y=wcorr, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by phrase",
+            x="Phrase id")
+```
+
+
+```{r}
+# Boxplots of wcorr by subject
+gests_data %>%
+  ggplot(aes(x=subject, y=wcorr, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by subject",
+            x="Subject id")
+```
+
+
+```{r}
+plot_gest_and_ref <- function(gest_name) {
+  # Get the index of the gesture
+  index<-get_gest_index(gest_name)
+  # Use it to get the freq of the gesture
+  gest_pitch <- gest_interps[[index]]$f
+  
+  # Get the reference phrase
+  phrase_name <- get_ref_name(gest_name)    
+  # Use it to get the prosogram pitch ref and the intensity
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  
+  wcorr <- slice(gests_data, index)$wcorr
+  
+  my_data <- tibble(gest=gest_pitch, ref=prosogram_pitch, i=intensity, 
+                    percent=gest_interps[[index]]$index)
+  
+  my_plot <- ggplot(data=my_data, aes(x=percent, y=gest, color="gesture")) +
+    scale_color_discrete(name = "Data source") +
+    geom_line() +
+    geom_line(data=my_data, aes(x=percent, y=ref, color="reference")) +
+    geom_line(data=my_data, aes(x=percent, y=i, color="intensity")) +
+    labs(title=paste(gest_name, "with its reference"), 
+            subtitle=paste("Weighted Correlation:", wcorr),
+            y="frequency (semitones from 130hz) \nunspecified for intensity",
+            x="percent time")
+  return(my_plot)
+}
+
+plot_gest_and_ref(gests[2])
+
+```
+
+This plot shows a big problem with how we are comparing the gesture with the reference. In the reference phrase, there is no sound at the beginning and end of the recording. If we look at the intensity plot, the vocalization does not start right at 0 and end right at 1. The gesture, starts at the point where sound starts. We have been comparing the gesture with the entire duration of the reference, but we should really only be comparing it with the central part of the recording with the actual sound.
+
+This might be why results so far have not made sense.
+
+# A different way of comparing
+
+Compare the gesture to only the part of the reference with the syllables. 
+
+```{r}
+
+compare2 <- function(gest_id) {
+  # Get the first gesture from the list
+  my_gest <- slice(gests_data, gest_id)  
+  
+  # Get the original data 
+  my_gest_data <- gest_originals[[gest_id]]
+  # Find the starting and ending scrub times
+  start_scrub <- my_gest_data$scrub[1]
+  end_scrub <- tail(my_gest_data$scrub, 1)
+
+  # Find the corresponding phrase for this gesture
+  my_ref <- get_ref_psgs_interp(my_gest$phrase)
+  # Number of points in my_ref
+  my_ref_length <- length(my_ref$f)
+  # Get the start and index of the reference phrase based on the start and end scrub points
+  my_ref_start_index <- floor(start_scrub * my_ref_length)
+  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  # Get the part of the reference to compare with the gesture
+  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
+  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
+  
+  # Get the intensity too
+  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
+  
+  # Now, interpolate the original gesture based on the number of points in the subset of the reference
+  my_gest_interp<-get_interpolated_data(my_gest_data, length(my_ref_f))
+
+  
+  return(weightedCorr(my_ref_f, my_gest_interp$f, method = "Pearson", 
+                      weights = my_ref_i, ML = FALSE, fast = TRUE))
+}
+
+# Run new comparison on all the gestures
+compare2_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  compare2(elt)
+}))[,1]
+
+gests_data <- add_column(gests_data, wcorr2 = compare2_all)
+```
+
+
+
+
+```{r}
+gests_data %>%
+  ggplot(aes(x=pid, y=wcorr2, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by phrase",
+            x="Phrase id")
+```
+
+```{r}
+
+# Boxplots of wcorr by subject
+gests_data %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by subject",
+            x="Subject id", y="Correlation score")
+```
+
+
+
+
+```{r}
+# Put the original and the gesture into a tibble
+  # comparison<-tibble(ref_f = my_ref_subset, ref_t = my_ref_subset_t, ref_i = my_refi_subset,
+  #                  gest_f = my_gest_interp$f, gest_s = my_gest_interp$scrub)
+
+#
+# ggplot(data=comparison, aes(x=ref_t, y=ref_f)) +
+#     scale_color_discrete(name = "Data source") +
+#     geom_line(data=comparison, aes(x=ref_t, y=gest_f, color="gesture")) +
+#     geom_line(data=comparison, aes(x=ref_t, y=ref_f, color="reference"))
+
+```
+

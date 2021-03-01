@@ -125,7 +125,7 @@ ref_times <- do.call("rbind", lapply(ref_pts_interp, function(elt) {
 # A tibble containing each phrase and its duration
 ref_info <- tibble(phrase=ref_phrases, duration=ref_times)
 
-# A function that gets the ruation given the phrase name
+# A function that gets the duration given the phrase name
 get_ref_duration <- function(phrase_name) {
   index<-match(phrase_name, ref_info$phrase)
   if (is.na(index)) { return(NULL) }

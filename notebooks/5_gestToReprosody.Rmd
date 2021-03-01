@@ -14,7 +14,7 @@ Currently, Gepeto app does not store the length of sound files, so I need to get
 
 Also, it would be good to do this for a bunch of files at a time.
 
-```{r}
+```{r message=FALSE}
 library("tidyverse")
 library("jsonlite")
 source("../utils/hertzToST.R")
@@ -25,8 +25,8 @@ options(tibble.print_max = Inf)
 
 # Gesture files are in two places. Uncomment one at a time and run thhe whole thing
 #path="../data/20_12_15-pilot_gestures/modalities/gestures/"
-path="../data/20_12_15-pilot_gestures/ambiguous/gestures/"
-ref_freq = 130
+path="../data/21_02-study/s10/gestures/"
+ref_freq = 116.54
 
 setwd(path)
 filenames <- dir(pattern="\\.gest$")
@@ -58,7 +58,7 @@ gestToReprosody <- function(name) {
   # Get the part of the name before .gest
   # "." is special character, so we use \\.
   core_name <- str_split(name, "\\.")[[1]][1]
-  filename_out <- paste0(path, "../for_voks/", core_name, ".txt")
+  filename_out <- paste0(path, "_voks/", core_name, ".txt")
 
   # Write the output
   cat("SCRUB", "\n", file=filename_out)
@@ -68,6 +68,5 @@ gestToReprosody <- function(name) {
 
 
 ```
-
 
 

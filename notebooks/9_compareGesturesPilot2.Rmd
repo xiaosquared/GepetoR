@@ -1,0 +1,818 @@
+---
+title: "Compare Gestures III.2: February 2020 pilot data"
+output: html_notebook
+---
+
+Starts by copying the important parts of 8_compareGesturesPilot and continues the analysis
+
+```{r}
+options("scipen"=100, "digits"=4)
+options(scipen=999)
+options(pillar.sigfig = 5)
+```
+
+
+# 1. Reference Data
+
+```{r, message=FALSE, warn=FALSE}
+library("zoo")
+library("rPraat")
+library("tidyverse")
+library("wCorr") # for the weighted correlation function
+library("scales")
+
+path="../data/21_02-study/reference/"
+ref_freq <- 116.54
+
+# Find intensity files
+setwd(paste0(path, "_intensity"))
+it_filenames <- dir(pattern="\\.IntensityTier$")
+
+# Find pitchTier files 
+setwd("../_pitchtier")
+pt_filenames <- dir(pattern="\\.PitchTier$")
+
+# Find Prosogram PitchTier files
+setwd("../_prosogram_pt")
+psg_filenames <- dir(pattern="\\.PitchTier$")
+
+# Interpolate pitch and intensity for one phrase and plot
+setwd("../../../../notebooks/")
+
+# A vector with all the phrases
+ref_phrases <- do.call("rbind", lapply(pt_filenames, function(elt) {
+  str_split(elt, '.PitchTier')[[1]][1]
+}))[,1]
+
+# Put all the reference textgrids into a list
+ref_tgs <- lapply(pt_filenames, function(elt) {
+  phrase<-str_split(elt, '.PitchTier')[[1]][1]
+  tg.read(paste0(path, "_textgrid/", paste0(phrase, '_auto.TextGrid')))
+})
+
+# Put all the reference pitch tiers into a list
+ref_pts_interp <- lapply(pt_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f, ref_freq)
+  interpolated$f <- interpolated$f-mean(interpolated$f)
+  interpolated
+})
+
+# Put all the Prosogram pitch tiers into a list
+ref_psgs_interp <- lapply(psg_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_prosogram_pt/", elt))
+  interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
+  interpolated$f <- hertz_to_semitones(interpolated$f,ref_freq)
+  interpolated$f <- interpolated$f-mean(interpolated$f)
+  interpolated
+})
+
+# Put all the reference intensity tiers into a list
+ref_its_interp <- lapply(it_filenames, function(elt) {
+  my_it <- it.read(paste0(path, "_intensity/", elt))
+  it.interpolate(my_it, seq(0, my_it$tmax, by=0.01))
+})
+
+# Get the times of each phrase
+ref_times <- do.call("rbind", lapply(ref_pts_interp, function(elt) {
+  elt$tmax
+}))[,1]
+
+# A tibble containing each phrase and its duration
+ref_info <- tibble(phrase=ref_phrases, duration=ref_times)
+
+```
+
+Some helper functions
+```{r}
+# Get the TextGrid
+get_ref_tg <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_tgs[[index]])
+}
+
+# Gets the interpolated prosogram object
+get_ref_psgs_interp <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_psgs_interp[[index]])
+}
+
+# Gets interpolated pitchtier for reference
+get_ref_pts_interp <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]])
+}
+
+# A function that gets the duration given the phrase name
+get_ref_duration <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_info$duration[index])
+}
+
+# Get the times stamps for interpolation given the phrase name
+get_ref_timestamps <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$t)
+}
+
+# Get the interpolated frequency values given the phrase name
+# (frequency time series)
+get_ref_tsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_pts_interp[[index]]$f)
+}
+
+# Get the interpolated prosogram frequency values given the phrase name
+# (prosogram frequency time series)
+get_ref_ptsf <- function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_psgs_interp[[index]]$f)
+}
+
+# Get the interpolated intensity values given the phrase name
+# (intensity time series)
+get_ref_tsi <-function(phrase_name) {
+  index<-match(phrase_name, ref_info$phrase)
+  if (is.na(index)) { return(NULL) }
+  return(ref_its_interp[[index]]$i)
+}
+```
+
+
+# 2. Gestures 
+```{r}
+
+library("jsonlite")
+library("timetk")
+
+# Get all the filenames of the gestures
+path="../data/21_02-study/all_gestures/"
+setwd(path)
+gest_filenames <- dir(pattern="\\.gest$")
+name <- gest_filenames[1]
+
+# Extract the reference phrase from the whole gesture name
+get_ref_name <- function(gest_name) {
+  return(str_split(gest_name, '-')[[1]][3])
+}
+
+# Finds the number of samples in the reference for the particular gesture
+get_num_samples <-function(gest_name) {
+# Find how many samples are in the ref file
+  ref_phrase <- get_ref_name(gest_name)  
+  return(length(get_ref_timestamps(ref_phrase)))
+}
+
+# Load gest data and convert time
+prep_gest<-function(gest) {
+  min_scrub <- gest$scrub[1]
+  max_scrub <- tail(gest$scrub, 1)
+    
+  # Convert time to percentage
+  max_time <- tail(gest$t_end, 1)
+  gest <- gest %>% mutate(percent=t_init/max_time) %>%
+             # Add another column for percent scaled to the scrub start and end values
+             mutate(percent_scaled = rescale(percent, to=c(min_scrub, max_scrub), from=c(0, 1)))  %>%
+             # only keep the columns we need
+             select(percent, f, scrub, percent_scaled)
+  
+  return(gest)
+}
+
+
+# args: data - tibble with columns: percent (% of way through signal) & f (frequency at that point), 
+# num_samples - # equally spaced points in outpt
+# returns: tibble with coluumns index & value. index has num_samples equally spaced points from 0 to 1
+# values are interplolated from f
+get_interpolated_data <- function(data, num_samples) {
+  # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
+  if (! 0 %in% data$percent) {
+    data <- add_row(data, percent=0, f=data$f[1], scrub=data$scrub[1], .before=1)
+  }
+  if (! (1 %in% data$percent)) {
+    data <- add_row(data, percent=1, f=tail(data$f, 1), scrub=tail(data$scrub, 1))
+  }
+          
+  # Create a tibble with all the points we are interested in, with NA values
+  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA) 
+  
+  # Add all the sample points whose percent value doesn't already exist in data
+  data2 <- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %>%
+    # Then sort by scrub columns  
+    arrange(percent)
+  
+  # Transform into zoo object to fill the NAs with interpolated values
+  z <- read.zoo(data2) %>% na.approx %>%
+   tk_tbl(preserve_index=TRUE, rename_index="index") %>%
+   filter(index %in% sample_points$percent)
+  
+  return(z)
+}
+
+# args: data - tibble with columns: scrub (% of way through REFERENCE signal), 
+# f (frequency of ORIGINAL signal at that point), 
+# num_samples - # equally spaced points in outpt
+# returns: tibble with coluumns index & value. index has num_samples equally spaced points from the start and end of scrub, f is interpolated
+get_interpolated_data_scrub <- function(data, num_samples) {
+  # Get the starting and ending scrub values
+  start_scrub <- data$scrub[1]
+  end_scrub <- tail(data$scrub, 1)
+  
+  # Remove rows with duplicated scrub values
+  data<-data[!duplicated(data$scrub),]
+  
+  # Create tibble with all the points we are interested in
+  sample_points <- tibble(scrub=seq(start_scrub, end_scrub, length.out = num_samples), f=NA, percent=NA)
+  
+  # # Add all the sample points whose scrub value doesn't alread exist to data
+  data2 <- bind_rows(data, filter(sample_points, !(scrub %in% data$scrub))) %>%
+    # Then sort by scrub columns
+    arrange(scrub) %>% select(scrub, f, percent)
+
+  # # Transform into zoo object to fill the NAs with interpolated values
+  z <- read.zoo(data2) %>% na.approx %>%
+   tk_tbl(preserve_index=TRUE, rename_index="index") %>%
+   filter(index %in% sample_points$scrub)
+   
+  return(z)
+}
+
+setwd("../../../notebooks/")
+
+# A vector with just the names of the phrases (w/o .json extension)
+gests <- do.call("rbind", lapply(gest_filenames, function(elt) {
+  str_split(elt, '.gest')[[1]][1]
+}))[,1]
+
+# Original gestures
+gest_originals <- lapply(gest_filenames, function(elt) {
+  result <- fromJSON(paste0(path, elt)) %>% as_tibble() %>% 
+  # NOTE THIS EXTRA STEP      
+  prep_gest()
+})
+
+# Returns the index of the gesture
+get_gest_index <- function(gest_name) {
+  index <- match(gest_name, gests)
+  if (is.na(index)) { return(NULL) }
+  return(index)
+}
+
+# Interpolated time series data of f & scrub value
+gest_interps <- lapply(gests, function(elt) {
+  # Elt is the name of a gesture. We want to find its index first
+  index<-get_gest_index(elt)
+  
+  # In order to get the actual gesture data
+  gest_orig<-gest_originals[[index]]
+  
+  # Gets number of samples for the gest, which is computed from the reference
+  num_samples<-get_num_samples(elt)
+  
+  # Do the interpolation  
+  gest_interp<-get_interpolated_data(gest_orig, num_samples)
+  
+  return(gest_interp)
+})
+
+# Organize gestures into a Tibble
+gests_data <- do.call("rbind", lapply(gests, function(elt) {
+  parts<-str_split(elt, '-')[[1]]
+  ref_phrase <- parts[3]
+  phrase_id <- str_split(ref_phrase, '_')[[1]][1]
+  tibble(phrase=ref_phrase, pid=phrase_id, type=parts[2], subject=parts[4], order=parts[1], gest_name=elt)
+})) %>% mutate(id = row_number()) %>%
+  select(subject, type, pid, order,gest_name, phrase, id)
+```
+
+## Comparison
+
+### 1. Weighted correlation of pitch and timing
+```{r}
+get_gest_comparison_data <- function(gest_id) {
+  # Get the gesture from the list by ID
+  my_gest <- slice(gests_data, gest_id)  
+  
+  # Get the original data 
+  my_gest_data <- gest_originals[[gest_id]]
+  # Find the starting and ending scrub times
+  start_scrub <- my_gest_data$scrub[1]
+  end_scrub <- tail(my_gest_data$scrub, 1)
+
+  # Find the corresponding phrase for this gesture
+  my_ref <- get_ref_pts_interp(my_gest$phrase)
+  # Number of points in my_ref
+  my_ref_length <- length(my_ref$f)
+  # Get the start and index of the reference phrase based on the start and end scrub points
+  my_ref_start_index <- floor(start_scrub * my_ref_length)
+  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  # Get the part of the reference to compare with the gesture
+  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
+  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
+  
+  # Get the intensity too
+  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
+  # Also get the prosogram f0 stylization for the reference
+  my_ref_f_psg <- get_ref_psgs_interp(my_gest$phrase)$f[my_ref_start_index:my_ref_end_index]
+  
+  # Now, interpolate the original gesture based on the number of points in the subset of the reference
+  my_gest_interp<-get_interpolated_data(my_gest_data, length(my_ref_f))
+  
+  # Put everything into a tibble
+  data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$type,
+                            percent_t = seq(0, 1, length.out = length(my_ref_f)), 
+                            gest_scrub = my_gest_interp$scrub, gest_f = my_gest_interp$f, 
+                            ref_t = my_ref_t, ref_f = my_ref_f, ref_f_psg = my_ref_f_psg, ref_i = my_ref_i)
+  return(data_to_compare)
+}
+
+gest_comparison_data <- lapply(gests_data$id, get_gest_comparison_data)
+gest_comparison_data_tibble <- bind_rows(gest_comparison_data)  
+
+```
+
+
+
+```{r}
+compare2 <- function(gest_id) {
+  # Get the gesture from the list by ID
+  my_gest <- slice(gests_data, gest_id)  
+  
+  # Get the original data 
+  my_gest_data <- gest_originals[[gest_id]]
+  # Find the starting and ending scrub times
+  start_scrub <- my_gest_data$scrub[1]
+  end_scrub <- tail(my_gest_data$scrub, 1)
+
+  # Find the corresponding phrase for this gesture
+  my_ref <- get_ref_psgs_interp(my_gest$phrase)
+  # Number of points in my_ref
+  my_ref_length <- length(my_ref$f)
+  # Get the start and index of the reference phrase based on the start and end scrub points
+  my_ref_start_index <- floor(start_scrub * my_ref_length)
+  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  # Get the part of the reference to compare with the gesture
+  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
+  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
+  
+  # Get the intensity too
+  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
+  
+  # Now, interpolate the original gesture based on the number of points in the subset of the reference
+  my_gest_interp<-get_interpolated_data(my_gest_data, length(my_ref_f))
+
+  
+  return(weightedCorr(my_ref_f, my_gest_interp$f, method = "Pearson", 
+                      weights = my_ref_i, ML = FALSE, fast = TRUE))
+}
+
+# Run new comparison on all the gestures
+compare2_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  compare2(elt)
+}))[,1]
+
+gests_data <- add_column(gests_data, wcorr2 = compare2_all)
+```
+
+### 2. Correlation of pitch, disregarding timing of gesture
+
+```{r}
+compare3 <- function(gest_id) {
+  # Get the gesture from the list based on id
+  my_gest <- slice(gests_data, gest_id)  
+  
+  # Get the original data 
+  my_gest_data <- gest_originals[[gest_id]]
+  # Find the starting and ending scrub times
+  start_scrub <- my_gest_data$scrub[1]
+  end_scrub <- tail(my_gest_data$scrub, 1)
+  
+  # Find the corresponding phrase for this gesture
+  my_ref <- get_ref_psgs_interp(my_gest$phrase)
+  # Number of points in my_ref
+  my_ref_length <- length(my_ref$f)
+  # Get the start and index of the reference phrase based on the start and end scrub points
+  my_ref_start_index <- floor(start_scrub * my_ref_length)
+  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  # Get the part of the reference to compare with the gesture
+  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
+  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
+  
+  # Get the intensity too
+  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
+  
+  # Now, interpolate the original gesture based on the number of points in the subset of the reference
+  my_gest_interp<-get_interpolated_data_scrub(my_gest_data, length(my_ref_f))
+  
+  return(weightedCorr(my_ref_f, my_gest_interp$f, method = "Pearson", 
+                      weights = my_ref_i, ML = FALSE, fast = TRUE))
+}
+
+# Run new comparison on all the gestures
+compare3_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  compare3(elt)
+}))[,1]
+
+gests_data <- add_column(gests_data, wcorr3 = compare3_all)
+
+```
+
+
+### 3. RMSE
+```{r}
+library("mltools")
+
+get_rmse <- function(gest_id) {
+  # Get the gesture from the list based on id
+  my_gest <- slice(gests_data, gest_id)  
+  
+  # Get the original data 
+  my_gest_data <- gest_originals[[gest_id]]
+  # Find the starting and ending scrub times
+  start_scrub <- my_gest_data$scrub[1]
+  end_scrub <- tail(my_gest_data$scrub, 1)
+  
+  # Find the corresponding phrase for this gesture
+  my_ref <- get_ref_psgs_interp(my_gest$phrase)
+  # Number of points in my_ref
+  my_ref_length <- length(my_ref$f)
+  # Get the start and index of the reference phrase based on the start and end scrub points
+  my_ref_start_index <- floor(start_scrub * my_ref_length)
+  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  # Get the part of the reference to compare with the gesture
+  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
+  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
+  
+  # Get the intensity too
+  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
+  
+  # Now, interpolate the original gesture based on the number of points in the subset of the reference
+  my_gest_interp<-get_interpolated_data_scrub(my_gest_data, length(my_ref_f))
+  
+  return(rmse(preds=my_ref_f, actuals=my_gest_interp$f,
+                      weights = my_ref_i))
+}
+
+# Run new comparison on all the gestures
+rmse_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  get_rmse(elt)
+}))[,1]
+
+gests_data <- add_column(gests_data, rmse = rmse_all)
+
+```
+
+
+# Plots
+By phrase
+```{r}
+gests_data %>%
+  mutate(pid = fct_relevel(pid, 
+            "2", "2bis", "7", 
+            "7bis", "8", "8bis", 
+            "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=wcorr2, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation")
+```
+
+```{r}
+gests_data %>%
+  mutate(pid = fct_relevel(pid, 
+            "2", "2bis", "7", 
+            "7bis", "8", "8bis", 
+            "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="RMSE of gesture with reference", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE")
+```
+
+By subject
+```{r}
+# Boxplots of wcorr by subject
+gests_data %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot() +
+  labs(title="Correlation of gesture with reference", 
+            subtitle="Grouped by subject",
+            x="Subject id", y="Correlation score")
+
+```
+
+
+### Subject info
+
+```{r}
+# Load subject info into a tibble
+path="../data/21_02-study/"
+setwd(path)
+subjects <- read.table(file = 'subjects.tsv', sep = '\t', header = TRUE) %>% tibble()
+```
+
+# Basic Subject Information
+```{r}
+mean(subjects$age)
+sd(subjects$age)
+```
+
+
+## Some filters for subjects
+```{r}
+require(gridExtra)
+
+# Native speakers
+natives <- subjects %>% filter(lvl_french == "N")
+
+learners_gests <- gests_data %>% filter(!(subject %in% natives$id)) %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 curves with timing", subtitle="Non-native", y="Correlation")
+
+natives_gests <- gests_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Native", y="Correlation")
+
+
+grid.arrange(learners_gests, natives_gests, ncol=2)
+
+```
+
+```{r}
+# Native speakers
+natives <- subjects %>% filter(lvl_french == "N")
+
+learners_gests <- gests_data %>% filter(!(subject %in% natives$id)) %>%
+  ggplot(aes(x=type, y=wcorr2, fill=type)) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 curves with timing", subtitle="Non-native", y="Correlation")
+
+natives_gests <- gests_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=type, y=wcorr2, fill=type)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Native", y="Correlation")
+
+
+grid.arrange(learners_gests, natives_gests, ncol=2)
+
+```
+
+```{r}
+# Native speakers
+natives <- subjects %>% filter(lvl_french == "N")
+
+learners_gests <- gests_data %>% filter(!(subject %in% natives$id)) %>%
+  ggplot(aes(x=type, y=rmse, fill=type)) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="RMSE of f0 curves with timing", subtitle="Non-native", y="Correlation")
+
+natives_gests <- gests_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=type, y=rmse, fill=type)) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Native", y="Correlation")
+
+
+grid.arrange(learners_gests, natives_gests, ncol=2)
+
+```
+
+```{r}
+
+# Musicians
+musicians <- subjects %>% filter(music == "Y")
+
+nonmus_gests <- gests_data %>% filter(!(subject %in% musicians$id)) %>%
+  ggplot(aes(x=type, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 curves with timing", subtitle="Non-musician", y="Correlation")
+
+musician_gests <- gests_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=type, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Musician", y="Correlation")
+
+grid.arrange(nonmus_gests, musician_gests, ncol=2)
+
+```
+
+```{r}
+
+# Musicians
+musicians <- subjects %>% filter(music == "Y")
+
+nonmus_gests <- gests_data %>% filter(!(subject %in% musicians$id)) %>%
+  ggplot(aes(x=type, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="RMSE f0 curves with timing", subtitle="Non-musician", y="Correlation")
+
+musician_gests <- gests_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=type, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Musician", y="Correlation")
+
+grid.arrange(nonmus_gests, musician_gests, ncol=2)
+
+```
+
+```{r}
+# Musicians
+musicians <- subjects %>% filter(music == "Y")
+
+nonmus_gests <- gests_data %>% filter(!(subject %in% musicians$id)) %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 curves with timing", subtitle="Non-musician", y="Correlation")
+
+musician_gests <- gests_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Musician", y="Correlation")
+
+grid.arrange(nonmus_gests, musician_gests, ncol=2)
+
+```
+
+## F0 only, timing not considered
+
+```{r}
+# Native speakers
+natives <- subjects %>% filter(lvl_french == "N")
+
+learners_gests <- gests_data %>% filter(!(subject %in% natives$id)) %>%
+  ggplot(aes(x=subject, y=wcorr3, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 only", subtitle="Non-native", y="Correlation")
+
+natives_gests <- gests_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=wcorr3, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Native", y="Correlation")
+
+
+grid.arrange(learners_gests, natives_gests, ncol=2)
+```
+
+```{r}
+# Musicians
+musicians <- subjects %>% filter(music == "Y")
+
+nonmus_gests <- gests_data %>% filter(!(subject %in% musicians$id)) %>%
+  ggplot(aes(x=subject, y=wcorr3, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="Correlation of f0 only", subtitle="Non-musician", y="Correlation")
+
+musician_gests <- gests_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=subject, y=wcorr3, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Musician", y="Correlation")
+
+grid.arrange(nonmus_gests, musician_gests, ncol=2)
+
+```
+
+## RMSE plots
+
+```{r}
+# Native speakers
+natives <- subjects %>% filter(lvl_french == "N")
+
+learners_gests <- gests_data %>% filter(!(subject %in% natives$id)) %>%
+  ggplot(aes(x=subject, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="RMSE of f0 curves with timing", subtitle="Non-native", y="RMSE")
+
+natives_gests <- gests_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Native", y="RMSE")
+
+
+grid.arrange(learners_gests, natives_gests, ncol=2)
+```
+
+```{r}
+# Musicians
+musicians <- subjects %>% filter(music == "Y")
+
+nonmus_gests <- gests_data %>% filter(!(subject %in% musicians$id)) %>%
+  ggplot(aes(x=subject, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) + 
+  labs(title="RMSE of f0 curves with timing", subtitle="Non-musician", y="RMSE")
+
+musician_gests <- gests_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=subject, y=rmse, fill=factor(type))) +
+  geom_boxplot(show.legend = FALSE) +
+  labs(title="", subtitle="Musician", y="RMSE")
+
+grid.arrange(nonmus_gests, musician_gests, ncol=2)
+
+```
+
+# Plot reference + attempts
+
+Timing of gesture
+
+```{r}
+# Plot gesture with its attempts
+plot_ref_with_gestures <- function(phrase_id, my_type='guide') {
+  my_ref <- get_ref_psgs_interp(ref_phrases[[phrase_id]])
+  ref_data <- tibble(percent=my_ref$t/my_ref$tmax, f=my_ref$f)
+
+  # Get all the gestures for this reference
+  my_ref_phrase <- ref_phrases[phrase_id]
+  my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
+
+  # Iterate through the ids, combine all gesture data into a giant tibble
+  selected_gests<-do.call("rbind", lapply(my_gestures$id, function(elt) {
+    # Get the subject for the gesture
+    my_subject <- slice(gests_data, elt)$subject
+  
+    # Get the data
+    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject)
+    return(my_gest_data)
+  }))
+
+ ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) + 
+            geom_line(data=selected_gests, mapping=aes(x=percent_scaled, y=f, color=subject)) +
+            labs(title=paste0("Reference and gesture - ", my_type),
+                 subtitle=paste0("Phrase:", my_ref_phrase), y="Frequency (Semitones)", x="Percent time")
+ 
+}
+
+```
+
+Ignoring timing of gesture
+```{r}
+plot_ref_with_gestures_notiming <- function(phrase_id, my_type='guide') {
+  my_ref <- get_ref_psgs_interp(ref_phrases[[phrase_id]])
+  ref_data <- tibble(percent=my_ref$t/my_ref$tmax, f=my_ref$f)
+
+  # Get all the gestures for this reference
+  my_ref_phrase <- ref_phrases[phrase_id]
+  my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
+
+  # Iterate through the ids, combine all gesture data into a gant tibble
+  selected_gests<-do.call("rbind", lapply(my_gestures$id, function(elt) {
+    # Get the subject for the gesture
+    my_subject <- slice(gests_data, elt)$subject
+  
+    # Get the data
+    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject)
+    return(my_gest_data)
+  }))
+
+ ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) + 
+            geom_line(data=selected_gests, mapping=aes(x=scrub, y=f, color=subject)) +
+            labs(title=paste0("Reference and gesture - ", my_type),
+                 subtitle=paste0("Phrase:", my_ref_phrase), y="Frequency (Semitones)", x="Percent time")
+ 
+}
+
+```
+
+Plotting only timing
+```{r}
+plot_ref_with_gestures_timing_only <- function(phrase_id, my_type='guide') {
+  my_ref <- get_ref_psgs_interp(ref_phrases[[phrase_id]])
+  ref_data <- tibble(percent=my_ref$t/my_ref$tmax, f=my_ref$f)
+
+  # Get all the gestures for this reference
+  my_ref_phrase <- ref_phrases[phrase_id]
+  my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
+
+  # Iterate through the ids, combine all gesture data into a gant tibble
+  selected_gests<-do.call("rbind", lapply(my_gestures$id, function(elt) {
+    # Get the subject for the gesture
+    my_subject <- slice(gests_data, elt)$subject
+  
+    # Get the data
+    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject)
+    return(my_gest_data)
+  }))
+
+ ggplot(data=ref_data, aes(x=percent, y=percent, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) + 
+            geom_line(data=selected_gests, mapping=aes(x=percent_scaled, y=scrub, color=subject)) +
+            labs(title=paste0("Reference and gesture - ", my_type),
+                 subtitle=paste0("Phrase:", my_ref_phrase), y="Scrub percentage", x="Percent time")
+ 
+}
+```
+

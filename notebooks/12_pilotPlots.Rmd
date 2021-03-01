@@ -1,0 +1,92 @@
+---
+title: "Plots: Feb 2020 Pilot Data"
+output: html_notebook
+---
+
+
+```{r}
+library("tidyverse")
+library("wesanderson")
+library("gridExtra")
+
+# Load the score data
+voice_data <- readRDS("../data/21_02-study/saved/voice_scores.rds")
+gests_data <- readRDS("../data/21_02-study/saved/gest_scores.rds")
+
+# Modify and combine into a big tibble
+gests_data <- gests_data %>% rename(corr_psg=wcorr2) %>%
+              select(subject, type, pid, order, phrase, corr_psg, rmse) %>% 
+              mutate(condition=type) %>% mutate(type="gesture")
+voice_data <- voice_data %>% select(subject, type, pid, order, phrase, corr_psg, rmse) %>%
+              mutate(condition=type) %>% mutate(type="voice")
+
+all_data <- bind_rows(gests_data, voice_data)
+
+# Subjects and types
+subjects <- read_tsv("../data/21_02-study/subjects.tsv")
+natives <- subjects %>% filter(lvl_french == "N")
+learners <- subjects %>% filter(lvl_french != "N")
+musicians <- subjects %>% filter(music == "Y")
+nonmus <- subjects %>% filter(music != "Y")
+
+```
+
+# Overall Data
+
+```{r}
+all_data %>% ggplot(aes(x=condition, y=corr_psg)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+             labs(title="Correlation Scores by Condition",
+              x="Condition", y="Correlation") 
+```
+
+# Separated by native vs non-natives
+```{r}
+
+learners_box <- all_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  labs(title="Correlation Scores", subtitle="Learners") 
+                    
+natives_box <- all_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  labs(title="", subtitle="Natives")                    
+ 
+grid.arrange(learners_box, natives_box, ncol=2)
+
+```
+
+# Musician vs Non-musician
+```{r}
+musicians_box <- all_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  labs(title="Correlation Scores", subtitle="Musicians")
+                    
+nonmus_box <- all_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  labs(title="", subtitle="Non-musicians")                    
+ 
+grid.arrange(musicians_box, nonmus_box, ncol=2)
+```
+
+
+
+# By Phrase
+
+```{r}
+all_data %>% filter(condition != "lecture") %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_psg, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+```
+
+

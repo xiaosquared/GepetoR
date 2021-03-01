@@ -1,0 +1,57 @@
+---
+title: "Resynthesize vocal recordings"
+output: html_notebook
+---
+
+For verification of a .PitchTier file, we will resynthesize the .wav with the f0 curve replaced by the .PitchTier
+
+```{r}
+library("tidyverse")
+library("rPraat")
+source("../utils/hertzToST.R")
+
+options(digits=6)
+options(scipen=999)
+options(tibble.print_max = Inf)
+
+subject <- "s1"
+
+# Gesture files are in two places. Uncomment one at a time and run thhe whole thing
+#path="../data/20_12_15-pilot_gestures/modalities/gestures/"
+path1=paste0("../data/21_02-study/", subject, "/lecture/")
+path2=paste0("../data/21_02-study/", subject, "/imitation/")
+ref_freq = 116.54
+
+setwd(path1)
+filenames <- dir(pattern="\\_styl.PitchTier$")
+setwd("../../../../notebooks/")
+path<-path1
+sapply(filenames, vocalToReprosody)
+
+#setwd(path2)
+#filenames <- dir(pattern="\\_styl.PitchTier$")
+#setwd("../../../../notebooks/")
+#path<-path2
+# sapply(filenames, vocalToReprosody)
+
+vocalToReprosody <- function(name) {
+  # Read the PitchTier file
+  my_pt <- pt.read(paste0(path, name))
+  # Put data into a tibble
+  data <- tibble(f=round(my_pt$f, 4), t=round(my_pt$t, 4)) %>%
+    # Format for Voks  
+    mutate(t_out=t, t_in=t) %>%
+    select(t_out, t_in, f)  
+  
+  # Get the filename for output file
+  core_name <- str_split(name, "_styl")[[1]][1]
+  filename_out <- paste0(path, "_voks/", core_name, ".txt")
+  
+  # We don't write SCRUB at the top of the file because it's in absolute time
+  # Just write the data
+  write.table(data, filename_out, col.names=FALSE, row.names=FALSE)
+}
+
+```
+
+
