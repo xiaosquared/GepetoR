@@ -3,7 +3,20 @@ title: "Pilot Plots Story"
 output: 
    html_document:
     code_folding: hide
+    number_sections: true
+    toc: yes
 ---
+
+# Summary
+
+* Guided chironomy enabbles non-natives to go beyond the capacities of their actual voice. For certain phrases, non-natives had higher median scores in guided chironomy than in vocal imitation
+* Controlling timing at the same time is more difficult
+  * Most people had trouble finding both the correct pitch and timing at the same time when not-guided
+  * For unguided, musicians did better for some phrases but not all. 
+* Differences between natives and non-natives in this study are fairly small, limited to certain phrases
+  * For reading, most differences pronunciation and reference during reading are due to timing variation and are neutralized when timing is aligned. For non-natives, there are more pitch differences.
+
+Guided chironomy can be a way for non-natives to practice. Such intervention should focus on phrases where they have trouble. Design of interface should consider other ways of controlling timing. Followup studies should work with less advanced learners. 
 
 ```{r, include=FALSE, warning=FALSE, echo=FALSE, messages=FALSE}
 library("tidyverse")
@@ -241,7 +254,9 @@ notiming_data %>%
             x="Phrase id", y="RMSE") #+ theme(aspect.ratio=0.4)
 ```
 
-## Phrase and Native/Non-native
+## Phrase and Subject Groups
+
+### Native/Non-native
 
 Natives and learners performed quite differently across the different phrases.  
 
@@ -304,7 +319,7 @@ r_n <- notiming_data %>% filter(subject %in% natives$id) %>%
 grid.arrange(r_l, r_n, ncol=1)
 ```
 
-## By Phrase and Musician/Non-musician
+### Musician/Non-musician
 
 In terms of correlation, musicians did much better than non-musicians in blind chironomy for a few specific phrases (e.g. 2, 7, 8). Some phrases were difficult for everyone (10bis, 21), but musicians still did better.
 
@@ -516,7 +531,7 @@ grid.arrange(m, nm, ncol=1)
 
 ```
 
-# By Phrase
+## By Phrase
 
 By compariing the difference between guided chironomy with and without timing taken into account, we can see that some phrases were trickier to control the timing of than others (e.g. 7bis, 10, 21, 21bis)
 
@@ -578,9 +593,9 @@ vi <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
 grid.arrange(ci, vi, ncol=1)
 ```
 
-# By Phrase and subject groups
+## By Phrase and subject groups
 
-## For guided chironomy
+### For guided chironomy
 Seems to be an equalizer between natives and non-natives. Not huge amount of difference.
 
 ```{r}

@@ -328,6 +328,8 @@ ggplot(data=cdata, aes(x=percent, y=ref_f, color="Reference")) +
 # Prepare DTW data
 ```{r}
 aligned_voice_data <- lapply(voice_data$id, function(elt) {
+  my_record <- slice(voice_data, elt)
+  
   data<-voice_comparison_data[[elt]]
   recording<- data$rec_f
   reference<-data$ref_f
@@ -339,7 +341,9 @@ aligned_voice_data <- lapply(voice_data$id, function(elt) {
   reference_psg<-data$ref_f_psg
   alignment_psg <- dtw(reference_psg, recording,keep=TRUE, step=asymmetric, open.begin=TRUE)
   
-  aligned_data <- tibble(ref_f = reference[alignment$index1],
+  aligned_data <- tibble(subject=my_record$subject, phrase=my_record$phrase, condition=my_record$condition,
+                         percent_t = seq(0, 1, length.out = length(alignment$index1)),
+                         ref_f = reference[alignment$index1],
                          ref_i= intensity[alignment$index1],
                          rec_f = recording[alignment$index2],
                          ref_f_psg = reference_psg[alignment_psg$index1],
@@ -348,7 +352,47 @@ aligned_voice_data <- lapply(voice_data$id, function(elt) {
   aligned_data
 })
 
+aligned_voice_data_tibble <- bind_rows(aligned_voice_data)  
+
 ```
+
+# PLOT DTW
+
+```{r}
+
+phrase_id <- 2
+ref_phrase <- ref_phrases[[phrase_id]]
+c <- "imitation"
+
+plot_voices_with_ref_aligned <- function(my_data, ref_phrase, my_type, subject_group, subject_group_name) {
+
+  my_plot <- my_data %>% filter(subject %in% subject_group$id,phrase==ref_phrase,condition==my_type) %>%
+            ggplot(my_data, mapping=aes(x=percent_t, y=ref_f, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) + ylim (-8, 12) +
+            geom_line(mapping=aes(x=percent_t, y=rec_f, color=subject)) +
+            labs(title=paste0("Aligned reference and voice, ", subject_group_name),
+                 subtitle=paste0("Phrase: ", ref_phrase, "\nCondition: ",  my_type), 
+                 y="Frequency (Semitones)", x="Percent time")
+
+  plot_filename <- paste0(ref_phrase, "-", my_type, "-", subject_group_name,"-ALIGNED.png")
+  ggsave(plot_filename, plot = my_plot, device='png', path="../data/21_02-study/_plots", 
+            width = 6, height = 4)
+  
+  return(my_plot)
+}
+
+plot_voices_with_ref_aligned(aligned_voice_data_tibble, ref_phrases[[4]], "lecture", learners, "Learners")
+
+# Plot and save all
+sapply(ref_phrases, function(phrase) {
+  plot_voices_with_ref_aligned(aligned_voice_data_tibble, phrase, "imitation", natives, "Natives")
+  plot_voices_with_ref_aligned(aligned_voice_data_tibble, phrase, "imitation", learners, "Learners")
+  plot_voices_with_ref_aligned(aligned_voice_data_tibble, phrase, "lecture", natives, "Natives")
+  plot_voices_with_ref_aligned(aligned_voice_data_tibble, phrase, "lecture", learners, "Learners")
+})
+```
+
 
 
 

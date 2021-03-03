@@ -396,7 +396,7 @@ long_data <- all_data %>% filter(type== 'voice') %>% bind_rows(gest_data2) %>%
              # Make long version of data
              pivot_longer(c('corr', 'corr_notiming', 'rmse', 'rmse_notiming'), names_to = "metrics", values_to = "score")
   
-# Correlation
+
 ```
 
 ## Overall
