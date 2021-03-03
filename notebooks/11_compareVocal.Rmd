@@ -179,21 +179,6 @@ voice_data <- voice_data %>% add_column(corr = corr_voice, corr_psg = corr_voice
 
 ```
 
-# Aggregate plots
-```{r}
-
-# Native speakers
-voice_data %>% mutate(pid = fct_relevel(pid, 
-            "2", "2bis", "7", 
-            "7bis", "8", "8bis", 
-            "10", "10bis", "11", "11bis", "21", "21bis")) %>%
-  ggplot(aes(x=pid, y=corr_psg, fill=factor(type))) +
-  geom_boxplot() +
-  labs(title="Correlation of gesture with reference", 
-            subtitle="Grouped by phrase",
-            x="Phrase id", y="Correlation")
-```
-
 
 
 ```{r}
@@ -299,36 +284,106 @@ sapply(ref_phrases, function(phrase) {
 ```
 
 
-# Getting a better alignment
+# Frequency only analysis
 
-Might need to do dynamic time warping (dtw)... 
-
-I'm skeptical about using DTW for this analysis because it gets rid of the actual timing of the pronunciations.
+Dynamic time warping - figuring out the settings. Seems like asymmetric step and open.begin give best alignment
 
 ```{r}
 library("dtw")
-voice_id <- 4
+voice_id <- 181
 recording_info <- slice(voice_data, voice_id)
 
-template <- voice_comparison_data[[voice_id]]$rec_f
-reference <- voice_comparison_data[[voice_id]]$ref_f_psg 
-alignment<-dtw(template, reference, keep=TRUE, step.pattern=asymmetric, open.begin=FALSE)
-plot(alignment, type="twoway")
+my_recording <-voice_comparison_data[[voice_id]]
+template <- my_recording$rec_f
+reference <- my_recording$ref_f
+alignment<-dtw(reference, template,keep=TRUE,step=asymmetric, open.begin = TRUE)
+
+alignment2<-dtw(reference, template,keep=TRUE,window.type=sakoeChibaWindow,
+window.size=100)
+
+#plot(alignment, type="twoway")
 
 dtw_voice <- sapply(alignment$index2, function(i) {template[i]})
+dtw_ref <- sapply(alignment$index1, function(i) {reference[i]})
 
-cdata <- voice_comparison_data[[voice_id]]
-cdata <- cdata %>% add_column(dtw_f=dtw_voice)
+dtw_voice2 <- sapply(alignment2$index2, function(i) {template[i]})
+dtw_ref2 <- sapply(alignment2$index1, function(i) {template[i]})
 
-ggplot(data=cdata, aes(x=percent_t, y=ref_f_psg, color="Reference")) +
+cdata <- tibble(ref_f=dtw_ref, rec_f=dtw_voice, percent=seq(1, length(ref_f))/length(ref_f))
+cdata2 <-tibble(ref_f2=dtw_ref2, rec_f2=dtw_voice2, percent=seq(1, length(ref_f2))/length(ref_f2))
+
+ggplot(data=cdata, aes(x=percent, y=ref_f, color="Reference")) +
             scale_color_discrete(name = "Data source") +
             geom_line(size=2) + 
-            geom_line(mapping=aes(x=percent_t, y=rec_f, color="Original recording")) +
-            geom_line(mapping=aes(x=percent_t, y=dtw_f, color="DTW")) +
+            geom_line(mapping=aes(x=percent, y=rec_f, color="Warped Recording")) +
+            geom_line(data=my_recording, mapping=aes(x=percent_t, y=rec_f, color="Original Recording")) +
+            geom_line(data=cdata2, mapping=aes(x=percent, y=rec_f2, color="Warped Recording, symmetric")) +
              labs(title=paste("Reference and gesture for", recording_info$phrase),
                  subtitle=paste("Subject:", recording_info$subject, "- Condition:", recording_info$type), 
                  y="Frequency (Semitones)", x="Percent time")
 
 ```
 
+
+# Prepare DTW data
+```{r}
+aligned_voice_data <- lapply(voice_data$id, function(elt) {
+  data<-voice_comparison_data[[elt]]
+  recording<- data$rec_f
+  reference<-data$ref_f
+  intensity<-data$ref_i
+  # Alignement with original reference
+  alignment<-dtw(reference, recording, keep=TRUE, step=asymmetric, open.begin=TRUE)
+  
+  # Alignment with prosogram
+  reference_psg<-data$ref_f_psg
+  alignment_psg <- dtw(reference_psg, recording,keep=TRUE, step=asymmetric, open.begin=TRUE)
+  
+  aligned_data <- tibble(ref_f = reference[alignment$index1],
+                         ref_i= intensity[alignment$index1],
+                         rec_f = recording[alignment$index2],
+                         ref_f_psg = reference_psg[alignment_psg$index1],
+                         rec_f_psg = reference_psg[alignment_psg$index2],
+                         ref_i_psg = intensity[alignment_psg$index2])
+  aligned_data
+})
+
+```
+
+
+
+```{r}
+# Get correlation, comparing with both the original and the prosogram vesions
+corr_voice_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- aligned_voice_data[[elt]]
+  weightedCorr(data$ref_f, data$rec_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+corr_voice_psg_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- aligned_voice_data[[elt]]
+  weightedCorr(data$ref_f_psg, data$rec_f_psg, method = "Pearson", 
+                      weights = data$ref_i_psg, ML = FALSE, fast = TRUE)
+}))[,1]
+
+#RSME
+rmse_voice_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- aligned_voice_data[[elt]]
+  rmse(preds=data$ref_f, actuals=data$rec_f, weights=data$ref_i)
+}))[,1]
+
+rmse_voice_psg_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- aligned_voice_data[[elt]]
+  rmse(preds=data$ref_f_psg, actuals=data$rec_f, weights=data$ref_i)
+}))[,1]
+
+voice_data <- voice_data %>% add_column(corr_notiming = corr_voice_notiming, corr_psg_notiming = corr_voice_psg_notiming,
+                                        rmse_notiming = rmse_voice_notiming, rmse_psg_notiming = rmse_voice_psg_notiming)
+saveRDS(voice_data, "../data/21_02-study/saved/voice_scores.rds")
+```
+  
   

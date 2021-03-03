@@ -1,10 +1,12 @@
 ---
 title: "Plots: Feb 2020 Pilot Data"
 output: html_notebook
+   html_document:
+    code_folding: hide
 ---
 
 
-```{r}
+```{r, include=FALSE, warning=FALSE, echo=FALSE, messages=FALSE}
 library("tidyverse")
 library("wesanderson")
 library("gridExtra")
@@ -14,10 +16,11 @@ voice_data <- readRDS("../data/21_02-study/saved/voice_scores.rds")
 gests_data <- readRDS("../data/21_02-study/saved/gest_scores.rds")
 
 # Modify and combine into a big tibble
-gests_data <- gests_data %>% rename(corr_psg=wcorr2) %>%
-              select(subject, type, pid, order, phrase, corr_psg, rmse) %>% 
+gests_data <- gests_data %>% select(subject, type, pid, order, phrase, id, corr, corr_psg, rmse, rmse_psg, 
+                                    corr_notiming, corr_psg_notiming, rmse_notiming, rmse_psg_notiming) %>%
               mutate(condition=type) %>% mutate(type="gesture")
-voice_data <- voice_data %>% select(subject, type, pid, order, phrase, corr_psg, rmse) %>%
+voice_data <- voice_data %>% select(subject, type, pid, order, phrase, id, corr, corr_psg, rmse, rmse_psg, 
+                                    corr_notiming, corr_psg_notiming, rmse_notiming, rmse_psg_notiming) %>%
               mutate(condition=type) %>% mutate(type="voice")
 
 all_data <- bind_rows(gests_data, voice_data)
@@ -29,64 +32,484 @@ learners <- subjects %>% filter(lvl_french != "N")
 musicians <- subjects %>% filter(music == "Y")
 nonmus <- subjects %>% filter(music != "Y")
 
+
+# Colors:
+# Everyone: Correlation (Moonrise3), RMSE(Moonrise2)
+# Natives: 
 ```
 
-# Overall Data
+# Comparison of F0 and Timing
+
+## Overall Data
+Does it make a difference whether the reference is the original or the stylized pitch curve? No.
+We will be comparing with the stylized pitch curve from now on.
 
 ```{r}
-all_data %>% ggplot(aes(x=condition, y=corr_psg)) + 
+# Correlation
+overall_psg <- all_data %>% ggplot(aes(x=condition, y=corr_psg)) + 
              geom_boxplot(aes(fill=condition), show.legend = FALSE) +
              scale_fill_manual(values=wes_palette("Moonrise3")) +
-             labs(title="Correlation Scores by Condition",
+             scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="Correlation Scores by Condition", subtitle="Stylized reference",
               x="Condition", y="Correlation") 
+
+overall <- all_data %>% ggplot(aes(x=condition, y=corr)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+             scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+# RMSE
+overall_psg_rmse <- all_data %>% ggplot(aes(x=condition, y=rmse_psg)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) +   
+             labs(title="RMSE Scores by Condition", subtitle="Stylized reference",
+              x="Condition", y="RMSE") 
+
+overall_rmse <- all_data %>% ggplot(aes(x=condition, y=rmse)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) +  
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="RMSE") 
+
+grid.arrange(overall_psg, overall, overall_psg_rmse, overall_rmse, ncol=2)
+
 ```
 
-# Separated by native vs non-natives
-```{r}
 
+## Native vs non-natives
+
+To what extent are there differences in performance between natives and non-natives? Doesn't seem to be significant difference...
+
+```{r}
 learners_box <- all_data %>% filter(subject %in% learners$id) %>%
   ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
   scale_fill_manual(values = wes_palette("GrandBudapest2")) +
-  labs(title="Correlation Scores", subtitle="Learners") 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="Correlation Scores (stylized ref)", subtitle="Learners") 
                     
 natives_box <- all_data %>% filter(subject %in% natives$id) %>%
   ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
   scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
   labs(title="", subtitle="Natives")                    
- 
-grid.arrange(learners_box, natives_box, ncol=2)
+
+learners_box_rmse <- all_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=rmse_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) +  
+  labs(title="RMSE Scores (stylized ref)", subtitle="Learners") 
+                    
+natives_box_rmse <- all_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=rmse_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) +  
+  labs(title="", subtitle="Natives")                    
+
+grid.arrange(learners_box, natives_box, learners_box_rmse, natives_box_rmse, ncol=2) 
 
 ```
 
-# Musician vs Non-musician
+## Musician vs Non-musician
+
+To what extent are there differences in performance between subjects who practice music vs those who don't? Doesn't seem to be significant difference...
+
 ```{r}
-musicians_box <- all_data %>% filter(subject %in% learners$id) %>%
+musicians_box <- all_data %>% filter(subject %in% musicians$id) %>%
   ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
   scale_fill_manual(values = wes_palette("Chevalier1")) +
-  labs(title="Correlation Scores", subtitle="Musicians")
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="Correlation Scores (stylized ref)", subtitle="Musicians")
                     
-nonmus_box <- all_data %>% filter(subject %in% natives$id) %>%
+nonmus_box <- all_data %>% filter(subject %in% nonmus$id) %>%
   ggplot(aes(x=condition, y=corr_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
   scale_fill_manual(values = wes_palette("Chevalier1")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
   labs(title="", subtitle="Non-musicians")                    
  
-grid.arrange(musicians_box, nonmus_box, ncol=2)
+musicians_box_rmse <- all_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=condition, y=rmse_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) +  
+  labs(title="Correlation Scores (stylized ref)", subtitle="Musicians")
+                    
+nonmus_box_rmse <- all_data %>% filter(subject %in% nonmus$id) %>%
+  ggplot(aes(x=condition, y=rmse_psg)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) +  
+  labs(title="", subtitle="Non-musicians")     
+
+grid.arrange(musicians_box, nonmus_box, musicians_box_rmse, nonmus_box_rmse, ncol=2)
 ```
 
 
+## By Phrase
 
-# By Phrase
+Is there a differencce in performance based on phrase? Yes
 
 ```{r}
-all_data %>% filter(condition != "lecture") %>%
+all_data %>%
   mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
                            "10", "10bis", "11", "11bis", "21", "21bis")) %>%
   ggplot(aes(x=pid, y=corr_psg, fill=condition)) +
   geom_boxplot(width=0.7) + 
   scale_fill_manual(values = wes_palette("Moonrise3")) +
-  labs(title="Correlation Scores", 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="Correlation Scores (stylized ref)", 
             subtitle="Grouped by phrase",
             x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
 ```
 
+```{r}
+all_data %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_psg, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  scale_fill_manual(values = wes_palette("Moonrise2")) +
+  labs(title="RMSE Scores (stylized ref)", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") #+ theme(aspect.ratio=0.4)
+```
 
+## By Subject
+```{r}
+l_corr <- all_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=subject, y=corr_psg, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) + 
+  labs(title="Correlation Scores (stylized ref)", 
+            subtitle="Learners",
+            x="Phrase id", y="Correlation")
+
+n_corr <- all_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=corr_psg, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) + 
+  labs(title="", 
+            subtitle="Natives",
+            x="Phrase id", y="Correlation")
+
+grid.arrange(l_corr, n_corr, ncol=1)
+```
+
+# F0 curve only, no-timing
+
+## Overall
+
+If we correct for timing, vocal imitation has the highest average scores. Comparing with original reference gives better results for vocal pronunciation than comparing with stylized reference. For gestures, comparing with stylized reference is slightly better.
+
+For the rest of this section, we will use the stylized reference for gesture and original reference for voice.
+
+```{r}
+# Correlation
+overall_psg_notiming <- all_data %>% ggplot(aes(x=condition, y=corr_psg_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+             scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="Correlation, No Timing", subtitle="Stylized reference",
+              x="Condition", y="Correlation") 
+
+overall_notiming <- all_data %>% ggplot(aes(x=condition, y=corr_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+# RMSE
+overall_psg_rmse_notiming <- all_data %>% ggplot(aes(x=condition, y=rmse_psg_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="RMSE Scores, No Timing", subtitle="Stylized reference",
+              x="Condition", y="Correlation") 
+
+overall_rmse_notiming <- all_data %>% ggplot(aes(x=condition, y=rmse_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+grid.arrange(overall_psg_notiming, overall_notiming, overall_psg_rmse_notiming, overall_rmse_notiming, ncol=2)
+
+```
+
+
+```{r}
+notiming_gest_data <- all_data %>% filter(type=='gesture') %>% 
+                 mutate(corr_notiming = corr_psg_notiming, rmse_notiming=rmse_psg_notiming) 
+notiming_voice_data <- all_data %>%filter(type=="voice")          
+notiming_data <-bind_rows(notiming_gest_data, notiming_voice_data)
+```
+
+
+## Native vs non-natives
+
+Learners seem to do slightly better for the blind condition, maybe because they have more conscious awareness of pitch curve?
+When timing isn't taken into account, natives have less variation in their reading.
+
+```{r}
+learners_box <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  labs(title="Correlation Scores (original ref)", subtitle="Learners") 
+                    
+natives_box <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  labs(title="", subtitle="Natives")                    
+
+learners_box_rmse <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  labs(title="RMSE Scores (original ref)", subtitle="Learners") 
+                    
+natives_box_rmse <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  labs(title="", subtitle="Natives")                    
+
+grid.arrange(learners_box, natives_box, learners_box_rmse, natives_box_rmse, ncol=2) 
+```
+
+## Musicians vs Non-musicians
+
+Interestingly, musicians do slightly better for the blind condition!
+
+```{r}
+musicians_box <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  labs(title="Correlation Scores (original ref)", subtitle="Musicians")
+                    
+nonmus_box <- notiming_data %>% filter(subject %in% nonmus$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  labs(title="", subtitle="Non-musicians")                    
+ 
+musicians_box_rmse <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="RMSE Scores", subtitle="Musicians")
+                    
+nonmus_box_rmse <- notiming_data %>% filter(subject %in% nonmus$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="", subtitle="Non-musicians")     
+
+grid.arrange(musicians_box, nonmus_box, musicians_box_rmse, nonmus_box_rmse, ncol=2)
+```
+
+## By phrase
+
+Guided chironomy and vocal imitation comparable. For some phrases, guided imitation have higher scores.
+
+```{r}
+notiming_data %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores (stylized ref)", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+```
+
+```{r}
+notiming_data %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise1")) +
+  labs(title="RMSE Scores (stylized ref)", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") #+ theme(aspect.ratio=0.4)
+```
+
+
+## By Subject
+
+```{r}
+
+l_corr <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=subject, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores (stylized ref for gest, original ref for voice)", 
+            subtitle="Learners",
+            x="Phrase id", y="Correlation")
+
+n_corr <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="", 
+            subtitle="Natives",
+            x="Phrase id", y="Correlation")
+
+grid.arrange(l_corr, n_corr, ncol= 1)
+```
+
+
+```{r}
+l_rmse <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=subject, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise2")) +
+  labs(title="RMSE Scores (stylized ref for gest, original ref for voice)", 
+            subtitle="Learners",
+            x="Phrase id", y="R<SE")
+
+n_rmse <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=subject, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise2")) +
+  labs(title="", 
+            subtitle="Natives",
+            x="Phrase id", y="RMSE")
+grid.arrange(l_rmse, n_rmse, ncol=1)
+```
+
+
+# Comparing timing vs no-timing
+
+## Prepareing Data
+
+```{r}
+# For gesture data, only keep the prosogram comparisons but call them the same thing as the corresponding comparisons for voice
+gest_data2 <- all_data %>% filter(type=='gesture') %>% mutate(corr_notiming = corr_psg_notiming, 
+                                                              rmse_notiming = rmse_psg_notiming,
+                                                              corr = corr_psg, rmse= rmse_psg) 
+long_data <- all_data %>% filter(type== 'voice') %>% bind_rows(gest_data2) %>% 
+             # Get rid of columns containing the prosogram comparisons
+             mutate(corr_psg = NULL, rmse_psg = NULL, corr_psg_notiming = NULL, rmse_psg_notiming = NULL) %>%
+             # Make long version of data
+             pivot_longer(c('corr', 'corr_notiming', 'rmse', 'rmse_notiming'), names_to = "metrics", values_to = "score")
+  
+# Correlation
+```
+
+## Overall
+
+```{r}
+long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing")
+
+```
+
+```{r}
+long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                labels = c("With timing", "No timing"), 
+                                values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing")
+```
+
+```{r}
+l <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Learners")
+
+n <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(subtitle="Natives")
+
+grid.arrange(l, n, ncol=1)
+
+```
+
+```{r}
+l <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% learners$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Learners")
+
+n <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% natives$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(subtitle="Natives")
+
+grid.arrange(l, n, ncol=1)
+
+```
+
+
+```{r}
+m <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% musicians$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Musicians")
+
+nm <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% nonmus$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(subtitle="Non-musicians")
+
+grid.arrange(m, nm, ncol=1)
+```
+
+```{r}
+m <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% musicians$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Learners")
+
+nm <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% nonmus$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(subtitle="Natives")
+
+grid.arrange(m, nm, ncol=1)
+
+```

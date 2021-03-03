@@ -50,6 +50,11 @@ ref_tgs <- lapply(pt_filenames, function(elt) {
   tg.read(paste0(path, "_textgrid/", paste0(phrase, '_auto.TextGrid')))
 })
 
+# All the rat pitchtiers
+ref_pts <- lapply(pt_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
+})
+
 # Put all the reference pitch tiers into a list
 ref_pts_interp <- lapply(pt_filenames, function(elt) {
   my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
@@ -181,8 +186,10 @@ prep_gest<-function(gest) {
   gest <- gest %>% mutate(percent=t_init/max_time) %>%
              # Add another column for percent scaled to the scrub start and end values
              mutate(percent_scaled = rescale(percent, to=c(min_scrub, max_scrub), from=c(0, 1)))  %>%
+             # rename t_init to t
+             rename(t = t_init) %>%
              # only keep the columns we need
-             select(percent, f, scrub, percent_scaled)
+             select(percent, t, f, scrub, percent_scaled)
   
   return(gest)
 }
@@ -195,14 +202,14 @@ prep_gest<-function(gest) {
 get_interpolated_data <- function(data, num_samples) {
   # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
   if (! 0 %in% data$percent) {
-    data <- add_row(data, percent=0, f=data$f[1], scrub=data$scrub[1], .before=1)
+    data <- add_row(data, percent=0, t=0, f=data$f[1], scrub=data$scrub[1], .before=1)
   }
   if (! (1 %in% data$percent)) {
-    data <- add_row(data, percent=1, f=tail(data$f, 1), scrub=tail(data$scrub, 1))
+    data <- add_row(data, percent=1, t=tail(data$t,1), f=tail(data$f, 1), scrub=tail(data$scrub, 1))
   }
           
   # Create a tibble with all the points we are interested in, with NA values
-  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA) 
+  sample_points <- tibble(percent=seq(0, 1, length.out=num_samples), t=NA, f=NA, scrub=NA) 
   
   # Add all the sample points whose percent value doesn't already exist in data
   data2 <- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %>%
@@ -293,9 +300,8 @@ gests_data <- do.call("rbind", lapply(gests, function(elt) {
   select(subject, type, pid, order,gest_name, phrase, id)
 ```
 
-## Comparison
+## Preparing data for comparison
 
-### 1. Weighted correlation of pitch and timing
 ```{r}
 get_gest_comparison_data <- function(gest_id) {
   # Get the gesture from the list by ID
@@ -325,12 +331,17 @@ get_gest_comparison_data <- function(gest_id) {
   
   # Now, interpolate the original gesture based on the number of points in the subset of the reference
   my_gest_interp<-get_interpolated_data(my_gest_data, length(my_ref_f))
+  # A version that disregards the timing 
+  my_gest_interp_scrub<-get_interpolated_data_scrub(my_gest_data, length(my_ref_f))
+  
   
   # Put everything into a tibble
   data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$type,
                             percent_t = seq(0, 1, length.out = length(my_ref_f)), 
-                            gest_scrub = my_gest_interp$scrub, gest_f = my_gest_interp$f, 
-                            ref_t = my_ref_t, ref_f = my_ref_f, ref_f_psg = my_ref_f_psg, ref_i = my_ref_i)
+                            gest_t = my_gest_interp$t, gest_scrub = my_gest_interp$scrub, 
+                            gest_f = my_gest_interp$f, gest_f_scrub = my_gest_interp_scrub$f,
+                            ref_t = my_ref_t, ref_f = my_ref_f, ref_f_psg = my_ref_f_psg, ref_i = my_ref_i) %>%
+                    mutate(gest_f=gest_f-mean(gest_f), gest_f_scrub=gest_f_scrub-mean(gest_f_scrub))
   return(data_to_compare)
 }
 
@@ -339,138 +350,81 @@ gest_comparison_data_tibble <- bind_rows(gest_comparison_data)
 
 ```
 
-
-
-```{r}
-compare2 <- function(gest_id) {
-  # Get the gesture from the list by ID
-  my_gest <- slice(gests_data, gest_id)  
-  
-  # Get the original data 
-  my_gest_data <- gest_originals[[gest_id]]
-  # Find the starting and ending scrub times
-  start_scrub <- my_gest_data$scrub[1]
-  end_scrub <- tail(my_gest_data$scrub, 1)
-
-  # Find the corresponding phrase for this gesture
-  my_ref <- get_ref_psgs_interp(my_gest$phrase)
-  # Number of points in my_ref
-  my_ref_length <- length(my_ref$f)
-  # Get the start and index of the reference phrase based on the start and end scrub points
-  my_ref_start_index <- floor(start_scrub * my_ref_length)
-  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
-  # Get the part of the reference to compare with the gesture
-  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
-  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
-  
-  # Get the intensity too
-  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
-  
-  # Now, interpolate the original gesture based on the number of points in the subset of the reference
-  my_gest_interp<-get_interpolated_data(my_gest_data, length(my_ref_f))
-
-  
-  return(weightedCorr(my_ref_f, my_gest_interp$f, method = "Pearson", 
-                      weights = my_ref_i, ML = FALSE, fast = TRUE))
-}
-
-# Run new comparison on all the gestures
-compare2_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
-  compare2(elt)
-}))[,1]
-
-gests_data <- add_column(gests_data, wcorr2 = compare2_all)
-```
-
-### 2. Correlation of pitch, disregarding timing of gesture
+#Functions to compare
 
 ```{r}
-compare3 <- function(gest_id) {
-  # Get the gesture from the list based on id
-  my_gest <- slice(gests_data, gest_id)  
-  
-  # Get the original data 
-  my_gest_data <- gest_originals[[gest_id]]
-  # Find the starting and ending scrub times
-  start_scrub <- my_gest_data$scrub[1]
-  end_scrub <- tail(my_gest_data$scrub, 1)
-  
-  # Find the corresponding phrase for this gesture
-  my_ref <- get_ref_psgs_interp(my_gest$phrase)
-  # Number of points in my_ref
-  my_ref_length <- length(my_ref$f)
-  # Get the start and index of the reference phrase based on the start and end scrub points
-  my_ref_start_index <- floor(start_scrub * my_ref_length)
-  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
-  # Get the part of the reference to compare with the gesture
-  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
-  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
-  
-  # Get the intensity too
-  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
-  
-  # Now, interpolate the original gesture based on the number of points in the subset of the reference
-  my_gest_interp<-get_interpolated_data_scrub(my_gest_data, length(my_ref_f))
-  
-  return(weightedCorr(my_ref_f, my_gest_interp$f, method = "Pearson", 
-                      weights = my_ref_i, ML = FALSE, fast = TRUE))
-}
+library("wCorr") # for weighted correlation
+library("mltools") # For weighted RMSE
 
-# Run new comparison on all the gestures
-compare3_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
-  compare3(elt)
+# Get correlation, comparing with both the original and the prosogram vesions
+corr_gest <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  weightedCorr(data$ref_f, data$gest_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
 }))[,1]
 
-gests_data <- add_column(gests_data, wcorr3 = compare3_all)
+# Compare with prosogram
+corr_gest_psg <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  weightedCorr(data$ref_f_psg, data$gest_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
 
+# Compare with reference raw f0, disregarding timing
+corr_gest_notiming <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  weightedCorr(data$ref_f, data$gest_f_scrub, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+# Compare with prosogram, disregarding timing
+corr_gest_psg_notiming <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  weightedCorr(data$ref_f_psg, data$gest_f_scrub, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+#RSME
+
+rmse_gest <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  rmse(preds=data$ref_f, actuals=data$gest_f, weights=data$ref_i)
+}))[,1]
+
+# Compare with prosogram
+rmse_gest_psg <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  rmse(preds=data$ref_f_psg, actuals=data$gest_f, weights=data$ref_i)
+}))[,1]
+
+rmse_gest_notiming <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  rmse(preds=data$ref_f, actuals=data$gest_f_scrub, weights=data$ref_i)
+}))[,1]
+
+# Compare with prosogram
+rmse_gest_psg_notiming <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  rmse(preds=data$ref_f_psg, actuals=data$gest_f_scrub, weights=data$ref_i)
+}))[,1]
+
+
+gests_data <- gests_data %>% 
+              add_column(corr = corr_gest, corr_psg = corr_gest_psg, 
+                         corr_notiming = corr_gest_notiming, corr_psg_notiming = corr_gest_psg_notiming,
+                         rmse = rmse_gest, rmse_psg = rmse_gest_psg, 
+                         rmse_notiming = rmse_gest_notiming, rmse_psg_notiming = rmse_gest_psg_notiming, )
+
+saveRDS(gests_data, "../data/21_02-study/saved/gest_scores.rds")
 ```
 
 
-### 3. RMSE
-```{r}
-library("mltools")
-
-get_rmse <- function(gest_id) {
-  # Get the gesture from the list based on id
-  my_gest <- slice(gests_data, gest_id)  
-  
-  # Get the original data 
-  my_gest_data <- gest_originals[[gest_id]]
-  # Find the starting and ending scrub times
-  start_scrub <- my_gest_data$scrub[1]
-  end_scrub <- tail(my_gest_data$scrub, 1)
-  
-  # Find the corresponding phrase for this gesture
-  my_ref <- get_ref_psgs_interp(my_gest$phrase)
-  # Number of points in my_ref
-  my_ref_length <- length(my_ref$f)
-  # Get the start and index of the reference phrase based on the start and end scrub points
-  my_ref_start_index <- floor(start_scrub * my_ref_length)
-  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
-  # Get the part of the reference to compare with the gesture
-  my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
-  my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
-  
-  # Get the intensity too
-  my_ref_i <- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
-  
-  # Now, interpolate the original gesture based on the number of points in the subset of the reference
-  my_gest_interp<-get_interpolated_data_scrub(my_gest_data, length(my_ref_f))
-  
-  return(rmse(preds=my_ref_f, actuals=my_gest_interp$f,
-                      weights = my_ref_i))
-}
-
-# Run new comparison on all the gestures
-rmse_all <- do.call("rbind", lapply(gests_data$id, function(elt) {
-  get_rmse(elt)
-}))[,1]
-
-gests_data <- add_column(gests_data, rmse = rmse_all)
-
-```
-
-
+----------------------------------------------------------------------------------------------------------
 # Plots
 By phrase
 ```{r}

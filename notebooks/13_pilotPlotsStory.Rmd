@@ -1,0 +1,785 @@
+---
+title: "Pilot Plots Story"
+output: 
+   html_document:
+    code_folding: hide
+---
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, messages=FALSE}
+library("tidyverse")
+library("wesanderson")
+library("gridExtra")
+
+# Load the score data
+voice_data <- readRDS("../data/21_02-study/saved/voice_scores.rds")
+gests_data <- readRDS("../data/21_02-study/saved/gest_scores.rds")
+
+# Modify and combine into a big tibble
+gests_data <- gests_data %>% select(subject, type, pid, order, phrase, id, corr, corr_psg, rmse, rmse_psg, 
+                                    corr_notiming, corr_psg_notiming, rmse_notiming, rmse_psg_notiming) %>%
+              mutate(condition=type) %>% mutate(type="gesture")
+voice_data <- voice_data %>% select(subject, type, pid, order, phrase, id, corr, corr_psg, rmse, rmse_psg, 
+                                    corr_notiming, corr_psg_notiming, rmse_notiming, rmse_psg_notiming) %>%
+              mutate(condition=type) %>% mutate(type="voice")
+
+all_data <- bind_rows(gests_data, voice_data)
+
+# Subjects and types
+subjects <- read_tsv("../data/21_02-study/subjects.tsv")
+natives <- subjects %>% filter(lvl_french == "N")
+learners <- subjects %>% filter(lvl_french != "N")
+musicians <- subjects %>% filter(music == "Y")
+nonmus <- subjects %>% filter(music != "Y")
+```
+
+# Comparison of F0 curve only, no timing
+
+## Overall
+
+As a first sanity check, let's use the same comparison methods as d'Alessandro 2011. They took the correlation and the RMSE of vocal and chironomic imitations with the reference f0 curve. 
+
+* Median for vocal imitation: >0.9 correlation, <1.5ST RMSE
+* Median for chironomic imitation: >0.8 correlation, <2.5ST RMSE
+
+For our data:
+```{r}
+all_data %>% filter(condition=="imitation") %>% pull(corr_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of vocal imitation")
+
+all_data %>% filter(condition=="guide") %>% pull(corr_notiming) %>% median() %>%
+  round(3) %>% paste0(": Median correlation of guided chironomic imitation")
+
+all_data %>% filter(condition=="blind") %>% pull(corr_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of blind chironomic imitation")
+
+all_data %>% filter(condition=="imitation") %>% pull(rmse_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median RMSE of vocal imitation")
+
+all_data %>% filter(condition=="guide") %>% pull(rmse_notiming) %>% median() %>%
+  round(3) %>% paste0(": Median RMSE of guided chironomic imitation")
+
+all_data %>% filter(condition=="blind") %>% pull(rmse_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median RMSE of blind chironomic imitation")
+```
+
+In d'Alessandro 2011, the chironomic imitation was non-guided. The worse performance for non-guided imitation for our study may be explained by the added difficulty of finding the intonation curve and the correct timing control.
+
+Slightly better scores arise for chironomic imitation when we use the stylized f0 curve as a reference. Stylization curve simplifies the f0 curve into straight line segments based on a perceptual model. The stylization removes microprosodic details present in natural vocal pronunciations that are not perceptually salient. Resynthesized utterances with f0 replaced by the stylized version are perceptually identical to the original. 
+
+Below are aggregate results for all data using the two types of references:
+
+```{r}
+# Correlation
+overall_psg_notiming <- all_data %>% ggplot(aes(x=condition, y=corr_psg_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+             scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="Correlation, No timing", subtitle="Stylized reference",
+              x="Condition", y="Correlation") 
+
+overall_notiming <- all_data %>% ggplot(aes(x=condition, y=corr_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise3")) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+# RMSE
+overall_psg_rmse_notiming <- all_data %>% ggplot(aes(x=condition, y=rmse_psg_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="RMSE Scores, No timing", subtitle="Stylized reference",
+              x="Condition", y="Correlation") 
+
+overall_rmse_notiming <- all_data %>% ggplot(aes(x=condition, y=rmse_notiming)) + 
+             geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise2")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+grid.arrange(overall_psg_notiming, overall_notiming, overall_psg_rmse_notiming, overall_rmse_notiming, ncol=2)
+
+```
+
+```{r}
+all_data %>% filter(condition=="imitation") %>% pull(corr_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of vocal imitation")
+
+all_data %>% filter(condition=="guide") %>% pull(corr_psg_notiming) %>% median() %>%
+  round(3) %>% paste0(": Median correlation of chironomic imitation")
+
+all_data %>% filter(condition=="imitation") %>% pull(rmse_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median RMSE of vocal imitation")
+
+all_data %>% filter(condition=="guide") %>% pull(rmse_psg_notiming) %>% median() %>%
+  round(3) %>% paste0(": Median RMSE of chironomic imitation")
+```
+
+For the rest of the comparison, we will be using the stylized version as a reference for the chironomic imitations and the original f0 curve for the vocal pronunciations. Chironomic pronunciations are always a stylization because it is both difficult and unncessary for the hands to produce the same micro-prosodic artifacts as the voice.
+
+```{r}
+notiming_gest_data <- all_data %>% filter(type=='gesture') %>% 
+                 mutate(corr_notiming = corr_psg_notiming, rmse_notiming=rmse_psg_notiming) 
+notiming_voice_data <- all_data %>%filter(type=="voice")          
+notiming_data <-bind_rows(notiming_gest_data, notiming_voice_data)
+```
+
+## Native vs Non-natives
+
+Differences are slight between the learner and native groups in this study. This particular group of learners have all taken a class on French intonation and have encountered the phrases used in the study. Their performance for chironomic imitation is even slightly better than that of natives (probably not significant). 
+
+Natives have slightly better vocal scores. Their reading is also more similar to the originals when timing is not taken into account.
+
+```{r}
+learners_box <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="Correlation Scores, no timing", subtitle="Learners") 
+                    
+natives_box <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="", subtitle="Natives")                    
+
+learners_box_rmse <- notiming_data %>% filter(subject %in% learners$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  labs(title="RMSE Scores, no timing", subtitle="Learners") 
+                    
+natives_box_rmse <- notiming_data %>% filter(subject %in% natives$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  labs(title="", subtitle="Natives")                    
+
+grid.arrange(learners_box, natives_box, learners_box_rmse, natives_box_rmse, ncol=2) 
+```
+
+## Musicians vs Non-musicians
+
+7 of the 10 subjects in d'Alessandro 2011 had a musical practice. It may have helped their performance in the chironomic condition. In our study, 4 of the 10 subjects play music or sing. Musicians had slightly better scores for the blind chironomic condition. Their results are not different from non-musicians in the other conditions.
+
+```{r}
+notiming_data %>% filter(subject %in% musicians$id & condition=="blind") %>% pull(corr_psg_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of blind chironomy - Musicians")
+
+notiming_data %>% filter(subject %in% nonmus$id & condition=="blind") %>% pull(corr_psg_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of blind chironomy - Non-musicians")
+
+notiming_data %>% filter(subject %in% musicians$id & condition=="blind") %>% pull(rmse_psg_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of blind chironomy - Musicians")
+
+notiming_data %>% filter(subject %in% nonmus$id & condition=="blind") %>% pull(rmse_psg_notiming) %>% median() %>% 
+  round(3) %>% paste0(": Median correlation of blind chironomy - Non-musicians")
+```
+
+
+```{r}
+musicians_box <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="Correlation Scores, no timing", subtitle="Musicians")
+                    
+nonmus_box <- notiming_data %>% filter(subject %in% nonmus$id) %>%
+  ggplot(aes(x=condition, y=corr_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Chevalier1")) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  labs(title="", subtitle="Non-musicians")                    
+ 
+musicians_box_rmse <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  labs(title="RMSE Scores, no timing", subtitle="Musicians")
+                    
+nonmus_box_rmse <- notiming_data %>% filter(subject %in% nonmus$id) %>%
+  ggplot(aes(x=condition, y=rmse_notiming)) + geom_boxplot(aes(fill=condition), show.legend = FALSE) +
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  labs(title="", subtitle="Non-musicians")     
+
+grid.arrange(musicians_box, nonmus_box, musicians_box_rmse, nonmus_box_rmse, ncol=2)
+```
+
+## By Phrase
+
+For most phrases, guided chironomy and vocal imitation had comparable scores when timing is not taken into account. Both had higher than >0.9 median correlation for most phrases, and between 0.5 & 2.5ST median RMSE.
+
+For half of the phrases (e.g. 2bis, 7, 8, 10, 11bis, 21bis), guided chironomy had higher median scores for correlation. Some of these phrases (10, 21bis), guided chironomy also had a better (lower) RMSE score.
+
+Blind chironomy varied widely across phrases the phrases. Some phrases were notably more difficult even in the guided chironomy condition.
+
+```{r}
+notiming_data %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores, no timing - all subjects", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+```
+
+```{r}
+notiming_data %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_fill_manual(values = wes_palette("Moonrise1")) +
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  labs(title="RMSE Scores, no timing - all subject", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") #+ theme(aspect.ratio=0.4)
+```
+
+## Phrase and Native/Non-native
+
+Natives and learners performed quite differently across the different phrases.  
+
+* For learners, reading (lecture) differed from the model the most for phrases 10, 10bis, 21.
+* For non-natives, the only phrase that had median correlation <0.8 in the reading condition was 10bis
+* For some phrases, blind chironomy had pretty good scores (correlation >0.8). These phrases were not all the same for n ative vs non-natives.
+* For some phrases, in the blind chironomy condition, natives had lower scores than non-natives
+
+In discussions after the study, a couple of native speakers reported not agreeing with the reference intonation curve provided for the guided chironomy condition.
+
+```{r}
+c_l <- notiming_data %>% filter(subject %in% learners$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores, no timing - Learners", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+
+c_n <- notiming_data %>% filter(subject %in% natives$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores, no timing - Natives", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+
+grid.arrange(c_l, c_n, ncol=1)
+```
+
+```{r}
+r_l <- notiming_data %>% filter(subject %in% learners$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="RMSE Scores - Learners", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") 
+
+r_n <- notiming_data %>% filter(subject %in% natives$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="RMSE Scores - Natives", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") 
+
+grid.arrange(r_l, r_n, ncol=1)
+```
+
+## By Phrase and Musician/Non-musician
+
+In terms of correlation, musicians did much better than non-musicians in blind chironomy for a few specific phrases (e.g. 2, 7, 8). Some phrases were difficult for everyone (10bis, 21), but musicians still did better.
+
+```{r}
+c_m <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores, no timing - Musicians", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+
+c_nm <- notiming_data %>% filter(subject %in% nonmus $id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=corr_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+  scale_fill_manual(values = wes_palette("Moonrise3")) +
+  labs(title="Correlation Scores, no timing - Non-musicians", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="Correlation") #+ theme(aspect.ratio=0.4)
+
+grid.arrange(c_m, c_nm, ncol=1)
+```
+
+
+```{r}
+r_m <- notiming_data %>% filter(subject %in% musicians$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="RMSE Scores - Musicians", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") 
+
+r_nm <- notiming_data %>% filter(subject %in% nonmus$id) %>%
+  mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+  ggplot(aes(x=pid, y=rmse_notiming, fill=condition)) +
+  geom_boxplot(width=0.7) + 
+  scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+  scale_fill_manual(values = wes_palette("Royal2")) +
+  labs(title="RMSE Scores - Nonmus", 
+            subtitle="Grouped by phrase",
+            x="Phrase id", y="RMSE") 
+
+grid.arrange(r_m, r_nm, ncol=1)
+```
+
+
+# Taking Timing into account
+
+For gestural comparisons, we need to make sure that we are comparing with the right part of the original signal. The part of the reference signal to be compared is taken from the beginning and ending scrub values of the gesture. The timing of the gesture is scaled linearly to match the timing of the reference.
+
+For vocal comparisons, the part of the recording containing the utterance is labeled for both the reference and subject recordings. The timing of the vocal recording is scaled linearly to match the reference. No time warping was done in order to preserve the original rhythm of the recording.  
+
+
+```{r}
+# For gesture data, only keep the prosogram comparisons but call them the same thing as the corresponding comparisons for voice
+gest_data2 <- all_data %>% filter(type=='gesture') %>% mutate(corr_notiming = corr_psg_notiming, 
+                                                              rmse_notiming = rmse_psg_notiming,
+                                                              corr = corr_psg, rmse= rmse_psg) 
+long_data <- all_data %>% filter(type== 'voice') %>% bind_rows(gest_data2) %>% 
+             # Get rid of columns containing the prosogram comparisons
+             mutate(corr_psg = NULL, rmse_psg = NULL, corr_psg_notiming = NULL, rmse_psg_notiming = NULL) %>%
+             # Make long version of data
+             pivot_longer(c('corr', 'corr_notiming', 'rmse', 'rmse_notiming'), names_to = "metrics", values_to = "score")
+```
+
+## Overall
+
+Interesting, the blind chironomy median scores don't change much because they are already not so great. The scores for the other conditions are worse. Interestingly, guided chironomy performs the best when timing is taken into account. Even though its scores are slightly worse than when timing is not taken into account, it still manages to have "good" scores (in comparison with results from d'Alessandro 2011) -- a median correlation of >0.8 and median RMSE around 2ST. 
+
+For reading, it is normal that there would be more variation in timing. 
+
+```{r}
+long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=0.2)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing")
+
+```
+
+```{r}
+long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                labels = c("With timing", "No timing"), 
+                                values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing")
+```
+
+## Learners vs Natives
+
+Not so much difference between natives and non-natives when timing is taken into account.
+
+```{r}
+l <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Learners")
+
+n <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(subtitle="Natives")
+
+grid.arrange(l, n, ncol=1)
+
+```
+```{r}
+l <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% learners$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Learners")
+
+n <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% natives$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(subtitle="Natives")
+
+grid.arrange(l, n, ncol=1)
+
+```
+
+## Musicians vs Non-musicians
+
+Not big difference between musicians and non-musicians either when timing is taken into account.
+
+```{r}
+m <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% musicians$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Musicians")
+
+nm <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% nonmus$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              geom_boxplot(aes(fill = metrics)) +
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(subtitle="Non-musicians")
+
+grid.arrange(m, nm, ncol=1)
+```
+
+```{r}
+m <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% musicians$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Learners")
+
+nm <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(subject %in% nonmus$id) %>%
+              ggplot(aes(x=condition, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise2")) +
+              labs(subtitle="Natives")
+
+grid.arrange(m, nm, ncol=1)
+
+```
+
+# By Phrase
+
+By compariing the difference between guided chironomy with and without timing taken into account, we can see that some phrases were trickier to control the timing of than others (e.g. 7bis, 10, 21, 21bis)
+
+I'm not sure how meaningful it is to compare the vocal pronunciations with without dynamic time warping because there is natural variation in the voice. 
+
+```{r}
+ci <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Guided Chironomy")
+
+vi <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(condition=='imitation') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Vocal Comparison")
+
+grid.arrange(ci, vi, ncol=1)
+```
+
+```{r}
+ci <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Royal2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Guided Chironomy")
+
+vi <- long_data %>% filter(metrics== 'rmse_notiming' | metrics == 'rmse') %>%
+              filter(condition=='imitation') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Royal2")) +
+              labs(title="RMSE, timing vs no-timing", subtitle="Vocal Comparison")
+
+grid.arrange(ci, vi, ncol=1)
+```
+
+# By Phrase and subject groups
+
+## For guided chironomy
+Seems to be an equalizer between natives and non-natives. Not huge amount of difference.
+
+```{r}
+lg <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Guided Chironomy, Learners")
+
+ng <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Guided Chironomy, Natives")
+
+grid.arrange(lg, ng, ncol=1)
+```
+
+### For blind chironomy:
+
+A couple of phrases natives had more trouble with. Could be that they are less conscious of the frequency curve?
+
+```{r}
+lb <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              filter(condition=='blind') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Blind Chironomy, Learners")
+
+nb <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              filter(condition=='blind') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Blind Chironomy, Natives")
+
+grid.arrange(lb, nb, ncol=1)
+```
+
+### Vocal Imitation
+
+Not too much difference. Natives have more variation.
+
+```{r}
+li <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              filter(condition=='imitation') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Imitation, Learners")
+
+ni <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              filter(condition=='imitation') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Imitation, Natives")
+
+grid.arrange(li, ni, ncol=1)
+```
+
+### Vocal Readinig
+
+Not too much difference. Natives have more variation. Non-natives seemed to have issues with 10, 10bis, 21.
+
+```{r}
+
+li <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% learners$id) %>%
+              filter(condition=='lecture') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Lecture, Learners")
+
+ni <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% natives$id) %>%
+              filter(condition=='lecture') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Lecture, Natives")
+
+grid.arrange(li, ni, ncol=1)
+```
+
+### Guided Chironomy - musicians vs non-musicians
+
+Musicians don't do better for guided chironomy
+
+```{r}
+mg <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% musicians$id) %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Guided Chironomy, Musicians")
+
+ng <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% nonmus$id) %>%
+              filter(condition=='guide') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Guided Chironomy, Non-musicians")
+
+grid.arrange(mg, ng, ncol=1)
+```
+
+### Blind Chironomy - musicians vs non-musicians
+
+We don't learn much new here. Musicians do better for some phrases than others.
+
+```{r}
+mb <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% musicians$id) %>%
+              filter(condition=='blind') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Blind Chironomy, Musicians")
+
+nb <- long_data %>% filter(metrics== 'corr_notiming' | metrics == 'corr') %>%
+              filter(subject %in% nonmus$id) %>%
+              filter(condition=='blind') %>%
+              mutate(pid = fct_relevel(pid, "2", "2bis", "7", "7bis", "8", "8bis",
+                           "10", "10bis", "11", "11bis", "21", "21bis")) %>%
+              ggplot(aes(x=pid, y=score)) +
+              geom_boxplot(aes(fill = metrics)) +
+              scale_y_continuous(breaks=seq(-0.8, 1, by=.2)) + 
+              scale_fill_manual(name = "Comparison type", 
+                                  labels = c("With timing", "No timing"),
+                                  values=wes_palette("Moonrise3")) +
+              labs(title="Correlation, timing vs no-timing", subtitle="Blind Chironomy, Non-musicians")
+
+grid.arrange(mb, nb, ncol=1)
+```
