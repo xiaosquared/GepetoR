@@ -120,7 +120,9 @@ get_voice_comparison_data <- function(recording_id) {
 
 # Put all the voice comparison data in a list so we don't have to regeneate it each time
 voice_comparison_data <- lapply(voice_data$id, get_voice_comparison_data)
-voice_comparison_data_tibble <- bind_rows(voice_comparison_data)  
+voice_comparison_data_tibble <- bind_rows(voice_comparison_data) %>% mutate(native = subject %in% natives$id)  
+
+saveRDS(voice_comparison_data_tibble, "../data/21_02-study/saved/voice_curves.rds")
 
 ```
 
@@ -352,8 +354,8 @@ aligned_voice_data <- lapply(voice_data$id, function(elt) {
   aligned_data
 })
 
-aligned_voice_data_tibble <- bind_rows(aligned_voice_data)  
-
+aligned_voice_data_tibble <- bind_rows(aligned_voice_data) %>% mutate(native = subject %in% natives$id)  
+saveRDS(aligned_voice_data_tibble, "../data/21_02-study/saved/voice_curves_aligned.rds")
 ```
 
 # PLOT DTW

@@ -336,7 +336,7 @@ get_gest_comparison_data <- function(gest_id) {
   
   
   # Put everything into a tibble
-  data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$type,
+  data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$condition,
                             percent_t = seq(0, 1, length.out = length(my_ref_f)), 
                             gest_t = my_gest_interp$t, gest_scrub = my_gest_interp$scrub, 
                             gest_f = my_gest_interp$f, gest_f_scrub = my_gest_interp_scrub$f,
@@ -346,8 +346,8 @@ get_gest_comparison_data <- function(gest_id) {
 }
 
 gest_comparison_data <- lapply(gests_data$id, get_gest_comparison_data)
-gest_comparison_data_tibble <- bind_rows(gest_comparison_data)  
-
+gest_comparison_data_tibble <- bind_rows(gest_comparison_data) %>% mutate(native = subject %in% natives$id)    
+saveRDS(gest_comparison_data_tibble, "../data/21_02-study/saved/gest_curves.rds")
 ```
 
 #Functions to compare
@@ -680,12 +680,11 @@ Timing of gesture
 
 ```{r}
 # Plot gesture with its attempts
-plot_ref_with_gestures <- function(phrase_id, my_type='guide') {
-  my_ref <- get_ref_psgs_interp(ref_phrases[[phrase_id]])
+plot_ref_with_gestures <- function(my_ref_phrase, my_type='guide') {
+  my_ref <- get_ref_psgs_interp(my_ref_phrase)
   ref_data <- tibble(percent=my_ref$t/my_ref$tmax, f=my_ref$f)
 
   # Get all the gestures for this reference
-  my_ref_phrase <- ref_phrases[phrase_id]
   my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
 
   # Iterate through the ids, combine all gesture data into a giant tibble
@@ -694,18 +693,30 @@ plot_ref_with_gestures <- function(phrase_id, my_type='guide') {
     my_subject <- slice(gests_data, elt)$subject
   
     # Get the data
-    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject)
+    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject) %>% mutate(f=f-mean(f))
     return(my_gest_data)
   }))
 
- ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
+  my_plot <- ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
             scale_color_discrete(name = "Data source") +
             geom_line(size=2) + 
             geom_line(data=selected_gests, mapping=aes(x=percent_scaled, y=f, color=subject)) +
-            labs(title=paste0("Reference and gesture - ", my_type),
+            labs(title=paste0("Reference and gesture - original timing - ", my_type),
                  subtitle=paste0("Phrase:", my_ref_phrase), y="Frequency (Semitones)", x="Percent time")
  
+  plot_filename <- paste0("gest-",  my_type, "-", my_ref_phrase, "-all", ".png")
+  ggsave(plot_filename, plot = my_plot, device='png', path="../data/21_02-study/_plots", 
+            width = 6, height = 4)
+
+  return(my_plot)
+ 
 }
+
+
+sapply(ref_phrases, function(phrase) {
+  plot_ref_with_gestures(phrase, 'guide')
+  plot_ref_with_gestures(phrase, 'blind')
+})
 
 ```
 
@@ -719,24 +730,32 @@ plot_ref_with_gestures_notiming <- function(phrase_id, my_type='guide') {
   my_ref_phrase <- ref_phrases[phrase_id]
   my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
 
-  # Iterate through the ids, combine all gesture data into a gant tibble
+  # Iterate through the ids, combine all gesture data into a giant tibble
   selected_gests<-do.call("rbind", lapply(my_gestures$id, function(elt) {
     # Get the subject for the gesture
     my_subject <- slice(gests_data, elt)$subject
   
     # Get the data
-    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject)
+    my_gest_data <- gest_originals[[elt]] %>% mutate(subject=my_subject) %>% mutate(f=f-mean(f))
     return(my_gest_data)
   }))
 
- ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
+ my_plot <- ggplot(data=ref_data, aes(x=percent, y=f, color="Reference")) +
             scale_color_discrete(name = "Data source") +
             geom_line(size=2) + 
             geom_line(data=selected_gests, mapping=aes(x=scrub, y=f, color=subject)) +
-            labs(title=paste0("Reference and gesture - ", my_type),
+            labs(title=paste0("Reference and gesture - Scrub Timing - ", my_type),
                  subtitle=paste0("Phrase:", my_ref_phrase), y="Frequency (Semitones)", x="Percent time")
  
+  
+  plot_filename <- paste0("scrub-gest-",  my_type, "-", my_ref_phrase, "-all", ".png")
+  ggsave(plot_filename, plot = my_plot, device='png', path="../data/21_02-study/_plots", 
+            width = 6, height = 4)
+  return(my_plot)
+ 
 }
+
+plot_ref_with_gestures_notiming(4)
 
 ```
 

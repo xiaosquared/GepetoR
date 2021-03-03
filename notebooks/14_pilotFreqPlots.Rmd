@@ -1,0 +1,222 @@
+---
+title: "Pilot Frequency Curves"
+output: html_notebook
+---
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, messages=FALSE}
+library("tidyverse")
+library("wesanderson")
+library("gridExtra")
+
+voice_comparison_data_tibble <- readRDS("../data/21_02-study/saved/voice_curves.rds")
+aligned_voice_data_tibble <- readRDS("../data/21_02-study/saved/voice_curves_aligned.rds")
+gest_comparison_data_tibble <- readRDS("../data/21_02-study/saved/gest_curves.rds")
+```
+
+# Gestures
+
+## 2
+
+![](../data/21_02-study/_plots/gest-blind-2_tu_parais_tres_soucieux-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-2_tu_parais_tres_soucieux-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-2_tu_parais_tres_soucieux-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-2_tu_parais_tres_soucieux-all.png){ width=45% } 
+
+## 2bis
+
+
+![](../data/21_02-study/_plots/gest-blind-2bis_tu_paraitrais_soucieux-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-2bis_tu_paraitrais_soucieux-all.png){ width=45% } 
+![](../data/21_02-study/_plots/scrub-gest-blind-2bis_tu_paraitrais_soucieux-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-2bis_tu_paraitrais_soucieux-all.png){ width=45% } 
+
+## 7 
+
+![](../data/21_02-study/_plots/gest-blind-7_Jean_leve_son_verre-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-7_Jean_leve_son_verre-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-7_Jean_leve_son_verre-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-7_Jean_leve_son_verre-all.png){ width=45% } 
+
+## 7bis 
+
+![](../data/21_02-study/_plots/gest-blind-7bis_Jenleve_son_verre-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-7bis_Jenleve_son_verre-all.png){ width=45% } 
+![](../data/21_02-study/_plots/scrub-gest-blind-7bis_Jenleve_son_verre-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-7bis_Jenleve_son_verre-all.png){ width=45% } 
+
+# 8
+
+![](../data/21_02-study/_plots/gest-blind-8_jean_porte_un_journal-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-8_jean_porte_un_journal-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-8_jean_porte_un_journal-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-8_jean_porte_un_journal-all.png){ width=45% } 
+
+# 8bis
+
+![](../data/21_02-study/_plots/gest-blind-8bis_jemporte_un_journal-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-8bis_jemporte_un_journal-all.png){ width=45% } 
+![](../data/21_02-study/_plots/scrub-gest-blind-8bis_jemporte_un_journal-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-8bis_jemporte_un_journal-all.png){ width=45% } 
+
+# 10
+
+![](../data/21_02-study/_plots/gest-blind-10_jean_saigne_beaucoup-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-10_jean_saigne_beaucoup-all.png){ width=45% } 
+![](../data/21_02-study/_plots/scrub-gest-blind-10_jean_saigne_beaucoup-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-10_jean_saigne_beaucoup-all.png){ width=45% } 
+
+# 10bis
+
+![](../data/21_02-study/_plots/gest-blind-10bis_jenseigne_beaucoup-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-10bis_jenseigne_beaucoup-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-10bis_jenseigne_beaucoup-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-10bis_jenseigne_beaucoup-all.png){ width=45% } 
+
+# 11
+
+![](../data/21_02-study/_plots/gest-blind-11_jean_cadre_la_photo-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-11_jean_cadre_la_photo-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-11_jean_cadre_la_photo-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-11_jean_cadre_la_photo-all.png){ width=45% } 
+
+# 11bis
+
+![](../data/21_02-study/_plots/gest-blind-11bis_jencadre_la_photo-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-11bis_jencadre_la_photo-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-11bis_jencadre_la_photo-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-11bis_jencadre_la_photo-all.png){ width=45% } 
+
+
+# 21
+
+![](../data/21_02-study/_plots/gest-blind-21_cest_la_mort_sure-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-21_cest_la_mort_sure-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-21_cest_la_mort_sure-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-21_cest_la_mort_sure-all.png){ width=45% } 
+
+# 21bis
+
+![](../data/21_02-study/_plots/gest-blind-21bis_cest_la_morsure-all.png){ width=45% } ![](../data/21_02-study/_plots/gest-guide-21bis_cest_la_morsure-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/scrub-gest-blind-21bis_cest_la_morsure-all.png){ width=45% } ![](../data/21_02-study/_plots/scrub-gest-guide-21bis_cest_la_morsure-all.png){ width=45% } 
+
+# Voice
+
+```{r, include=FALSE, warning=FALSE, echo=FALSE, messages=FALSE}
+
+plot_voices_with_ref <- function(my_data, ref_phrase, my_type, extra=NULL) {
+  my_data <- my_data %>% filter(phrase==ref_phrase,condition==my_type)
+  natives_data <- my_data %>% filter(native == TRUE)
+  learners_data <- my_data %>% filter(native == FALSE)
+  
+  my_plot <- ggplot(data=natives_data, aes(x=percent_t, y=ref_f, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            # Reference
+            geom_line(size=2) + ylim (-8, 12) +
+            # Natives
+            geom_line(mapping=aes(x=percent_t, y=rec_f, group=subject, color=native)) +
+            geom_line(data=learners_data, mapping=aes(x=percent_t, y=rec_f, group=subject, color=native)) +
+    
+            scale_color_manual(name = "Legend",
+                    labels = c("Reference" = "Reference", "FALSE" = "Learner", "TRUE" = "Native"), 
+                    limits = c("Reference", "FALSE", "TRUE"), 
+                    values = c("TRUE" = "orange", "FALSE" = "royalblue",  "Reference" = "tomato")) +
+    
+            labs(title=paste0("Reference and voice f0, linearly scaled timing"),
+                 subtitle=paste0("Phrase: ", ref_phrase, "\nCondition: ",  my_type), 
+                 y="Frequency (Semitones)", x="Percent time")
+  
+  if (is.null(extra)) {
+    plot_filename <- paste0(ref_phrase, "-", my_type, "-all", ".png")
+  } else {
+    plot_filename <- paste0(ref_phrase, "-", my_type, "-all", "-", extra, ".png")
+  }
+  ggsave(plot_filename, plot = my_plot, device='png', path="../data/21_02-study/_plots", 
+            width = 6, height = 4)
+
+  return(my_plot)
+}
+
+sapply(ref_phrases, function(phrase) {
+#  plot_voices_with_ref(voice_comparison_data_tibble, phrase, "lecture")
+#  plot_voices_with_ref(voice_comparison_data_tibble, phrase, "imitation")
+  
+  plot_voices_with_ref(aligned_voice_data_tibble, phrase, "lecture", "aligned")
+  plot_voices_with_ref(aligned_voice_data_tibble, phrase, "imitation", "aligned")
+})
+
+```
+
+### 2
+
+![](../data/21_02-study/_plots/2_tu_parais_tres_soucieux-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/2_tu_parais_tres_soucieux-imitation-all.png){ width=45% } 
+![](../data/21_02-study/_plots/2_tu_parais_tres_soucieux-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/2_tu_parais_tres_soucieux-imitation-all-aligned.png){ width=45% } 
+
+### 2bis
+
+![](../data/21_02-study/_plots/2bis_tu_paraitrais_soucieux-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/2bis_tu_paraitrais_soucieux-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/2bis_tu_paraitrais_soucieux-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/2bis_tu_paraitrais_soucieux-imitation-all-aligned.png){ width=45% } 
+
+### 7
+
+![](../data/21_02-study/_plots/7_Jean_leve_son_verre-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/7_Jean_leve_son_verre-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/7_Jean_leve_son_verre-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/7_Jean_leve_son_verre-imitation-all-aligned.png){ width=45% } 
+
+### 7bis
+
+![](../data/21_02-study/_plots/7bis_Jenleve_son_verre-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/7bis_Jenleve_son_verre-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/7bis_Jenleve_son_verre-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/7bis_Jenleve_son_verre-imitation-all-aligned.png){ width=45% } 
+
+### 8
+
+![](../data/21_02-study/_plots/8_jean_porte_un_journal-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/8_jean_porte_un_journal-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/8_jean_porte_un_journal-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/8_jean_porte_un_journal-imitation-all-aligned.png){ width=45% } 
+
+### 8bis
+
+![](../data/21_02-study/_plots/8bis_jemporte_un_journal-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/8bis_jemporte_un_journal-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/8bis_jemporte_un_journal-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/8bis_jemporte_un_journal-imitation-all-aligned.png){ width=45% } 
+
+### 10
+
+![](../data/21_02-study/_plots/10_jean_saigne_beaucoup-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/10_jean_saigne_beaucoup-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/10_jean_saigne_beaucoup-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/10_jean_saigne_beaucoup-imitation-all-aligned.png){ width=45% } 
+
+### 10bis
+
+![](../data/21_02-study/_plots/10bis_jenseigne_beaucoup-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/10bis_jenseigne_beaucoup-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/10bis_jenseigne_beaucoup-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/10bis_jenseigne_beaucoup-imitation-all-aligned.png){ width=45% } 
+
+### 11
+
+![](../data/21_02-study/_plots/11_jean_cadre_la_photo-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/11_jean_cadre_la_photo-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/11_jean_cadre_la_photo-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/11_jean_cadre_la_photo-imitation-all-aligned.png){ width=45% } 
+
+### 11bis
+
+![](../data/21_02-study/_plots/11bis_jencadre_la_photo-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/11bis_jencadre_la_photo-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/11bis_jencadre_la_photo-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/11bis_jencadre_la_photo-imitation-all-aligned.png){ width=45% } 
+
+### 21
+
+![](../data/21_02-study/_plots/21_cest_la_mort_sure-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/21_cest_la_mort_sure-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/21_cest_la_mort_sure-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/21_cest_la_mort_sure-imitation-all-aligned.png){ width=45% } 
+
+### 21bis
+
+![](../data/21_02-study/_plots/21bis_cest_la_morsure-lecture-all.png){ width=45% } ![](../data/21_02-study/_plots/21bis_cest_la_morsure-imitation-all.png){ width=45% } 
+
+![](../data/21_02-study/_plots/21bis_cest_la_morsure-lecture-all-aligned.png){ width=45% } ![](../data/21_02-study/_plots/21bis_cest_la_morsure-imitation-all-aligned.png){ width=45% } 
+
+
+2_tu_parais_tres_soucieux
+2bis_tu_paraitrais_soucieux
+8_jean_porte_un_journal
+8bis_jemporte_un_journal
+7_Jean_leve_son_verre
+7bis_Jenleve_son_verre
+10_jean_saigne_beaucoup
+10bis_jenseigne_beaucoup
+11_jean_cadre_la_photo
+11bis_jencadre_la_photo
+21_cest_la_mort_sure
+21bis_cest_la_morsure
+
+
+
+
