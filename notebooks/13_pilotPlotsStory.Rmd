@@ -24,7 +24,7 @@ library("wesanderson")
 library("gridExtra")
 
 # Load the score data
-voice_data <- readRDS("../data/21_02-study/saved/voice_scores.rds")
+voice_data <- readRDS("../data/21_02-study/saved/voice_scores2.rds")
 gests_data <- readRDS("../data/21_02-study/saved/gest_scores.rds")
 
 # Modify and combine into a big tibble
@@ -37,6 +37,9 @@ voice_data <- voice_data %>% select(subject, type, pid, order, phrase, id, corr,
 
 all_data <- bind_rows(gests_data, voice_data)
 
+# Reload voice data to keep all rows
+voice_data <- readRDS("../data/21_02-study/saved/voice_scores2.rds")
+
 # Subjects and types
 subjects <- read_tsv("../data/21_02-study/subjects.tsv")
 natives <- subjects %>% filter(lvl_french == "N")
@@ -45,6 +48,8 @@ musicians <- subjects %>% filter(music == "Y")
 nonmus <- subjects %>% filter(music != "Y")
 ```
 
+
+------------------
 # Comparison of F0 curve only, no timing
 
 ## Overall
@@ -115,6 +120,26 @@ overall_rmse_notiming <- all_data %>% ggplot(aes(x=condition, y=rmse_notiming)) 
 grid.arrange(overall_psg_notiming, overall_notiming, overall_psg_rmse_notiming, overall_rmse_notiming, ncol=2)
 
 ```
+
+```{r}
+# Distance
+overall_psg_ndist <- voice_data %>% ggplot(aes(x=type, y=dtw_ndist_psg)) + 
+             geom_boxplot(aes(fill=type), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise1")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="Normalized cost from DTW", subtitle="Stylized reference",
+              x="Condition", y="Correlation") 
+
+overall_ndist <- voice_data %>% ggplot(aes(x=type, y=dtw_ndist)) + 
+             geom_boxplot(aes(fill=type), show.legend = FALSE) +
+             scale_fill_manual(values=wes_palette("Moonrise1")) +
+             scale_y_continuous(breaks=seq(0, 8, by=1)) + 
+             labs(title="Normalized cost from DTW", subtitle="Original reference",
+              x="Condition", y="Correlation") 
+
+grid.arrange(overall_psg_ndist, overall_ndist,ncol=2)
+```
+
 
 ```{r}
 all_data %>% filter(condition=="imitation") %>% pull(corr_notiming) %>% median() %>% 

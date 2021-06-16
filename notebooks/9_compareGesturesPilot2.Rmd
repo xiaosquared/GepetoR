@@ -50,7 +50,7 @@ ref_tgs <- lapply(pt_filenames, function(elt) {
   tg.read(paste0(path, "_textgrid/", paste0(phrase, '_auto.TextGrid')))
 })
 
-# All the rat pitchtiers
+# All the ref pitchtiers
 ref_pts <- lapply(pt_filenames, function(elt) {
   my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
 })
@@ -154,7 +154,6 @@ get_ref_tsi <-function(phrase_name) {
 
 # 2. Gestures 
 ```{r}
-
 library("jsonlite")
 library("timetk")
 
@@ -300,9 +299,31 @@ gests_data <- do.call("rbind", lapply(gests, function(elt) {
   select(subject, type, pid, order,gest_name, phrase, id)
 ```
 
+
+```{r}
+getwd()
+path<-"../data/21_02-study/maybe_fixable/"
+#file<-"2-guide-2_tu_parais_tres_soucieux-s10.gest"
+#file<- "3-guide-2bis_tu_paraitrais_soucieux-s10.gest"
+file<-"3-guide-11_jean_cadre_la_photo-s1.gest"
+#file<-"5-guide-10_jean_saigne_beaucoup-s1.gest"
+gest <- fromJSON(paste0(path, file)) %>% as_tibble() 
+
+offset <- gest$t_init[1]
+gest <- gest %>% mutate(t_init = t_init-offset, t_end=t_end-offset)
+
+ggplot(data=gest, aes(x=scrub, y=f)) +
+            geom_line()
+            
+```
+
+
 ## Preparing data for comparison
 
 ```{r}
+
+gest_id <-1
+
 get_gest_comparison_data <- function(gest_id) {
   # Get the gesture from the list by ID
   my_gest <- slice(gests_data, gest_id)  
@@ -336,7 +357,7 @@ get_gest_comparison_data <- function(gest_id) {
   
   
   # Put everything into a tibble
-  data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$condition,
+  data_to_compare <- tibble(subject=my_gest$subject, phrase=my_gest$phrase, condition=my_gest$type,
                             percent_t = seq(0, 1, length.out = length(my_ref_f)), 
                             gest_t = my_gest_interp$t, gest_scrub = my_gest_interp$scrub, 
                             gest_f = my_gest_interp$f, gest_f_scrub = my_gest_interp_scrub$f,
@@ -363,6 +384,7 @@ corr_gest <- do.call("rbind", lapply(gests_data$id, function(elt) {
   weightedCorr(data$ref_f, data$gest_f, method = "Pearson", 
                       weights = data$ref_i, ML = FALSE, fast = TRUE)
 }))[,1]
+
 
 # Compare with prosogram
 corr_gest_psg <- do.call("rbind", lapply(gests_data$id, function(elt) {
@@ -418,9 +440,93 @@ gests_data <- gests_data %>%
               add_column(corr = corr_gest, corr_psg = corr_gest_psg, 
                          corr_notiming = corr_gest_notiming, corr_psg_notiming = corr_gest_psg_notiming,
                          rmse = rmse_gest, rmse_psg = rmse_gest_psg, 
-                         rmse_notiming = rmse_gest_notiming, rmse_psg_notiming = rmse_gest_psg_notiming, )
+                         rmse_notiming = rmse_gest_notiming, rmse_psg_notiming = rmse_gest_psg_notiming)
 
 saveRDS(gests_data, "../data/21_02-study/saved/gest_scores.rds")
+```
+
+# ALTERNATE comparison functioins - only start 50%
+
+```{r}
+library("wCorr") # for weighted correlation
+library("mltools") # For weighted RMSE
+
+# Get correlation, comparing with both the original and the prosogram vesions
+corr_gest50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f, data$gest_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+
+# Compare with prosogram
+corr_gest_psg50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f_psg, data$gest_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+# Compare with reference raw f0, disregarding timing
+corr_gest_notiming50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f, data$gest_f_scrub, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+# Compare with prosogram, disregarding timing
+corr_gest_psg_notiming50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f_psg, data$gest_f_scrub, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+#RSME
+
+rmse_gest50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f, actuals=data$gest_f, weights=data$ref_i)
+}))[,1]
+
+# Compare with prosogram
+rmse_gest_psg50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f_psg, actuals=data$gest_f, weights=data$ref_i)
+}))[,1]
+
+rmse_gest_notiming50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f, actuals=data$gest_f_scrub, weights=data$ref_i)
+}))[,1]
+
+# Compare with prosogram
+rmse_gest_psg_notiming50 <- do.call("rbind", lapply(gests_data$id, function(elt) {
+  # Get the data to compare
+  data <- gest_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f_psg, actuals=data$gest_f_scrub, weights=data$ref_i)
+}))[,1]
+
+
+gests_data <- gests_data %>% 
+              add_column(corr50 = corr_gest50, corr_psg50 = corr_gest_psg50, 
+                         corr_notiming50 = corr_gest_notiming50, 
+                         corr_psg_notiming50 = corr_gest_psg_notiming50,
+                         rmse50 = rmse_gest50, rmse_psg50 = rmse_gest_psg50, 
+                         rmse_notiming50 = rmse_gest_notiming50, 
+                         rmse_psg_notiming50 = rmse_gest_psg_notiming50)
+
+saveRDS(gests_data, "../data/21_02-study/saved/gest_scores50.rds")
 ```
 
 
@@ -433,7 +539,7 @@ gests_data %>%
             "2", "2bis", "7", 
             "7bis", "8", "8bis", 
             "10", "10bis", "11", "11bis", "21", "21bis")) %>%
-  ggplot(aes(x=pid, y=wcorr2, fill=factor(type))) +
+  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
   geom_boxplot() +
   labs(title="Correlation of gesture with reference", 
             subtitle="Grouped by phrase",
@@ -722,12 +828,11 @@ sapply(ref_phrases, function(phrase) {
 
 Ignoring timing of gesture
 ```{r}
-plot_ref_with_gestures_notiming <- function(phrase_id, my_type='guide') {
-  my_ref <- get_ref_psgs_interp(ref_phrases[[phrase_id]])
+plot_ref_with_gestures_notiming <- function(my_ref_phrase, my_type='guide') {
+  my_ref <- get_ref_psgs_interp(my_ref_phrase)
   ref_data <- tibble(percent=my_ref$t/my_ref$tmax, f=my_ref$f)
 
   # Get all the gestures for this reference
-  my_ref_phrase <- ref_phrases[phrase_id]
   my_gestures <- gests_data %>% filter(phrase == my_ref_phrase, type == my_type)
 
   # Iterate through the ids, combine all gesture data into a giant tibble
@@ -755,7 +860,12 @@ plot_ref_with_gestures_notiming <- function(phrase_id, my_type='guide') {
  
 }
 
-plot_ref_with_gestures_notiming(4)
+sapply(ref_phrases, function(phrase) {
+  plot_ref_with_gestures_notiming(phrase, 'guide')
+  plot_ref_with_gestures_notiming(phrase, 'blind')
+})
+
+
 
 ```
 
@@ -788,4 +898,3 @@ plot_ref_with_gestures_timing_only <- function(phrase_id, my_type='guide') {
  
 }
 ```
-

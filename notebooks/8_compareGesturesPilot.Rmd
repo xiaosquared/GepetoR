@@ -35,6 +35,11 @@ ref_phrases <- do.call("rbind", lapply(pt_filenames, function(elt) {
   str_split(elt, '.PitchTier')[[1]][1]
 }))[,1]
 
+#All the ref pitchtiers, not interpolated
+ref_pts <- lapply(pt_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
+})
+
 # Put all the reference pitch tiers into a list
 ref_pts_interp <- lapply(pt_filenames, function(elt) {
   my_pt<-pt.read(paste0(path, "_pitchtier/", elt))
@@ -43,12 +48,22 @@ ref_pts_interp <- lapply(pt_filenames, function(elt) {
   interpolated
 })
 
+# All the ref prosograms, not interpolated
+ref_psgs <- lapply(psg_filenames, function(elt) {
+  my_pt<-pt.read(paste0(path, "_prosogram_pt/", elt))
+})
+
 # Put all the Prosogram pitch tiers into a list
 ref_psgs_interp <- lapply(psg_filenames, function(elt) {
   my_pt<-pt.read(paste0(path, "_prosogram_pt/", elt))
   interpolated <- pt.interpolate(my_pt, seq(0, my_pt$tmax, by=0.01))
   interpolated$f <- hertz_to_semitones(interpolated$f,ref_freq)
   interpolated
+})
+
+# Non-interpolated intensity tiers
+ref_its <- lapply(it_filenames, function(elt) {
+  my_it <- it.read(paste0(path, "_intensity/", elt))
 })
 
 # Put all the reference intensity tiers into a list
@@ -145,8 +160,21 @@ get_weighted_corr_praat_psg <- function(phrase_name) {
   return(wc)
 }
 
+get_rmse_praat_psg <- function(phrase_name) {
+  praat_pitch <- get_ref_tsf(phrase_name)
+  prosogram_pitch <- get_ref_ptsf(phrase_name)
+  intensity <- get_ref_tsi(phrase_name)
+  
+  r <- rmse(preds=praat_pitch, actuals=prosogram_pitch, weights=intensity)
+  return(r)
+}
+
 wcorr_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
   get_weighted_corr_praat_psg(elt)
+}))[,1]
+
+rmse_praat_psg_refs <- do.call("rbind", lapply(ref_phrases, function(elt) {
+  get_rmse_praat_psg(elt)
 }))[,1]
 
 results_wcorr_praat_prosogram <- tibble(phrase=ref_phrases, corr.praat.psg=corr_praat_psg_refs,
@@ -155,6 +183,55 @@ print(as.matrix(results_wcorr_praat_prosogram), quote = FALSE)
 
 ```
 All of these values are quite high.
+
+
+Compare Prosograms between pairs of phrases
+```{r}
+
+pbis <- c(2, 4, 6, 8, 10, 12)
+#ref_pairs<-tibble(pid=pbis-1,phrase=ref_phrases[pbis-1], pid_bis=pbis, phrase_bis=ref_phrases[pbis])
+
+psg_pairs_interp<-do.call("rbind", lapply(pbis, function(id) { 
+  psg1<-ref_psgs[id]
+  psg2<-ref_psgs[id-1]
+  tmax <- max(psg1[[1]]$tmax, psg2[[1]]$tmax)
+  len_to_interp <- seq(0, tmax, by=0.01) %>% length()
+  psg1_interp<-pt.interpolate(psg1[[1]], seq(0, psg1[[1]]$tmax, length=len_to_interp))
+  psg2_interp<-pt.interpolate(psg2[[1]], seq(0, psg2[[1]]$tmax, length=len_to_interp))
+  
+  it1<-ref_its[id]
+  it1_interp<-it.interpolate(it1[[1]], seq(0, it1[[1]]$tmax, length=len_to_interp))
+  
+  f1<- hertz_to_semitones(psg1_interp$f, ref_freq)
+  f2<- hertz_to_semitones(psg2_interp$f, ref_freq)
+  
+  my_corr<-weightedCorr(f1, f2, method = "Pearson", 
+               weights = it1_interp$i, ML = FALSE, fast = TRUE)
+  my_rmse<-rmse(preds=f1, actuals=f2, weights=it1_interp$i)
+  tibble(pid=id, corr=my_corr, rmse=my_rmse)
+  return(tibble(pid=id, corr=my_corr, rmse=my_rmse))
+}))
+  
+  
+d1<-tibble(f1=psg1_interp$f, t1=psg1_interp$t, f2=psg2_interp$f, t2=psg2_interp$t)
+     ggplot(data=d1, aes(x=t1, y=f1)) +
+      geom_line(aes(color="pitch1")) +
+      scale_color_discrete(name = "Data")  +
+      geom_line(aes(x=t1, y=f2, color="pitch2"))
+      
+mean(psg_pairs_interp$corr) #.508
+sd(psg_pairs_interp$corr) #.379
+
+mean(psg_pairs_interp$rmse) # 4.473
+sd(psg_pairs_interp$rmse) #.91
+         
+#Between prosograms of phrase pairs, correlation ranges from -0.175 to 0.895 (mean .508, SD .379) and RMSE ranges from 3.77 to 6.10 (mean 4.473, sd .91)
+
+#mean correlation is .508 (min:-.175, max: .895, SD; 0.379), and mean RMSE is 4.473 (m)
+```
+
+
+
 
 Let's plot the graphs with the lowest correlation value:
 

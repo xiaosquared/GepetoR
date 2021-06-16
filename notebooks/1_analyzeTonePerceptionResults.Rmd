@@ -485,4 +485,3 @@ p.max_percents <- plot_grid_max(percents, "Tone with max percentage chosen")
 p.max_percents
 ```
 
-

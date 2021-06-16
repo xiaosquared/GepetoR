@@ -74,12 +74,14 @@ voice_data <- do.call("rbind", lapply(voices, function(elt) {
 Load scripts in part 1 of 9_compareGesturesPilot2.Rmd to have access to reference data
 
 ```{r}
+
 # Given id of voice recording, returns the data for both the recording and its reference
 # for comparison and plotting. Output tibble includes:
 # percent_t - from 0 to 1 (for plotting) 
 # rec_t, rec_f - timestamps and frequency for recording
 # ref_t, ref_f, ref_i - timestamps, frequency, intensity for reference
 get_voice_comparison_data <- function(recording_id) {
+  #print(recording_id)
   # For each vocal recording
   my_record <- slice(voice_data, recording_id)
   # Get the pitch tier of the recording 
@@ -89,15 +91,16 @@ get_voice_comparison_data <- function(recording_id) {
   my_ref_tg <- get_ref_tg(my_record$phrase)
   
   # Get the start and end of the voiced section as a percentage
-  start_percent <- my_ref_tg$syll$t1[1]/my_ref_tg$tmax
-  end_percent <- tail(my_ref_tg$syll$t1, 1)/my_ref_tg$tmax
+  total_duration<-tg.getTotalDuration(my_ref_tg)
+  start_percent <- my_ref_tg$syll$t2[1]/total_duration
+  end_percent <- tail(my_ref_tg$syll$t1, 1)/total_duration
   
   # Get the interpolated frequency data of the phrase
   my_ref <- get_ref_pts_interp(my_record$phrase)
   my_ref_length <- length(my_ref$f)
   # Get the start and index of the reference phrase based on start/end percent from the textgrid
-  my_ref_start_index <- floor(start_scrub * my_ref_length)
-  my_ref_end_index <- ceiling(end_scrub * my_ref_length)
+  my_ref_start_index <- floor(start_percent * my_ref_length)
+  my_ref_end_index <- ceiling(end_percent * my_ref_length)
   # Get the part of the reference to compare with the recording
   my_ref_f <- my_ref$f[my_ref_start_index:my_ref_end_index]
   my_ref_t <- my_ref$t[my_ref_start_index:my_ref_end_index]
@@ -120,9 +123,9 @@ get_voice_comparison_data <- function(recording_id) {
 
 # Put all the voice comparison data in a list so we don't have to regeneate it each time
 voice_comparison_data <- lapply(voice_data$id, get_voice_comparison_data)
-voice_comparison_data_tibble <- bind_rows(voice_comparison_data) %>% mutate(native = subject %in% natives$id)  
+voice_comparison_data_tibble <- bind_rows(voice_comparison_data) %>% mutate(native = subject %in% natives)  # or in natives$id, depending on what is loaded
 
-saveRDS(voice_comparison_data_tibble, "../data/21_02-study/saved/voice_curves.rds")
+#saveRDS(voice_comparison_data_tibble, "../data/21_02-study/saved/voice_curves.rds")
 
 ```
 
@@ -181,6 +184,49 @@ voice_data <- voice_data %>% add_column(corr = corr_voice, corr_psg = corr_voice
 
 ```
 
+# ALTERNATE COMPARE - only first 50%  
+
+```{r}
+library("wCorr") # for weighted correlation
+library("mltools") # For weighted RMSE
+
+# Get correlation, comparing with both the original and the prosogram vesions
+corr_voice50 <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- voice_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f, data$rec_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+corr_voice_psg50 <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- voice_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  weightedCorr(data$ref_f_psg, data$rec_f, method = "Pearson", 
+                      weights = data$ref_i, ML = FALSE, fast = TRUE)
+}))[,1]
+
+#RSME
+rmse_voice50 <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- voice_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f, actuals=data$rec_f, weights=data$ref_i)
+}))[,1]
+
+rmse_voice_psg50 <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  # Get the data to compare
+  data <- voice_comparison_data[[elt]]
+  data <- data %>% filter(percent_t <= 0.5)
+  rmse(preds=data$ref_f_psg, actuals=data$rec_f, weights=data$ref_i)
+}))[,1]
+
+voice_data <- voice_data %>% add_column(corr50 = corr_voice50, corr_psg50 = corr_voice_psg50,
+                                        rmse50 = rmse_voice50, rmse_psg50 = rmse_voice_psg50)
+saveRDS(voice_data, "../data/21_02-study/saved/voice_scores50.rds")
+```  
+  
 
 
 ```{r}
@@ -227,24 +273,24 @@ grid.arrange(learners_voice, natives_voice, ncol=2)
 Let's see what's happening by plotting the curves
 
 ```{r}
-# Plot gesture with its attempts
+#Plot gesture with its attempts
 #plot_ref_with_recordings <- function(phrase_id, my_type='guide') {
-# s <- "s10"
-# phrase_id <- 7
-# my_type <- "imitation"
-# 
-# #
-# my_data <- filter(voice_comparison_data_tibble,phrase==ref_phrases[[phrase_id]], condition==my_type)
-# #my_data <- filter(voice_comparison_data_tibble,subject==s,phrase==ref_phrases[[phrase_id]], condition==my_type)
-# my_plot <- ggplot(data=my_data, aes(x=percent_t, y=ref_f_psg, color="Reference")) +
-#             scale_color_discrete(name = "Data source") +
-#             geom_line(size=2) + 
-#             geom_line(mapping=aes(x=percent_t, y=rec_f, color=subject)) +
-#             labs(title=paste0("Reference and gesture - All Subjects"),
-#                  subtitle=paste0("Phrase: ", ref_phrases[[phrase_id]], ", Condition: ",  my_type), 
-#                  y="Frequency (Semitones)", x="Percent time")
-# my_plot
-# 
+  s <- "s10"
+  phrase_id <- 7
+  my_type <- "imitation"
+
+#
+  my_data <- filter(voice_comparison_data_tibble,phrase==ref_phrases[[phrase_id]], condition==my_type)
+  #my_data <- filter(voice_comparison_data_tibble,subject==s,phrase==ref_phrases[[phrase_id]],   condition==my_type)
+  my_plot <- ggplot(data=my_data, aes(x=percent_t, y=ref_f_psg, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) +
+            geom_line(mapping=aes(x=percent_t, y=rec_f, color=subject)) +
+            labs(title=paste0("Reference and gesture - All Subjects"),
+                 subtitle=paste0("Phrase: ", ref_phrases[[phrase_id]], ", Condition: ",  my_type),
+                 y="Frequency (Semitones)", x="Percent time")
+  my_plot
+
 # plot_filename <- paste0(ref_phrases[[phrase_id]], "-", my_type, ".png")
 ##ggsave(plot_filename,plot = my_plot, device='png', path="../data/21_02-study/_plots")
  
@@ -292,7 +338,7 @@ Dynamic time warping - figuring out the settings. Seems like asymmetric step and
 
 ```{r}
 library("dtw")
-voice_id <- 181
+voice_id <- 12
 recording_info <- slice(voice_data, voice_id)
 
 my_recording <-voice_comparison_data[[voice_id]]
@@ -329,6 +375,7 @@ ggplot(data=cdata, aes(x=percent, y=ref_f, color="Reference")) +
 
 # Prepare DTW data
 ```{r}
+#elt <- 1
 aligned_voice_data <- lapply(voice_data$id, function(elt) {
   my_record <- slice(voice_data, elt)
   
@@ -343,7 +390,7 @@ aligned_voice_data <- lapply(voice_data$id, function(elt) {
   reference_psg<-data$ref_f_psg
   alignment_psg <- dtw(reference_psg, recording,keep=TRUE, step=asymmetric, open.begin=TRUE)
   
-  aligned_data <- tibble(subject=my_record$subject, phrase=my_record$phrase, condition=my_record$condition,
+  aligned_data <- tibble(subject=my_record$subject, phrase=my_record$phrase, condition=my_record$type,
                          percent_t = seq(0, 1, length.out = length(alignment$index1)),
                          ref_f = reference[alignment$index1],
                          ref_i= intensity[alignment$index1],
@@ -355,7 +402,7 @@ aligned_voice_data <- lapply(voice_data$id, function(elt) {
 })
 
 aligned_voice_data_tibble <- bind_rows(aligned_voice_data) %>% mutate(native = subject %in% natives$id)  
-saveRDS(aligned_voice_data_tibble, "../data/21_02-study/saved/voice_curves_aligned.rds")
+#saveRDS(aligned_voice_data_tibble, "../data/21_02-study/saved/voice_curves_aligned2.rds")
 ```
 
 # PLOT DTW
@@ -399,6 +446,36 @@ sapply(ref_phrases, function(phrase) {
 
 
 ```{r}
+
+# Normalized Distance from DTW
+dist_voice_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  my_record <- slice(voice_data, elt)
+  data<-voice_comparison_data[[elt]]
+  recording<- data$rec_f
+  reference<-data$ref_f
+
+  # Alignement with original reference
+  alignment<-dtw(reference, recording, keep=TRUE, step=asymmetric, open.begin=TRUE)
+  alignment$normalizedDistance
+  # Alignment with prosogram
+  #reference_psg<-data$ref_f_psg
+  #alignment_psg <- dtw(reference_psg, recording,keep=TRUE, step=asymmetric, open.begin=TRUE)
+}))[,1]
+
+# Normalized Distance from DTW
+dist_voice_psg_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
+  my_record <- slice(voice_data, elt)
+  data<-voice_comparison_data[[elt]]
+  recording<- data$rec_f
+  reference<-data$ref_f
+
+  # Alignment with prosogram
+  reference_psg<-data$ref_f_psg
+  alignment_psg <- dtw(reference_psg, recording,keep=TRUE, step=asymmetric, open.begin=TRUE)
+  alignment_psg$normalizedDistance
+}))[,1]
+
+
 # Get correlation, comparing with both the original and the prosogram vesions
 corr_voice_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) {
   # Get the data to compare
@@ -427,9 +504,13 @@ rmse_voice_psg_notiming <- do.call("rbind", lapply(voice_data$id, function(elt) 
   rmse(preds=data$ref_f_psg, actuals=data$rec_f, weights=data$ref_i)
 }))[,1]
 
-voice_data <- voice_data %>% add_column(corr_notiming = corr_voice_notiming, corr_psg_notiming = corr_voice_psg_notiming,
-                                        rmse_notiming = rmse_voice_notiming, rmse_psg_notiming = rmse_voice_psg_notiming)
-saveRDS(voice_data, "../data/21_02-study/saved/voice_scores.rds")
+voice_data <- voice_data %>% add_column(corr_notiming = corr_voice_notiming, 
+                                        corr_psg_notiming = corr_voice_psg_notiming,
+                                        rmse_notiming = rmse_voice_notiming, 
+                                        rmse_psg_notiming = rmse_voice_psg_notiming,
+                                        dtw_ndist=dist_voice_notiming,
+                                        dtw_ndist_psg=dist_voice_psg_notiming)
+saveRDS(voice_data, "../data/21_02-study/saved/voice_scores2.rds")
 ```
   
   
