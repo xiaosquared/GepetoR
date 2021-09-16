@@ -1802,37 +1802,17 @@ summary {
 <p>Load pitch and intensity info for the ref phrases:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcInpvb1wiKVxuYGBgIn0= -->
-<pre class="r"><code>library(&quot;zoo&quot;)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBtZXNzYWdlczpcbjE6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG4yOiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbjM6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG40OiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbjU6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG42OiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbjc6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG44OiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbjk6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG4xMDogVW5rbm93biBvciB1bmluaXRpYWxpc2VkIGNvbHVtbjogYHNjcnViYC4gXG4ifQ== -->
-<pre><code>Warning messages:
-1: Unknown or uninitialised column: `f`. 
-2: Unknown or uninitialised column: `scrub`. 
-3: Unknown or uninitialised column: `f`. 
-4: Unknown or uninitialised column: `scrub`. 
-5: Unknown or uninitialised column: `f`. 
-6: Unknown or uninitialised column: `scrub`. 
-7: Unknown or uninitialised column: `f`. 
-8: Unknown or uninitialised column: `scrub`. 
-9: Unknown or uninitialised column: `f`. 
-10: Unknown or uninitialised column: `scrub`. </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcInJQcmFhdFwiKVxubGlicmFyeShcInRpZHl2ZXJzZVwiKVxuXG5wYXRoPVwiLi4vZGF0YS8yMV8wMi1zdHVkeS9yZWZlcmVuY2UvXCJcbnJlZl9mcmVxIDwtIDExNi41NFxuXG4jIEZpbmQgaW50ZW5zaXR5IGZpbGVzXG5zZXR3ZChwYXN0ZTAocGF0aCwgXCJfaW50ZW5zaXR5XCIpKVxuYGBgIn0= -->
-<pre class="r"><code>library(&quot;rPraat&quot;)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShcInpvb1wiKVxubGlicmFyeShcInJQcmFhdFwiKVxubGlicmFyeShcInRpZHl2ZXJzZVwiKVxuXG5wYXRoPVwiLi4vZGF0YS8yMV8wMi1zdHVkeS9yZWZlcmVuY2UvXCJcbnJlZl9mcmVxIDwtIDExNi41NFxuXG4jIEZpbmQgaW50ZW5zaXR5IGZpbGVzXG5zZXR3ZChwYXN0ZTAocGF0aCwgXCJfaW50ZW5zaXR5XCIpKVxuaXRfZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5JbnRlbnNpdHlUaWVyJFwiKVxuXG4jIEZpbmQgcGl0Y2hUaWVyIGZpbGVzIFxuc2V0d2QoXCIuLi9fcGl0Y2h0aWVyXCIpXG5wdF9maWxlbmFtZXMgPC0gZGlyKHBhdHRlcm49XCJcXFxcLlBpdGNoVGllciRcIilcblxuIyBGaW5kIFByb3NvZ3JhbSBQaXRjaFRpZXIgZmlsZXNcbnNldHdkKFwiLi4vX3Byb3NvZ3JhbV9wdFwiKVxucHNnX2ZpbGVuYW1lcyA8LSBkaXIocGF0dGVybj1cIlxcXFwuUGl0Y2hUaWVyJFwiKVxuXG4jIEludGVycG9sYXRlIHBpdGNoIGFuZCBpbnRlbnNpdHkgZm9yIG9uZSBwaHJhc2UgYW5kIHBsb3RcbnNldHdkKFwiLi4vLi4vLi4vLi4vbm90ZWJvb2tzL1wiKVxuXG4jIEEgdmVjdG9yIHdpdGggYWxsIHRoZSBwaHJhc2VzXG5yZWZfcGhyYXNlcyA8LSBkby5jYWxsKFwicmJpbmRcIiwgbGFwcGx5KHB0X2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIHN0cl9zcGxpdChlbHQsICcuUGl0Y2hUaWVyJylbWzFdXVsxXVxufSkpWywxXVxuXG4jQWxsIHRoZSByZWYgcGl0Y2h0aWVycywgbm90IGludGVycG9sYXRlZFxucmVmX3B0cyA8LSBsYXBwbHkocHRfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3BpdGNodGllci9cIiwgZWx0KSlcbn0pXG5cbiMgUHV0IGFsbCB0aGUgcmVmZXJlbmNlIHBpdGNoIHRpZXJzIGludG8gYSBsaXN0XG5yZWZfcHRzX2ludGVycCA8LSBsYXBwbHkocHRfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3BpdGNodGllci9cIiwgZWx0KSlcbiAgaW50ZXJwb2xhdGVkIDwtIHB0LmludGVycG9sYXRlKG15X3B0LCBzZXEoMCwgbXlfcHQkdG1heCwgYnk9MC4wMSkpXG4gIGludGVycG9sYXRlZCRmIDwtIGhlcnR6X3RvX3NlbWl0b25lcyhpbnRlcnBvbGF0ZWQkZiwgcmVmX2ZyZXEpXG4gIGludGVycG9sYXRlZFxufSlcblxuIyBBbGwgdGhlIHJlZiBwcm9zb2dyYW1zLCBub3QgaW50ZXJwb2xhdGVkXG5yZWZfcHNncyA8LSBsYXBwbHkocHNnX2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIG15X3B0PC1wdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9wcm9zb2dyYW1fcHQvXCIsIGVsdCkpXG59KVxuXG4jIFB1dCBhbGwgdGhlIFByb3NvZ3JhbSBwaXRjaCB0aWVycyBpbnRvIGEgbGlzdFxucmVmX3BzZ3NfaW50ZXJwIDwtIGxhcHBseShwc2dfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3Byb3NvZ3JhbV9wdC9cIiwgZWx0KSlcbiAgaW50ZXJwb2xhdGVkIDwtIHB0LmludGVycG9sYXRlKG15X3B0LCBzZXEoMCwgbXlfcHQkdG1heCwgYnk9MC4wMSkpXG4gIGludGVycG9sYXRlZCRmIDwtIGhlcnR6X3RvX3NlbWl0b25lcyhpbnRlcnBvbGF0ZWQkZixyZWZfZnJlcSlcbiAgaW50ZXJwb2xhdGVkXG59KVxuXG4jIE5vbi1pbnRlcnBvbGF0ZWQgaW50ZW5zaXR5IHRpZXJzXG5yZWZfaXRzIDwtIGxhcHBseShpdF9maWxlbmFtZXMsIGZ1bmN0aW9uKGVsdCkge1xuICBteV9pdCA8LSBpdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9pbnRlbnNpdHkvXCIsIGVsdCkpXG59KVxuXG4jIFB1dCBhbGwgdGhlIHJlZmVyZW5jZSBpbnRlbnNpdHkgdGllcnMgaW50byBhIGxpc3RcbnJlZl9pdHNfaW50ZXJwIDwtIGxhcHBseShpdF9maWxlbmFtZXMsIGZ1bmN0aW9uKGVsdCkge1xuICBteV9pdCA8LSBpdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9pbnRlbnNpdHkvXCIsIGVsdCkpXG4gIGl0LmludGVycG9sYXRlKG15X2l0LCBzZXEoMCwgbXlfaXQkdG1heCwgYnk9MC4wMSkpXG59KVxuXG4jIEdldCB0aGUgdGltZXMgb2YgZWFjaCBwaHJhc2VcbnJlZl90aW1lcyA8LSBkby5jYWxsKFwicmJpbmRcIiwgbGFwcGx5KHJlZl9wdHNfaW50ZXJwLCBmdW5jdGlvbihlbHQpIHtcbiAgZWx0JHRtYXhcbn0pKVssMV1cblxuIyBBIHRpYmJsZSBjb250YWluaW5nIGVhY2ggcGhyYXNlIGFuZCBpdHMgZHVyYXRpb25cbnJlZl9pbmZvIDwtIHRpYmJsZShwaHJhc2U9cmVmX3BocmFzZXMsIGR1cmF0aW9uPXJlZl90aW1lcylcblxuYGBgIn0= -->
+<pre class="r"><code>library(&quot;zoo&quot;)
+library(&quot;rPraat&quot;)
 library(&quot;tidyverse&quot;)
 
 path=&quot;../data/21_02-study/reference/&quot;
 ref_freq &lt;- 116.54
 
 # Find intensity files
-setwd(paste0(path, &quot;_intensity&quot;))</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9kYXRhLzIxXzAyLXN0dWR5L3JlZmVyZW5jZS9faW50ZW5zaXR5IGluc2lkZSBhIG5vdGVib29rIGNodW5rLiBUaGUgd29ya2luZyBkaXJlY3Rvcnkgd2lsbCBiZSByZXNldCB3aGVuIHRoZSBjaHVuayBpcyBmaW5pc2hlZCBydW5uaW5nLiBVc2UgdGhlIGtuaXRyIHJvb3QuZGlyIG9wdGlvbiBpbiB0aGUgc2V0dXAgY2h1bmsgdG8gY2hhbmdlIHRoZSB3b3JraW5nIGRpcmVjdG9yeSBmb3Igbm90ZWJvb2sgY2h1bmtzLlxuIn0= -->
-<pre><code>The working directory was changed to /Users/xx/Github/GepetoR/data/21_02-study/reference/_intensity inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaXRfZmlsZW5hbWVzIDwtIGRpcihwYXR0ZXJuPVwiXFxcXC5JbnRlbnNpdHlUaWVyJFwiKVxuXG4jIEZpbmQgcGl0Y2hUaWVyIGZpbGVzIFxuc2V0d2QoXCIuLi9fcGl0Y2h0aWVyXCIpXG5wdF9maWxlbmFtZXMgPC0gZGlyKHBhdHRlcm49XCJcXFxcLlBpdGNoVGllciRcIilcblxuIyBGaW5kIFByb3NvZ3JhbSBQaXRjaFRpZXIgZmlsZXNcbnNldHdkKFwiLi4vX3Byb3NvZ3JhbV9wdFwiKVxucHNnX2ZpbGVuYW1lcyA8LSBkaXIocGF0dGVybj1cIlxcXFwuUGl0Y2hUaWVyJFwiKVxuXG4jIEludGVycG9sYXRlIHBpdGNoIGFuZCBpbnRlbnNpdHkgZm9yIG9uZSBwaHJhc2UgYW5kIHBsb3RcbnNldHdkKFwiLi4vLi4vLi4vLi4vbm90ZWJvb2tzL1wiKVxuXG4jIEEgdmVjdG9yIHdpdGggYWxsIHRoZSBwaHJhc2VzXG5yZWZfcGhyYXNlcyA8LSBkby5jYWxsKFwicmJpbmRcIiwgbGFwcGx5KHB0X2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIHN0cl9zcGxpdChlbHQsICcuUGl0Y2hUaWVyJylbWzFdXVsxXVxufSkpWywxXVxuXG4jQWxsIHRoZSByZWYgcGl0Y2h0aWVycywgbm90IGludGVycG9sYXRlZFxucmVmX3B0cyA8LSBsYXBwbHkocHRfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3BpdGNodGllci9cIiwgZWx0KSlcbn0pXG5cbiMgUHV0IGFsbCB0aGUgcmVmZXJlbmNlIHBpdGNoIHRpZXJzIGludG8gYSBsaXN0XG5yZWZfcHRzX2ludGVycCA8LSBsYXBwbHkocHRfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3BpdGNodGllci9cIiwgZWx0KSlcbiAgaW50ZXJwb2xhdGVkIDwtIHB0LmludGVycG9sYXRlKG15X3B0LCBzZXEoMCwgbXlfcHQkdG1heCwgYnk9MC4wMSkpXG4gIGludGVycG9sYXRlZCRmIDwtIGhlcnR6X3RvX3NlbWl0b25lcyhpbnRlcnBvbGF0ZWQkZiwgcmVmX2ZyZXEpXG4gIGludGVycG9sYXRlZFxufSlcblxuIyBBbGwgdGhlIHJlZiBwcm9zb2dyYW1zLCBub3QgaW50ZXJwb2xhdGVkXG5yZWZfcHNncyA8LSBsYXBwbHkocHNnX2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIG15X3B0PC1wdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9wcm9zb2dyYW1fcHQvXCIsIGVsdCkpXG59KVxuXG4jIFB1dCBhbGwgdGhlIFByb3NvZ3JhbSBwaXRjaCB0aWVycyBpbnRvIGEgbGlzdFxucmVmX3BzZ3NfaW50ZXJwIDwtIGxhcHBseShwc2dfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgbXlfcHQ8LXB0LnJlYWQocGFzdGUwKHBhdGgsIFwiX3Byb3NvZ3JhbV9wdC9cIiwgZWx0KSlcbiAgaW50ZXJwb2xhdGVkIDwtIHB0LmludGVycG9sYXRlKG15X3B0LCBzZXEoMCwgbXlfcHQkdG1heCwgYnk9MC4wMSkpXG4gIGludGVycG9sYXRlZCRmIDwtIGhlcnR6X3RvX3NlbWl0b25lcyhpbnRlcnBvbGF0ZWQkZixyZWZfZnJlcSlcbiAgaW50ZXJwb2xhdGVkXG59KVxuXG4jIE5vbi1pbnRlcnBvbGF0ZWQgaW50ZW5zaXR5IHRpZXJzXG5yZWZfaXRzIDwtIGxhcHBseShpdF9maWxlbmFtZXMsIGZ1bmN0aW9uKGVsdCkge1xuICBteV9pdCA8LSBpdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9pbnRlbnNpdHkvXCIsIGVsdCkpXG59KVxuXG4jIFB1dCBhbGwgdGhlIHJlZmVyZW5jZSBpbnRlbnNpdHkgdGllcnMgaW50byBhIGxpc3RcbnJlZl9pdHNfaW50ZXJwIDwtIGxhcHBseShpdF9maWxlbmFtZXMsIGZ1bmN0aW9uKGVsdCkge1xuICBteV9pdCA8LSBpdC5yZWFkKHBhc3RlMChwYXRoLCBcIl9pbnRlbnNpdHkvXCIsIGVsdCkpXG4gIGl0LmludGVycG9sYXRlKG15X2l0LCBzZXEoMCwgbXlfaXQkdG1heCwgYnk9MC4wMSkpXG59KVxuXG4jIEdldCB0aGUgdGltZXMgb2YgZWFjaCBwaHJhc2VcbnJlZl90aW1lcyA8LSBkby5jYWxsKFwicmJpbmRcIiwgbGFwcGx5KHJlZl9wdHNfaW50ZXJwLCBmdW5jdGlvbihlbHQpIHtcbiAgZWx0JHRtYXhcbn0pKVssMV1cblxuIyBBIHRpYmJsZSBjb250YWluaW5nIGVhY2ggcGhyYXNlIGFuZCBpdHMgZHVyYXRpb25cbnJlZl9pbmZvIDwtIHRpYmJsZShwaHJhc2U9cmVmX3BocmFzZXMsIGR1cmF0aW9uPXJlZl90aW1lcylcblxuYGBgIn0= -->
-<pre class="r"><code>it_filenames &lt;- dir(pattern=&quot;\\.IntensityTier$&quot;)
+setwd(paste0(path, &quot;_intensity&quot;))
+it_filenames &lt;- dir(pattern=&quot;\\.IntensityTier$&quot;)
 
 # Find pitchTier files 
 setwd(&quot;../_pitchtier&quot;)
@@ -1901,63 +1881,51 @@ ref_info &lt;- tibble(phrase=ref_phrases, duration=ref_times)
 <p>Some helper functions to get duration, time stamps, interpolated f0 (stylized or not) values, interpolated intensity values given the phrase name:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jIEdldHMgdGhlIGludGVycG9sYXRlZCBwcm9zb2dyYW0gb2JqZWN0XG5nZXRfcmVmX3BzZ3NfaW50ZXJwIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfcHNnc19pbnRlcnBbW2luZGV4XV0pXG59XG5cbiMgQSBmdW5jdGlvbiB0aGF0IGdldHMgdGhlIGR1cmF0aW9uIGdpdmVuIHRoZSBwaHJhc2UgbmFtZVxuZ2V0X3JlZl9kdXJhdGlvbiA8LSBmdW5jdGlvbihwaHJhc2VfbmFtZSkge1xuICBpbmRleDwtbWF0Y2gocGhyYXNlX25hbWUsIHJlZl9pbmZvJHBocmFzZSlcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4ocmVmX2luZm8kZHVyYXRpb25baW5kZXhdKVxufVxuXG4jIEdldCB0aGUgdGltZXMgc3RhbXBzIGZvciBpbnRlcnBvbGF0aW9uIGdpdmVuIHRoZSBwaHJhc2UgbmFtZVxuZ2V0X3JlZl90aW1lc3RhbXBzIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfcHRzX2ludGVycFtbaW5kZXhdXSR0KVxufVxuXG4jIEdldCB0aGUgaW50ZXJwb2xhdGVkIGZyZXF1ZW5jeSB2YWx1ZXMgZ2l2ZW4gdGhlIHBocmFzZSBuYW1lXG4jIChmcmVxdWVuY3kgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3RzZiA8LSBmdW5jdGlvbihwaHJhc2VfbmFtZSkge1xuICBpbmRleDwtbWF0Y2gocGhyYXNlX25hbWUsIHJlZl9pbmZvJHBocmFzZSlcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4ocmVmX3B0c19pbnRlcnBbW2luZGV4XV0kZilcbn1cblxuIyBHZXQgdGhlIGludGVycG9sYXRlZCBwcm9zb2dyYW0gZnJlcXVlbmN5IHZhbHVlcyBnaXZlbiB0aGUgcGhyYXNlIG5hbWVcbiMgKHByb3NvZ3JhbSBmcmVxdWVuY3kgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3B0c2YgPC0gZnVuY3Rpb24ocGhyYXNlX25hbWUpIHtcbiAgaW5kZXg8LW1hdGNoKHBocmFzZV9uYW1lLCByZWZfaW5mbyRwaHJhc2UpXG4gIGlmIChpcy5uYShpbmRleCkpIHsgcmV0dXJuKE5VTEwpIH1cbiAgcmV0dXJuKHJlZl9wc2dzX2ludGVycFtbaW5kZXhdXSRmKVxufVxuXG4jIEdldCB0aGUgaW50ZXJwb2xhdGVkIGludGVuc2l0eSB2YWx1ZXMgZ2l2ZW4gdGhlIHBocmFzZSBuYW1lXG4jIChpbnRlbnNpdHkgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3RzaSA8LWZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfaXRzX2ludGVycFtbaW5kZXhdXSRpKVxufVxuYGBgIn0= -->
-<pre class="r"><code>
-# Gets the interpolated prosogram object
-get_ref_psgs_interp &lt;- function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_psgs_interp[[index]])
-}
-
-# A function that gets the duration given the phrase name
-get_ref_duration &lt;- function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_info$duration[index])
-}
-
-# Get the times stamps for interpolation given the phrase name
-get_ref_timestamps &lt;- function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_pts_interp[[index]]$t)
-}
-
-# Get the interpolated frequency values given the phrase name
-# (frequency time series)
-get_ref_tsf &lt;- function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_pts_interp[[index]]$f)
-}
-
-# Get the interpolated prosogram frequency values given the phrase name
-# (prosogram frequency time series)
-get_ref_ptsf &lt;- function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_psgs_interp[[index]]$f)
-}
-
-# Get the interpolated intensity values given the phrase name
-# (intensity time series)
-get_ref_tsi &lt;-function(phrase_name) {
-  index&lt;-match(phrase_name, ref_info$phrase)
-  if (is.na(index)) { return(NULL) }
-  return(ref_its_interp[[index]]$i)
-}</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG4jIEdldHMgdGhlIGludGVycG9sYXRlZCBwcm9zb2dyYW0gb2JqZWN0XG5nZXRfcmVmX3BzZ3NfaW50ZXJwIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfcHNnc19pbnRlcnBbW2luZGV4XV0pXG59XG5cbiMgQSBmdW5jdGlvbiB0aGF0IGdldHMgdGhlIGR1cmF0aW9uIGdpdmVuIHRoZSBwaHJhc2UgbmFtZVxuZ2V0X3JlZl9kdXJhdGlvbiA8LSBmdW5jdGlvbihwaHJhc2VfbmFtZSkge1xuICBpbmRleDwtbWF0Y2gocGhyYXNlX25hbWUsIHJlZl9pbmZvJHBocmFzZSlcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4ocmVmX2luZm8kZHVyYXRpb25baW5kZXhdKVxufVxuXG4jIEdldCB0aGUgdGltZXMgc3RhbXBzIGZvciBpbnRlcnBvbGF0aW9uIGdpdmVuIHRoZSBwaHJhc2UgbmFtZVxuZ2V0X3JlZl90aW1lc3RhbXBzIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfcHRzX2ludGVycFtbaW5kZXhdXSR0KVxufVxuXG4jIEdldCB0aGUgaW50ZXJwb2xhdGVkIGZyZXF1ZW5jeSB2YWx1ZXMgZ2l2ZW4gdGhlIHBocmFzZSBuYW1lXG4jIChmcmVxdWVuY3kgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3RzZiA8LSBmdW5jdGlvbihwaHJhc2VfbmFtZSkge1xuICBpbmRleDwtbWF0Y2gocGhyYXNlX25hbWUsIHJlZl9pbmZvJHBocmFzZSlcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4ocmVmX3B0c19pbnRlcnBbW2luZGV4XV0kZilcbn1cblxuIyBHZXQgdGhlIGludGVycG9sYXRlZCBwcm9zb2dyYW0gZnJlcXVlbmN5IHZhbHVlcyBnaXZlbiB0aGUgcGhyYXNlIG5hbWVcbiMgKHByb3NvZ3JhbSBmcmVxdWVuY3kgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3B0c2YgPC0gZnVuY3Rpb24ocGhyYXNlX25hbWUpIHtcbiAgaW5kZXg8LW1hdGNoKHBocmFzZV9uYW1lLCByZWZfaW5mbyRwaHJhc2UpXG4gIGlmIChpcy5uYShpbmRleCkpIHsgcmV0dXJuKE5VTEwpIH1cbiAgcmV0dXJuKHJlZl9wc2dzX2ludGVycFtbaW5kZXhdXSRmKVxufVxuXG4jIEdldCB0aGUgaW50ZXJwb2xhdGVkIGludGVuc2l0eSB2YWx1ZXMgZ2l2ZW4gdGhlIHBocmFzZSBuYW1lXG4jIChpbnRlbnNpdHkgdGltZSBzZXJpZXMpXG5nZXRfcmVmX3RzaSA8LWZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gIGluZGV4PC1tYXRjaChwaHJhc2VfbmFtZSwgcmVmX2luZm8kcGhyYXNlKVxuICBpZiAoaXMubmEoaW5kZXgpKSB7IHJldHVybihOVUxMKSB9XG4gIHJldHVybihyZWZfaXRzX2ludGVycFtbaW5kZXhdXSRpKVxufVxuYGBgXG5gYGAifQ== -->
+<p><code>r</code>r</p>
+</div>
+<div id="gets-the-interpolated-prosogram-object" class="section level1">
+<h1>Gets the interpolated prosogram object</h1>
+<p>get_ref_psgs_interp &lt;- function(phrase_name) { index&lt;-match(phrase_name, ref_info$phrase) if (is.na(index)) { return(NULL) } return(ref_psgs_interp[[index]]) }</p>
+</div>
+<div id="a-function-that-gets-the-duration-given-the-phrase-name" class="section level1">
+<h1>A function that gets the duration given the phrase name</h1>
+<p>get_ref_duration &lt;- function(phrase_name) { index&lt;-match(phrase_name, ref_info<span class="math inline">\(phrase)  if (is.na(index)) { return(NULL) }  return(ref_info\)</span>duration[index]) }</p>
+</div>
+<div id="get-the-times-stamps-for-interpolation-given-the-phrase-name" class="section level1">
+<h1>Get the times stamps for interpolation given the phrase name</h1>
+<p>get_ref_timestamps &lt;- function(phrase_name) { index&lt;-match(phrase_name, ref_info<span class="math inline">\(phrase)  if (is.na(index)) { return(NULL) }  return(ref_pts_interp[[index]]\)</span>t) }</p>
+</div>
+<div id="get-the-interpolated-frequency-values-given-the-phrase-name" class="section level1">
+<h1>Get the interpolated frequency values given the phrase name</h1>
+</div>
+<div id="frequency-time-series" class="section level1">
+<h1>(frequency time series)</h1>
+<p>get_ref_tsf &lt;- function(phrase_name) { index&lt;-match(phrase_name, ref_info<span class="math inline">\(phrase)  if (is.na(index)) { return(NULL) }  return(ref_pts_interp[[index]]\)</span>f) }</p>
+</div>
+<div id="get-the-interpolated-prosogram-frequency-values-given-the-phrase-name" class="section level1">
+<h1>Get the interpolated prosogram frequency values given the phrase name</h1>
+</div>
+<div id="prosogram-frequency-time-series" class="section level1">
+<h1>(prosogram frequency time series)</h1>
+<p>get_ref_ptsf &lt;- function(phrase_name) { index&lt;-match(phrase_name, ref_info<span class="math inline">\(phrase)  if (is.na(index)) { return(NULL) }  return(ref_psgs_interp[[index]]\)</span>f) }</p>
+</div>
+<div id="get-the-interpolated-intensity-values-given-the-phrase-name" class="section level1">
+<h1>Get the interpolated intensity values given the phrase name</h1>
+</div>
+<div id="intensity-time-series" class="section level1">
+<h1>(intensity time series)</h1>
+<p>get_ref_tsi &lt;-function(phrase_name) { index&lt;-match(phrase_name, ref_info<span class="math inline">\(phrase)  if (is.na(index)) { return(NULL) }  return(ref_its_interp[[index]]\)</span>i) }</p>
+<pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Compare the Pearson’s Correlation values between Praat and Prosogoram frequency curves</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucm1zZV9wcmFhdF9wc2dfcmVmcyA8LSBkby5jYWxsKFwicmJpbmRcIiwgbGFwcGx5KHJlZl9waHJhc2VzLCBmdW5jdGlvbihlbHQpIHtcbiAgZ2V0X3Jtc2VfcHJhYXRfcHNnKGVsdClcbn0pKVssMV1cblxuYGBgIn0= -->
-<pre class="r"><code>rmse_praat_psg_refs &lt;- do.call(&quot;rbind&quot;, lapply(ref_phrases, function(elt) {
-  get_rmse_praat_psg(elt)
-}))[,1]
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxucm1zZV9wcmFhdF9wc2dfcmVmcyA8LSBkby5jYWxsKFxccmJpbmRcXCwgbGFwcGx5KHJlZl9waHJhc2VzLCBmdW5jdGlvbihlbHQpIHtcbiAgZ2V0X3Jtc2VfcHJhYXRfcHNnKGVsdClcbn0pKVssMV1cblxuYGBgXG5gYGAifQ== -->
+<p><code>r</code>r rmse_praat_psg_refs &lt;- do.call(, lapply(ref_phrases, function(elt) { get_rmse_praat_psg(elt) }))[,1]</p>
+<pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBtZXNzYWdlczpcbjE6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG4yOiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbiJ9 -->
 <pre><code>Warning messages:
@@ -1970,15 +1938,13 @@ get_ref_tsi &lt;-function(phrase_name) {
 <p>Compare Prosograms between pairs of phrases</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2QocHNnX3BhaXJzX2ludGVycCRybXNlKSAjMTEuMjIgICBcblxuYGBgIn0= -->
-<pre class="r"><code>sd(psg_pairs_interp$rmse) #11.22   
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc2QocHNnX3BhaXJzX2ludGVycCRybXNlKSAjMTEuMjIgICBcblxuYGBgXG5gYGAifQ== -->
+<p><code>r</code>r sd(psg_pairs_interp$rmse) #11.22</p>
+<pre><code></code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDAuOTEyNzA3NlxuIn0= -->
-<pre><code>[1] 0.9127076</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBtZXNzYWdlczpcbjE6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG4yOiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbiJ9 -->
-<pre><code>Warning messages:
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIDAuOTEyNzA3NlxuV2FybmluZyBtZXNzYWdlczpcbjE6IFVua25vd24gb3IgdW5pbml0aWFsaXNlZCBjb2x1bW46IGBmYC4gXG4yOiBVbmtub3duIG9yIHVuaW5pdGlhbGlzZWQgY29sdW1uOiBgc2NydWJgLiBcbiJ9 -->
+<pre><code>[1] 0.9127076
+Warning messages:
 1: Unknown or uninitialised column: `f`. 
 2: Unknown or uninitialised column: `scrub`. </code></pre>
 <!-- rnb-output-end -->
@@ -1987,27 +1953,11 @@ get_ref_tsi &lt;-function(phrase_name) {
 <p>Let’s plot the graphs with the lowest correlation value:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxucGxvdF9yZWZfY3VydmVzIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gICMgZmlyc3QgZ2V0IHRoZSBpbmZvXG4gIHByYWF0X3BpdGNoIDwtIGdldF9yZWZfdHNmKHBocmFzZV9uYW1lKVxuICBwcm9zb2dyYW1fcGl0Y2ggPC0gZ2V0X3JlZl9wdHNmKHBocmFzZV9uYW1lKVxuICBpbnRlbnNpdHkgPC0gZ2V0X3JlZl90c2kocGhyYXNlX25hbWUpXG4gIHRpbWVzdGFtcHMgPC0gZ2V0X3JlZl90aW1lc3RhbXBzKHBocmFzZV9uYW1lKVxuICBcbiAgIyBjb21iaW5lIGludG8gYSB0aWJibGVcbiAgcmVmX2RhdGEgPC0gdGliYmxlKGY9cHJhYXRfcGl0Y2gsIGk9aW50ZW5zaXR5LCBwc2cuZj1wcm9zb2dyYW1fcGl0Y2gsIHQ9dGltZXN0YW1wcylcbiAgXG4gICMgcGxvdFxuICBnZ3Bsb3QoZGF0YT1yZWZfZGF0YSwgYWVzKHg9dCwgeT1mKSkgK1xuICAgICAgZ2VvbV9saW5lKGFlcyhjb2xvcj1cXFByYWF0IFBpdGNoXFwpKSArXG4gICAgICBzY2FsZV9jb2xvcl9kaXNjcmV0ZShuYW1lID0gXFxEYXRhXFwpICArXG4gICAgICBnZW9tX2xpbmUoYWVzKHg9dCwgeT1pLCBjb2xvcj1cXEludGVuc2l0eVxcKSkgK1xuICAgICAgZ2VvbV9saW5lKGFlcyh4PXQsIHk9cHNnLmYsIGNvbG9yPVxcUHJvc29ncmFtIFBpdGNoXFwpKSArXG4gICAgICBsYWJzKHRpdGxlPVxcSW50ZXJwb2xhdGVkIHBpdGNoIHRpZXIgYW5kIGludGVuc2l0eSB0aWVyc1xcLCBzdWJ0aXRsZT1wYXN0ZShcXFBocmFzZTpcXCxwaHJhc2VfbmFtZSksXG4gICAgICAgICAgeD1cXHRpbWUgKHNlY29uZHMpXFwsXG4gICAgICAgICAgeT1cXEZyZXF1ZW5jeSAoSHopIGZvciBwaXRjaFxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r</p>
-<pre class="r"><code>plot_ref_curves &lt;- function(phrase_name) {
-  # first get the info
-  praat_pitch &lt;- get_ref_tsf(phrase_name)
-  prosogram_pitch &lt;- get_ref_ptsf(phrase_name)
-  intensity &lt;- get_ref_tsi(phrase_name)
-  timestamps &lt;- get_ref_timestamps(phrase_name)
-  
-  # combine into a tibble
-  ref_data &lt;- tibble(f=praat_pitch, i=intensity, psg.f=prosogram_pitch, t=timestamps)
-  
-  # plot
-  ggplot(data=ref_data, aes(x=t, y=f)) +
-      geom_line(aes(color=\Praat Pitch\)) +
-      scale_color_discrete(name = \Data\)  +
-      geom_line(aes(x=t, y=i, color=\Intensity\)) +
-      geom_line(aes(x=t, y=psg.f, color=\Prosogram Pitch\)) +
-      labs(title=\Interpolated pitch tier and intensity tiers\, subtitle=paste(\Phrase:\,phrase_name),
-          x=\time (seconds)\,
-          y=\Frequency (Hz) for pitch</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxucGxvdF9yZWZfY3VydmVzIDwtIGZ1bmN0aW9uKHBocmFzZV9uYW1lKSB7XG4gICMgZmlyc3QgZ2V0IHRoZSBpbmZvXG4gIHByYWF0X3BpdGNoIDwtIGdldF9yZWZfdHNmKHBocmFzZV9uYW1lKVxuICBwcm9zb2dyYW1fcGl0Y2ggPC0gZ2V0X3JlZl9wdHNmKHBocmFzZV9uYW1lKVxuICBpbnRlbnNpdHkgPC0gZ2V0X3JlZl90c2kocGhyYXNlX25hbWUpXG4gIHRpbWVzdGFtcHMgPC0gZ2V0X3JlZl90aW1lc3RhbXBzKHBocmFzZV9uYW1lKVxuICBcbiAgIyBjb21iaW5lIGludG8gYSB0aWJibGVcbiAgcmVmX2RhdGEgPC0gdGliYmxlKGY9cHJhYXRfcGl0Y2gsIGk9aW50ZW5zaXR5LCBwc2cuZj1wcm9zb2dyYW1fcGl0Y2gsIHQ9dGltZXN0YW1wcylcbiAgXG4gICMgcGxvdFxuICBnZ3Bsb3QoZGF0YT1yZWZfZGF0YSwgYWVzKHg9dCwgeT1mKSkgK1xuICAgICAgZ2VvbV9saW5lKGFlcyhjb2xvcj1cXFByYWF0IFBpdGNoXFwpKSArXG4gICAgICBzY2FsZV9jb2xvcl9kaXNjcmV0ZShuYW1lID0gXFxEYXRhXFwpICArXG4gICAgICBnZW9tX2xpbmUoYWVzKHg9dCwgeT1pLCBjb2xvcj1cXEludGVuc2l0eVxcKSkgK1xuICAgICAgZ2VvbV9saW5lKGFlcyh4PXQsIHk9cHNnLmYsIGNvbG9yPVxcUHJvc29ncmFtIFBpdGNoXFwpKSArXG4gICAgICBsYWJzKHRpdGxlPVxcSW50ZXJwb2xhdGVkIHBpdGNoIHRpZXIgYW5kIGludGVuc2l0eSB0aWVyc1xcLCBzdWJ0aXRsZT1wYXN0ZShcXFBocmFzZTpcXCxwaHJhc2VfbmFtZSksXG4gICAgICAgICAgeD1cXHRpbWUgKHNlY29uZHMpXFwsXG4gICAgICAgICAgeT1cXEZyZXF1ZW5jeSAoSHopIGZvciBwaXRjaFxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r <code>r</code>r plot_ref_curves &lt;- function(phrase_name) { # first get the info praat_pitch &lt;- get_ref_tsf(phrase_name) prosogram_pitch &lt;- get_ref_ptsf(phrase_name) intensity &lt;- get_ref_tsi(phrase_name) timestamps &lt;- get_ref_timestamps(phrase_name)</p>
+<p># combine into a tibble ref_data &lt;- tibble(f=praat_pitch, i=intensity, psg.f=prosogram_pitch, t=timestamps)</p>
+<p># plot ggplot(data=ref_data, aes(x=t, y=f)) + geom_line(aes(color=Pitch)) + scale_color_discrete(name = ) + geom_line(aes(x=t, y=i, color=)) + geom_line(aes(x=t, y=psg.f, color=Pitch)) + labs(title=pitch tier and intensity tiers, subtitle=paste(:,phrase_name), x=(seconds), y=(Hz) for pitch</p>
+<pre><code></code></pre>
 <p>```</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -2015,9 +1965,9 @@ get_ref_tsi &lt;-function(phrase_name) {
 <p>These two curves had the lowest correlation: 0.87</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxucGxvdF9yZWZfY3VydmVzKHJlZl9waHJhc2VzWzFdKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>plot_ref_curves(ref_phrases[1])</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxucGxvdF9yZWZfY3VydmVzKHJlZl9waHJhc2VzWzFdKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r plot_ref_curves(ref_phrases[1])</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-plot-begin -->
@@ -2030,113 +1980,76 @@ get_ref_tsi &lt;-function(phrase_name) {
 <h1>Comparing Gestures</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxubGlicmFyeShcXGpzb25saXRlXFwpXG5saWJyYXJ5KFxcdGltZXRrXFwpXG5cbiMgR2V0IGFsbCB0aGUgZmlsZW5hbWVzIG9mIHRoZSBnZXN0dXJlc1xucGF0aD1cXC4uL2RhdGEvMjFfMDItc3R1ZHkvYWxsX2dlc3R1cmVzL1xcXG5zZXR3ZChwYXRoKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>library(\jsonlite\)
-library(\timetk\)
-
-# Get all the filenames of the gestures
-path=\../data/21_02-study/all_gestures/\
-setwd(path)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxubGlicmFyeShcXGpzb25saXRlXFwpXG5saWJyYXJ5KFxcdGltZXRrXFwpXG5cbiMgR2V0IGFsbCB0aGUgZmlsZW5hbWVzIG9mIHRoZSBnZXN0dXJlc1xucGF0aD1cXC4uL2RhdGEvMjFfMDItc3R1ZHkvYWxsX2dlc3R1cmVzL1xcXG5zZXR3ZChwYXRoKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r library() library()</p>
+</div>
+<div id="get-all-the-filenames-of-the-gestures" class="section level1">
+<h1>Get all the filenames of the gestures</h1>
+<p>path=../data/21_02-study/all_gestures/<br />
+setwd(path)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdhcyBjaGFuZ2VkIHRvIC9Vc2Vycy94eC9HaXRodWIvR2VwZXRvUi9kYXRhLzIxXzAyLXN0dWR5L2FsbF9nZXN0dXJlcyBpbnNpZGUgYSBub3RlYm9vayBjaHVuay4gVGhlIHdvcmtpbmcgZGlyZWN0b3J5IHdpbGwgYmUgcmVzZXQgd2hlbiB0aGUgY2h1bmsgaXMgZmluaXNoZWQgcnVubmluZy4gVXNlIHRoZSBrbml0ciByb290LmRpciBvcHRpb24gaW4gdGhlIHNldHVwIGNodW5rIHRvIGNoYW5nZSB0aGUgd29ya2luZyBkaXJlY3RvcnkgZm9yIG5vdGVib29rIGNodW5rcy5cbiJ9 -->
 <pre><code>The working directory was changed to /Users/xx/Github/GepetoR/data/21_02-study/all_gestures inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks.</code></pre>
 <!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuZ2VzdF9maWxlbmFtZXMgPC0gZGlyKHBhdHRlcm49XFxcXFxcLmdlc3QkXFwpXG5uYW1lIDwtIGdlc3RfZmlsZW5hbWVzWzFdXG5cbiMgRXh0cmFjdCB0aGUgcmVmZXJlbmNlIHBocmFzZSBmcm9tIHRoZSB3aG9sZSBnZXN0dXJlIG5hbWVcbmdldF9yZWZfbmFtZSA8LSBmdW5jdGlvbihnZXN0X25hbWUpIHtcbiAgcmV0dXJuKHN0cl9zcGxpdChnZXN0X25hbWUsICctJylbWzFdXVszXSlcbn1cblxuIyBGaW5kcyB0aGUgbnVtYmVyIG9mIHNhbXBsZXMgaW4gdGhlIHJlZmVyZW5jZSBmb3IgdGhlIHBhcnRpY3VsYXIgZ2VzdHVyZVxuZ2V0X251bV9zYW1wbGVzIDwtZnVuY3Rpb24oZ2VzdF9uYW1lKSB7XG4jIEZpbmQgaG93IG1hbnkgc2FtcGxlcyBhcmUgaW4gdGhlIHJlZiBmaWxlXG4gIHJlZl9waHJhc2UgPC0gZ2V0X3JlZl9uYW1lKGdlc3RfbmFtZSkgIFxuICByZXR1cm4obGVuZ3RoKGdldF9yZWZfdGltZXN0YW1wcyhyZWZfcGhyYXNlKSkpXG59XG5cbiMgTG9hZCBnZXN0IGRhdGEgYW5kIGNvbnZlcnQgdGltZVxucHJlcF9nZXN0PC1mdW5jdGlvbihnZXN0KSB7XG4gICMgQ29udmVydCB0aW1lIHRvIHBlcmNlbnRhZ2VcbiAgbWF4X3RpbWUgPC0gdGFpbChnZXN0JHRfZW5kLCAxKVxuICBnZXN0IDwtIGdlc3QgJT4lIG11dGF0ZShwZXJjZW50PXRfaW5pdC9tYXhfdGltZSkgJT4lXG4gICAgICAgICAgICAgIyBvbmx5IGtlZXAgbG9jYWwgc2NydWIgdGltZSBhbmQgdGhlIGZyZXEgdmFsdWVzIFxuICAgICAgICAgICAgIHNlbGVjdChwZXJjZW50LCBmLCBzY3J1YilcbiAgcmV0dXJuKGdlc3QpXG59XG5cbiMgYXJnczogZGF0YSAtIHRpYmJsZSB3aXRoIGNvbHVtbnM6IHBlcmNlbnQgKCUgb2Ygd2F5IHRocm91Z2ggc2lnbmFsKSAmIGYgKGZyZXF1ZW5jeSBhdCB0aGF0IHBvaW50KSwgXG4jIG51bV9zYW1wbGVzIC0gIyBlcXVhbGx5IHNwYWNlZCBwb2ludHMgaW4gb3V0cHRcbiMgcmV0dXJuczogdGliYmxlIHdpdGggY29sdXVtbnMgaW5kZXggJiB2YWx1ZS4gaW5kZXggaGFzIG51bV9zYW1wbGVzIGVxdWFsbHkgc3BhY2VkIHBvaW50cyBmcm9tIDAgdG8gMVxuIyB2YWx1ZXMgYXJlIGludGVycGxvbGF0ZWQgZnJvbSBmXG5nZXRfaW50ZXJwb2xhdGVkX2RhdGEgPC0gZnVuY3Rpb24oZGF0YSwgbnVtX3NhbXBsZXMpIHtcbiAgIyBBZGQgZW5kIHBvaW50cyBhdCAwIGFuZCAxIGlmIHRoZXkgZG9uJ3QgYWxyZWFkeSBleGlzdCwgZHVwbGljYXRpbmcgZmlyc3QgYW5kIGxhc3QgYXZhaWxhYmxlIGYgdmFsdWVcbiAgaWYgKCEgMCAlaW4lIGRhdGEkcGVyY2VudCkge1xuICAgIGRhdGEgPC0gYWRkX3JvdyhkYXRhLCBwZXJjZW50PTAsIGY9ZGF0YSRmWzFdLCBzY3J1Yj1kYXRhJHNjcnViWzFdLCAuYmVmb3JlPTEpXG4gIH1cbiAgaWYgKCEgKDEgJWluJSBkYXRhJHBlcmNlbnQpKSB7XG4gICAgZGF0YSA8LSBhZGRfcm93KGRhdGEsIHBlcmNlbnQ9MSwgZj10YWlsKGRhdGEkZiwgMSksIHNjcnViPXRhaWwoZGF0YSRzY3J1YiwgMSkpXG4gIH1cbiAgICAgICAgICBcbiAgIyBDcmVhdGUgYSB0aWJibGUgd2l0aCBhbGwgdGhlIHBvaW50cyB3ZSBhcmUgaW50ZXJlc3RlZCBpbiwgd2l0aCBOQSB2YWx1ZXNcbiAgc2FtcGxlX3BvaW50cyA8LSB0aWJibGUocGVyY2VudD1zZXEoMCwgMSwgbGVuZ3RoLm91dD1udW1fc2FtcGxlcyksIGY9TkEsIHNjcnViPU5BKSBcbiAgXG4gICMgQWRkIGFsbCB0aGUgc2FtcGxlIHBvaW50cyB3aG9zZSBzY3J1YiB2YWx1ZSBkb2Vzbid0IGFscmVhZHkgZXhpc3QgaW4gZGF0YVxuICBkYXRhMiA8LSBiaW5kX3Jvd3MoZGF0YSwgZmlsdGVyKHNhbXBsZV9wb2ludHMsICEocGVyY2VudCAlaW4lIGRhdGEkcGVyY2VudCkpKSAgJT4lXG4gICAgIyBUaGVuIHNvcnQgYnkgc2NydWIgY29sdW1ucyAgXG4gICAgYXJyYW5nZShwZXJjZW50KVxuICBcbiAgIyBUcmFuc2Zvcm0gaW50byB6b28gb2JqZWN0IHRvIGZpbGwgdGhlIE5BcyB3aXRoIGludGVycG9sYXRlZCB2YWx1ZXNcbiAgeiA8LSByZWFkLnpvbyhkYXRhMikgJT4lIG5hLmFwcHJveCAlPiVcbiAgIHRrX3RibChwcmVzZXJ2ZV9pbmRleD1UUlVFLCByZW5hbWVfaW5kZXg9XFxpbmRleFxcKSAlPiVcbiAgIGZpbHRlcihpbmRleCAlaW4lIHNhbXBsZV9wb2ludHMkcGVyY2VudClcbiAgXG4gIHJldHVybih6KVxufVxuXG5zZXR3ZChcXC4uLy4uLy4uL25vdGVib29rcy9cXClcblxuIyBBIHZlY3RvciB3aXRoIGp1c3QgdGhlIG5hbWVzIG9mIHRoZSBwaHJhc2VzICh3L28gLmpzb24gZXh0ZW5zaW9uKVxuZ2VzdHMgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0X2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIHN0cl9zcGxpdChlbHQsICcuZ2VzdCcpW1sxXV1bMV1cbn0pKVssMV1cblxuIyBPcmlnaW5hbCBnZXN0dXJlc1xuZ2VzdF9vcmlnaW5hbHMgPC0gbGFwcGx5KGdlc3RfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgcmVzdWx0IDwtIGZyb21KU09OKHBhc3RlMChwYXRoLCBlbHQpKSAlPiUgYXNfdGliYmxlKCkgJT4lIFxuICAjIE5PVEUgVEhJUyBFWFRSQSBTVEVQICAgICAgXG4gIHByZXBfZ2VzdCgpXG59KVxuXG4jIFJldHVybnMgdGhlIGluZGV4IG9mIHRoZSBnZXN0dXJlXG5nZXRfZ2VzdF9pbmRleCA8LSBmdW5jdGlvbihnZXN0X25hbWUpIHtcbiAgaW5kZXggPC0gbWF0Y2goZ2VzdF9uYW1lLCBnZXN0cylcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4oaW5kZXgpXG59XG5cbiMgSW50ZXJwb2xhdGVkIHRpbWUgc2VyaWVzIGRhdGEgb2YgZiAmIHNjcnViIHZhbHVlXG5nZXN0X2ludGVycHMgPC0gbGFwcGx5KGdlc3RzLCBmdW5jdGlvbihlbHQpIHtcbiAgIyBFbHQgaXMgdGhlIG5hbWUgb2YgYSBnZXN0dXJlLiBXZSB3YW50IHRvIGZpbmQgaXRzIGluZGV4IGZpcnN0XG4gIGluZGV4PC1nZXRfZ2VzdF9pbmRleChlbHQpXG4gIFxuICAjIEluIG9yZGVyIHRvIGdldCB0aGUgYWN0dWFsIGdlc3R1cmUgZGF0YVxuICBnZXN0X29yaWc8LWdlc3Rfb3JpZ2luYWxzW1tpbmRleF1dXG4gIFxuICAjIEdldHMgbnVtYmVyIG9mIHNhbXBsZXMgZm9yIHRoZSBnZXN0LCB3aGljaCBpcyBjb21wdXRlZCBmcm9tIHRoZSByZWZlcmVuY2VcbiAgbnVtX3NhbXBsZXM8LWdldF9udW1fc2FtcGxlcyhlbHQpXG4gIFxuICAjIERvIHRoZSBpbnRlcnBvbGF0aW9uICBcbiAgZ2VzdF9pbnRlcnA8LWdldF9pbnRlcnBvbGF0ZWRfZGF0YShnZXN0X29yaWcsIG51bV9zYW1wbGVzKVxuICBcbiAgcmV0dXJuKGdlc3RfaW50ZXJwKVxufSlcblxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>gest_filenames &lt;- dir(pattern=\\\.gest$\)
-name &lt;- gest_filenames[1]
-
-# Extract the reference phrase from the whole gesture name
-get_ref_name &lt;- function(gest_name) {
-  return(str_split(gest_name, '-')[[1]][3])
-}
-
-# Finds the number of samples in the reference for the particular gesture
-get_num_samples &lt;-function(gest_name) {
-# Find how many samples are in the ref file
-  ref_phrase &lt;- get_ref_name(gest_name)  
-  return(length(get_ref_timestamps(ref_phrase)))
-}
-
-# Load gest data and convert time
-prep_gest&lt;-function(gest) {
-  # Convert time to percentage
-  max_time &lt;- tail(gest$t_end, 1)
-  gest &lt;- gest %&gt;% mutate(percent=t_init/max_time) %&gt;%
-             # only keep local scrub time and the freq values 
-             select(percent, f, scrub)
-  return(gest)
-}
-
-# args: data - tibble with columns: percent (% of way through signal) &amp; f (frequency at that point), 
-# num_samples - # equally spaced points in outpt
-# returns: tibble with coluumns index &amp; value. index has num_samples equally spaced points from 0 to 1
-# values are interplolated from f
-get_interpolated_data &lt;- function(data, num_samples) {
-  # Add end points at 0 and 1 if they don't already exist, duplicating first and last available f value
-  if (! 0 %in% data$percent) {
-    data &lt;- add_row(data, percent=0, f=data$f[1], scrub=data$scrub[1], .before=1)
-  }
-  if (! (1 %in% data$percent)) {
-    data &lt;- add_row(data, percent=1, f=tail(data$f, 1), scrub=tail(data$scrub, 1))
-  }
-          
-  # Create a tibble with all the points we are interested in, with NA values
-  sample_points &lt;- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA) 
-  
-  # Add all the sample points whose scrub value doesn't already exist in data
-  data2 &lt;- bind_rows(data, filter(sample_points, !(percent %in% data$percent)))  %&gt;%
-    # Then sort by scrub columns  
-    arrange(percent)
-  
-  # Transform into zoo object to fill the NAs with interpolated values
-  z &lt;- read.zoo(data2) %&gt;% na.approx %&gt;%
-   tk_tbl(preserve_index=TRUE, rename_index=\index\) %&gt;%
-   filter(index %in% sample_points$percent)
-  
-  return(z)
-}
-
-setwd(\../../../notebooks/\)
-
-# A vector with just the names of the phrases (w/o .json extension)
-gests &lt;- do.call(\rbind\, lapply(gest_filenames, function(elt) {
-  str_split(elt, '.gest')[[1]][1]
-}))[,1]
-
-# Original gestures
-gest_originals &lt;- lapply(gest_filenames, function(elt) {
-  result &lt;- fromJSON(paste0(path, elt)) %&gt;% as_tibble() %&gt;% 
-  # NOTE THIS EXTRA STEP      
-  prep_gest()
-})
-
-# Returns the index of the gesture
-get_gest_index &lt;- function(gest_name) {
-  index &lt;- match(gest_name, gests)
-  if (is.na(index)) { return(NULL) }
-  return(index)
-}
-
-# Interpolated time series data of f &amp; scrub value
-gest_interps &lt;- lapply(gests, function(elt) {
-  # Elt is the name of a gesture. We want to find its index first
-  index&lt;-get_gest_index(elt)
-  
-  # In order to get the actual gesture data
-  gest_orig&lt;-gest_originals[[index]]
-  
-  # Gets number of samples for the gest, which is computed from the reference
-  num_samples&lt;-get_num_samples(elt)
-  
-  # Do the interpolation  
-  gest_interp&lt;-get_interpolated_data(gest_orig, num_samples)
-  
-  return(gest_interp)
-})
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuZ2VzdF9maWxlbmFtZXMgPC0gZGlyKHBhdHRlcm49XFxcXFxcLmdlc3QkXFwpXG5uYW1lIDwtIGdlc3RfZmlsZW5hbWVzWzFdXG5cbiMgRXh0cmFjdCB0aGUgcmVmZXJlbmNlIHBocmFzZSBmcm9tIHRoZSB3aG9sZSBnZXN0dXJlIG5hbWVcbmdldF9yZWZfbmFtZSA8LSBmdW5jdGlvbihnZXN0X25hbWUpIHtcbiAgcmV0dXJuKHN0cl9zcGxpdChnZXN0X25hbWUsICctJylbWzFdXVszXSlcbn1cblxuIyBGaW5kcyB0aGUgbnVtYmVyIG9mIHNhbXBsZXMgaW4gdGhlIHJlZmVyZW5jZSBmb3IgdGhlIHBhcnRpY3VsYXIgZ2VzdHVyZVxuZ2V0X251bV9zYW1wbGVzIDwtZnVuY3Rpb24oZ2VzdF9uYW1lKSB7XG4jIEZpbmQgaG93IG1hbnkgc2FtcGxlcyBhcmUgaW4gdGhlIHJlZiBmaWxlXG4gIHJlZl9waHJhc2UgPC0gZ2V0X3JlZl9uYW1lKGdlc3RfbmFtZSkgIFxuICByZXR1cm4obGVuZ3RoKGdldF9yZWZfdGltZXN0YW1wcyhyZWZfcGhyYXNlKSkpXG59XG5cbiMgTG9hZCBnZXN0IGRhdGEgYW5kIGNvbnZlcnQgdGltZVxucHJlcF9nZXN0PC1mdW5jdGlvbihnZXN0KSB7XG4gICMgQ29udmVydCB0aW1lIHRvIHBlcmNlbnRhZ2VcbiAgbWF4X3RpbWUgPC0gdGFpbChnZXN0JHRfZW5kLCAxKVxuICBnZXN0IDwtIGdlc3QgJT4lIG11dGF0ZShwZXJjZW50PXRfaW5pdC9tYXhfdGltZSkgJT4lXG4gICAgICAgICAgICAgIyBvbmx5IGtlZXAgbG9jYWwgc2NydWIgdGltZSBhbmQgdGhlIGZyZXEgdmFsdWVzIFxuICAgICAgICAgICAgIHNlbGVjdChwZXJjZW50LCBmLCBzY3J1YilcbiAgcmV0dXJuKGdlc3QpXG59XG5cbiMgYXJnczogZGF0YSAtIHRpYmJsZSB3aXRoIGNvbHVtbnM6IHBlcmNlbnQgKCUgb2Ygd2F5IHRocm91Z2ggc2lnbmFsKSAmIGYgKGZyZXF1ZW5jeSBhdCB0aGF0IHBvaW50KSwgXG4jIG51bV9zYW1wbGVzIC0gIyBlcXVhbGx5IHNwYWNlZCBwb2ludHMgaW4gb3V0cHRcbiMgcmV0dXJuczogdGliYmxlIHdpdGggY29sdXVtbnMgaW5kZXggJiB2YWx1ZS4gaW5kZXggaGFzIG51bV9zYW1wbGVzIGVxdWFsbHkgc3BhY2VkIHBvaW50cyBmcm9tIDAgdG8gMVxuIyB2YWx1ZXMgYXJlIGludGVycGxvbGF0ZWQgZnJvbSBmXG5nZXRfaW50ZXJwb2xhdGVkX2RhdGEgPC0gZnVuY3Rpb24oZGF0YSwgbnVtX3NhbXBsZXMpIHtcbiAgIyBBZGQgZW5kIHBvaW50cyBhdCAwIGFuZCAxIGlmIHRoZXkgZG9uJ3QgYWxyZWFkeSBleGlzdCwgZHVwbGljYXRpbmcgZmlyc3QgYW5kIGxhc3QgYXZhaWxhYmxlIGYgdmFsdWVcbiAgaWYgKCEgMCAlaW4lIGRhdGEkcGVyY2VudCkge1xuICAgIGRhdGEgPC0gYWRkX3JvdyhkYXRhLCBwZXJjZW50PTAsIGY9ZGF0YSRmWzFdLCBzY3J1Yj1kYXRhJHNjcnViWzFdLCAuYmVmb3JlPTEpXG4gIH1cbiAgaWYgKCEgKDEgJWluJSBkYXRhJHBlcmNlbnQpKSB7XG4gICAgZGF0YSA8LSBhZGRfcm93KGRhdGEsIHBlcmNlbnQ9MSwgZj10YWlsKGRhdGEkZiwgMSksIHNjcnViPXRhaWwoZGF0YSRzY3J1YiwgMSkpXG4gIH1cbiAgICAgICAgICBcbiAgIyBDcmVhdGUgYSB0aWJibGUgd2l0aCBhbGwgdGhlIHBvaW50cyB3ZSBhcmUgaW50ZXJlc3RlZCBpbiwgd2l0aCBOQSB2YWx1ZXNcbiAgc2FtcGxlX3BvaW50cyA8LSB0aWJibGUocGVyY2VudD1zZXEoMCwgMSwgbGVuZ3RoLm91dD1udW1fc2FtcGxlcyksIGY9TkEsIHNjcnViPU5BKSBcbiAgXG4gICMgQWRkIGFsbCB0aGUgc2FtcGxlIHBvaW50cyB3aG9zZSBzY3J1YiB2YWx1ZSBkb2Vzbid0IGFscmVhZHkgZXhpc3QgaW4gZGF0YVxuICBkYXRhMiA8LSBiaW5kX3Jvd3MoZGF0YSwgZmlsdGVyKHNhbXBsZV9wb2ludHMsICEocGVyY2VudCAlaW4lIGRhdGEkcGVyY2VudCkpKSAgJT4lXG4gICAgIyBUaGVuIHNvcnQgYnkgc2NydWIgY29sdW1ucyAgXG4gICAgYXJyYW5nZShwZXJjZW50KVxuICBcbiAgIyBUcmFuc2Zvcm0gaW50byB6b28gb2JqZWN0IHRvIGZpbGwgdGhlIE5BcyB3aXRoIGludGVycG9sYXRlZCB2YWx1ZXNcbiAgeiA8LSByZWFkLnpvbyhkYXRhMikgJT4lIG5hLmFwcHJveCAlPiVcbiAgIHRrX3RibChwcmVzZXJ2ZV9pbmRleD1UUlVFLCByZW5hbWVfaW5kZXg9XFxpbmRleFxcKSAlPiVcbiAgIGZpbHRlcihpbmRleCAlaW4lIHNhbXBsZV9wb2ludHMkcGVyY2VudClcbiAgXG4gIHJldHVybih6KVxufVxuXG5zZXR3ZChcXC4uLy4uLy4uL25vdGVib29rcy9cXClcblxuIyBBIHZlY3RvciB3aXRoIGp1c3QgdGhlIG5hbWVzIG9mIHRoZSBwaHJhc2VzICh3L28gLmpzb24gZXh0ZW5zaW9uKVxuZ2VzdHMgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0X2ZpbGVuYW1lcywgZnVuY3Rpb24oZWx0KSB7XG4gIHN0cl9zcGxpdChlbHQsICcuZ2VzdCcpW1sxXV1bMV1cbn0pKVssMV1cblxuIyBPcmlnaW5hbCBnZXN0dXJlc1xuZ2VzdF9vcmlnaW5hbHMgPC0gbGFwcGx5KGdlc3RfZmlsZW5hbWVzLCBmdW5jdGlvbihlbHQpIHtcbiAgcmVzdWx0IDwtIGZyb21KU09OKHBhc3RlMChwYXRoLCBlbHQpKSAlPiUgYXNfdGliYmxlKCkgJT4lIFxuICAjIE5PVEUgVEhJUyBFWFRSQSBTVEVQICAgICAgXG4gIHByZXBfZ2VzdCgpXG59KVxuXG4jIFJldHVybnMgdGhlIGluZGV4IG9mIHRoZSBnZXN0dXJlXG5nZXRfZ2VzdF9pbmRleCA8LSBmdW5jdGlvbihnZXN0X25hbWUpIHtcbiAgaW5kZXggPC0gbWF0Y2goZ2VzdF9uYW1lLCBnZXN0cylcbiAgaWYgKGlzLm5hKGluZGV4KSkgeyByZXR1cm4oTlVMTCkgfVxuICByZXR1cm4oaW5kZXgpXG59XG5cbiMgSW50ZXJwb2xhdGVkIHRpbWUgc2VyaWVzIGRhdGEgb2YgZiAmIHNjcnViIHZhbHVlXG5nZXN0X2ludGVycHMgPC0gbGFwcGx5KGdlc3RzLCBmdW5jdGlvbihlbHQpIHtcbiAgIyBFbHQgaXMgdGhlIG5hbWUgb2YgYSBnZXN0dXJlLiBXZSB3YW50IHRvIGZpbmQgaXRzIGluZGV4IGZpcnN0XG4gIGluZGV4PC1nZXRfZ2VzdF9pbmRleChlbHQpXG4gIFxuICAjIEluIG9yZGVyIHRvIGdldCB0aGUgYWN0dWFsIGdlc3R1cmUgZGF0YVxuICBnZXN0X29yaWc8LWdlc3Rfb3JpZ2luYWxzW1tpbmRleF1dXG4gIFxuICAjIEdldHMgbnVtYmVyIG9mIHNhbXBsZXMgZm9yIHRoZSBnZXN0LCB3aGljaCBpcyBjb21wdXRlZCBmcm9tIHRoZSByZWZlcmVuY2VcbiAgbnVtX3NhbXBsZXM8LWdldF9udW1fc2FtcGxlcyhlbHQpXG4gIFxuICAjIERvIHRoZSBpbnRlcnBvbGF0aW9uICBcbiAgZ2VzdF9pbnRlcnA8LWdldF9pbnRlcnBvbGF0ZWRfZGF0YShnZXN0X29yaWcsIG51bV9zYW1wbGVzKVxuICBcbiAgcmV0dXJuKGdlc3RfaW50ZXJwKVxufSlcblxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r gest_filenames &lt;- dir(pattern=\.gest$) name &lt;- gest_filenames[1]</p>
+</div>
+<div id="extract-the-reference-phrase-from-the-whole-gesture-name" class="section level1">
+<h1>Extract the reference phrase from the whole gesture name</h1>
+<p>get_ref_name &lt;- function(gest_name) { return(str_split(gest_name, ‘-’)[[1]][3]) }</p>
+</div>
+<div id="finds-the-number-of-samples-in-the-reference-for-the-particular-gesture" class="section level1">
+<h1>Finds the number of samples in the reference for the particular gesture</h1>
+<p>get_num_samples &lt;-function(gest_name) { # Find how many samples are in the ref file ref_phrase &lt;- get_ref_name(gest_name)<br />
+return(length(get_ref_timestamps(ref_phrase))) }</p>
+</div>
+<div id="load-gest-data-and-convert-time" class="section level1">
+<h1>Load gest data and convert time</h1>
+<p>prep_gest&lt;-function(gest) { # Convert time to percentage max_time &lt;- tail(gest$t_end, 1) gest &lt;- gest %&gt;% mutate(percent=t_init/max_time) %&gt;% # only keep local scrub time and the freq values select(percent, f, scrub) return(gest) }</p>
+</div>
+<div id="args-data---tibble-with-columns-percent-of-way-through-signal-f-frequency-at-that-point" class="section level1">
+<h1>args: data - tibble with columns: percent (% of way through signal) &amp; f (frequency at that point),</h1>
+</div>
+<div id="num_samples---equally-spaced-points-in-outpt" class="section level1">
+<h1>num_samples - # equally spaced points in outpt</h1>
+</div>
+<div id="returns-tibble-with-coluumns-index-value.-index-has-num_samples-equally-spaced-points-from-0-to-1" class="section level1">
+<h1>returns: tibble with coluumns index &amp; value. index has num_samples equally spaced points from 0 to 1</h1>
+</div>
+<div id="values-are-interplolated-from-f" class="section level1">
+<h1>values are interplolated from f</h1>
+<p>get_interpolated_data &lt;- function(data, num_samples) { # Add end points at 0 and 1 if they don’t already exist, duplicating first and last available f value if (! 0 %in% data<span class="math inline">\(percent) {  data &lt;- add_row(data, percent=0, f=data\)</span>f[1], scrub=data<span class="math inline">\(scrub[1], .before=1)  }  if (! (1 %in% data\)</span>percent)) { data &lt;- add_row(data, percent=1, f=tail(data<span class="math inline">\(f, 1), scrub=tail(data\)</span>scrub, 1)) }</p>
+<p># Create a tibble with all the points we are interested in, with NA values sample_points &lt;- tibble(percent=seq(0, 1, length.out=num_samples), f=NA, scrub=NA)</p>
+<p># Add all the sample points whose scrub value doesn’t already exist in data data2 &lt;- bind_rows(data, filter(sample_points, !(percent %in% data$percent))) %&gt;% # Then sort by scrub columns<br />
+arrange(percent)</p>
+<p># Transform into zoo object to fill the NAs with interpolated values z &lt;- read.zoo(data2) %&gt;% na.approx %&gt;% tk_tbl(preserve_index=TRUE, rename_index=) %&gt;% filter(index %in% sample_points$percent)</p>
+<p>return(z) }</p>
+<p>setwd(../../../notebooks/)</p>
+</div>
+<div id="a-vector-with-just-the-names-of-the-phrases-wo-.json-extension" class="section level1">
+<h1>A vector with just the names of the phrases (w/o .json extension)</h1>
+<p>gests &lt;- do.call(, lapply(gest_filenames, function(elt) { str_split(elt, ‘.gest’)[[1]][1] }))[,1]</p>
+</div>
+<div id="original-gestures" class="section level1">
+<h1>Original gestures</h1>
+<p>gest_originals &lt;- lapply(gest_filenames, function(elt) { result &lt;- fromJSON(paste0(path, elt)) %&gt;% as_tibble() %&gt;% # NOTE THIS EXTRA STEP<br />
+prep_gest() })</p>
+</div>
+<div id="returns-the-index-of-the-gesture" class="section level1">
+<h1>Returns the index of the gesture</h1>
+<p>get_gest_index &lt;- function(gest_name) { index &lt;- match(gest_name, gests) if (is.na(index)) { return(NULL) } return(index) }</p>
+</div>
+<div id="interpolated-time-series-data-of-f-scrub-value" class="section level1">
+<h1>Interpolated time series data of f &amp; scrub value</h1>
+<p>gest_interps &lt;- lapply(gests, function(elt) { # Elt is the name of a gesture. We want to find its index first index&lt;-get_gest_index(elt)</p>
+<p># In order to get the actual gesture data gest_orig&lt;-gest_originals[[index]]</p>
+<p># Gets number of samples for the gest, which is computed from the reference num_samples&lt;-get_num_samples(elt)</p>
+<p># Do the interpolation<br />
+gest_interp&lt;-get_interpolated_data(gest_orig, num_samples)</p>
+<p>return(gest_interp) })</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -2144,15 +2057,9 @@ gest_interps &lt;- lapply(gests, function(elt) {
 <p>Organize gestures into a Tibble</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuZ2VzdHNfZGF0YSA8LSBkby5jYWxsKFxccmJpbmRcXCwgbGFwcGx5KGdlc3RzLCBmdW5jdGlvbihlbHQpIHtcbiAgcGFydHM8LXN0cl9zcGxpdChlbHQsICctJylbWzFdXVxuICByZWZfcGhyYXNlIDwtIHBhcnRzWzNdXG4gIHBocmFzZV9pZCA8LSBzdHJfc3BsaXQocmVmX3BocmFzZSwgJ18nKVtbMV1dWzFdXG4gIHRpYmJsZShwaHJhc2U9cmVmX3BocmFzZSwgcGlkPXBocmFzZV9pZCwgdHlwZT1wYXJ0c1syXSwgc3ViamVjdD1wYXJ0c1s0XSwgb3JkZXI9cGFydHNbMV0sIGdlc3RfbmFtZT1lbHQpXG59KSkgJT4lIG11dGF0ZShpZCA9IHJvd19udW1iZXIoKSkgJT4lXG4gIHNlbGVjdChzdWJqZWN0LCB0eXBlLCBwaWQsIG9yZGVyLGdlc3RfbmFtZSwgcGhyYXNlLCBpZClcbmBgYFxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r</p>
-<pre class="r"><code>gests_data &lt;- do.call(\rbind\, lapply(gests, function(elt) {
-  parts&lt;-str_split(elt, '-')[[1]]
-  ref_phrase &lt;- parts[3]
-  phrase_id &lt;- str_split(ref_phrase, '_')[[1]][1]
-  tibble(phrase=ref_phrase, pid=phrase_id, type=parts[2], subject=parts[4], order=parts[1], gest_name=elt)
-})) %&gt;% mutate(id = row_number()) %&gt;%
-  select(subject, type, pid, order,gest_name, phrase, id)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuZ2VzdHNfZGF0YSA8LSBkby5jYWxsKFxccmJpbmRcXCwgbGFwcGx5KGdlc3RzLCBmdW5jdGlvbihlbHQpIHtcbiAgcGFydHM8LXN0cl9zcGxpdChlbHQsICctJylbWzFdXVxuICByZWZfcGhyYXNlIDwtIHBhcnRzWzNdXG4gIHBocmFzZV9pZCA8LSBzdHJfc3BsaXQocmVmX3BocmFzZSwgJ18nKVtbMV1dWzFdXG4gIHRpYmJsZShwaHJhc2U9cmVmX3BocmFzZSwgcGlkPXBocmFzZV9pZCwgdHlwZT1wYXJ0c1syXSwgc3ViamVjdD1wYXJ0c1s0XSwgb3JkZXI9cGFydHNbMV0sIGdlc3RfbmFtZT1lbHQpXG59KSkgJT4lIG11dGF0ZShpZCA9IHJvd19udW1iZXIoKSkgJT4lXG4gIHNlbGVjdChzdWJqZWN0LCB0eXBlLCBwaWQsIG9yZGVyLGdlc3RfbmFtZSwgcGhyYXNlLCBpZClcbmBgYFxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r <code>r</code>r gests_data &lt;- do.call(, lapply(gests, function(elt) { parts&lt;-str_split(elt, ‘-’)[[1]] ref_phrase &lt;- parts[3] phrase_id &lt;- str_split(ref_phrase, ’_’)[[1]][1] tibble(phrase=ref_phrase, pid=phrase_id, type=parts[2], subject=parts[4], order=parts[1], gest_name=elt) })) %&gt;% mutate(id = row_number()) %&gt;% select(subject, type, pid, order,gest_name, phrase, id)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -2160,39 +2067,23 @@ gest_interps &lt;- lapply(gests, function(elt) {
 <p>Let’s compute some stuff and add to the tibble</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuXG4jIENvbXB1dGUgdGhlIGNvcnJlbGF0aW9uIGFuZCBybXMgZ2l2ZW4gdGhlIGVudGlyZSBnZXN0dXJlIG5hbWVcbmdldF9jb3JyIDwtIGZ1bmN0aW9uKGdlc3RfbmFtZSwgd2VpZ2h0cz1GQUxTRSkge1xuICAjIEdldCB0aGUgaW5kZXggb2YgdGhlIGdlc3R1cmVcbiAgaW5kZXg8LWdldF9nZXN0X2luZGV4KGdlc3RfbmFtZSlcbiAgIyBVc2UgaXQgdG8gZ2V0IHRoZSBmcmVxIG9mIHRoZSBnZXN0dXJlXG4gIGdlc3RfcGl0Y2ggPC0gZ2VzdF9pbnRlcnBzW1tpbmRleF1dJGZcbiAgXG4gICMgR2V0IHRoZSByZWZlcmVuY2UgcGhyYXNlXG4gIHBocmFzZV9uYW1lIDwtIGdldF9yZWZfbmFtZShnZXN0X25hbWUpICAgIFxuICAjIFVzZSBpdCB0byBnZXQgdGhlIHByb3NvZ3JhbSBwaXRjaCByZWYgYW5kIHRoZSBpbnRlbnNpdHlcbiAgcHJvc29ncmFtX3BpdGNoIDwtIGdldF9yZWZfcHRzZihwaHJhc2VfbmFtZSlcbiAgXG4gICMgSWYgdXNpbmcgd2VpZ2h0cywgZ2V0IHRoZSBpbnRlbnNpdHkgb2YgdGhlIHJlZiBwaHJhc2VcbiAgaWYgKHdlaWdodHMpIHsgIFxuICAgIGludGVuc2l0eSA8LSBnZXRfcmVmX3RzaShwaHJhc2VfbmFtZSlcbiAgXG4gICAgd2MgPC0gd2VpZ2h0ZWRDb3JyKGdlc3RfcGl0Y2gsIHByb3NvZ3JhbV9waXRjaCwgbWV0aG9kID0gXFxQZWFyc29uXFwsIFxuICAgICAgICAgICAgICAgd2VpZ2h0cyA9IGludGVuc2l0eSwgTUwgPSBGQUxTRSwgZmFzdCA9IFRSVUUpXG4gICAgcmV0dXJuKHdjKVxuICB9IGVsc2Uge1xuICAgIHJldHVybih3ZWlnaHRlZENvcnIoZ2VzdF9waXRjaCwgcHJvc29ncmFtX3BpdGNoLCBtZXRob2QgPSBcXFBlYXJzb25cXCwgXG4gICAgICAgICAgICAgICB3ZWlnaHRzID0gcmVwKDEsIGxlbmd0aChnZXN0X3BpdGNoKSksIE1MID0gRkFMU0UsIGZhc3QgPSBUUlVFKSlcbiAgfVxufVxuXG53Y29ycl9hbGwgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0cywgZnVuY3Rpb24oZWx0KSB7XG4gIGdldF9jb3JyKGVsdCwgd2VpZ2h0cz1UUlVFKVxufSkpWywxXVxuXG5nZXN0c19kYXRhIDwtIGFkZF9jb2x1bW4oZ2VzdHNfZGF0YSwgd2NvcnI9d2NvcnJfYWxsKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>
-# Compute the correlation and rms given the entire gesture name
-get_corr &lt;- function(gest_name, weights=FALSE) {
-  # Get the index of the gesture
-  index&lt;-get_gest_index(gest_name)
-  # Use it to get the freq of the gesture
-  gest_pitch &lt;- gest_interps[[index]]$f
-  
-  # Get the reference phrase
-  phrase_name &lt;- get_ref_name(gest_name)    
-  # Use it to get the prosogram pitch ref and the intensity
-  prosogram_pitch &lt;- get_ref_ptsf(phrase_name)
-  
-  # If using weights, get the intensity of the ref phrase
-  if (weights) {  
-    intensity &lt;- get_ref_tsi(phrase_name)
-  
-    wc &lt;- weightedCorr(gest_pitch, prosogram_pitch, method = \Pearson\, 
-               weights = intensity, ML = FALSE, fast = TRUE)
-    return(wc)
-  } else {
-    return(weightedCorr(gest_pitch, prosogram_pitch, method = \Pearson\, 
-               weights = rep(1, length(gest_pitch)), ML = FALSE, fast = TRUE))
-  }
-}
-
-wcorr_all &lt;- do.call(\rbind\, lapply(gests, function(elt) {
-  get_corr(elt, weights=TRUE)
-}))[,1]
-
-gests_data &lt;- add_column(gests_data, wcorr=wcorr_all)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuXG4jIENvbXB1dGUgdGhlIGNvcnJlbGF0aW9uIGFuZCBybXMgZ2l2ZW4gdGhlIGVudGlyZSBnZXN0dXJlIG5hbWVcbmdldF9jb3JyIDwtIGZ1bmN0aW9uKGdlc3RfbmFtZSwgd2VpZ2h0cz1GQUxTRSkge1xuICAjIEdldCB0aGUgaW5kZXggb2YgdGhlIGdlc3R1cmVcbiAgaW5kZXg8LWdldF9nZXN0X2luZGV4KGdlc3RfbmFtZSlcbiAgIyBVc2UgaXQgdG8gZ2V0IHRoZSBmcmVxIG9mIHRoZSBnZXN0dXJlXG4gIGdlc3RfcGl0Y2ggPC0gZ2VzdF9pbnRlcnBzW1tpbmRleF1dJGZcbiAgXG4gICMgR2V0IHRoZSByZWZlcmVuY2UgcGhyYXNlXG4gIHBocmFzZV9uYW1lIDwtIGdldF9yZWZfbmFtZShnZXN0X25hbWUpICAgIFxuICAjIFVzZSBpdCB0byBnZXQgdGhlIHByb3NvZ3JhbSBwaXRjaCByZWYgYW5kIHRoZSBpbnRlbnNpdHlcbiAgcHJvc29ncmFtX3BpdGNoIDwtIGdldF9yZWZfcHRzZihwaHJhc2VfbmFtZSlcbiAgXG4gICMgSWYgdXNpbmcgd2VpZ2h0cywgZ2V0IHRoZSBpbnRlbnNpdHkgb2YgdGhlIHJlZiBwaHJhc2VcbiAgaWYgKHdlaWdodHMpIHsgIFxuICAgIGludGVuc2l0eSA8LSBnZXRfcmVmX3RzaShwaHJhc2VfbmFtZSlcbiAgXG4gICAgd2MgPC0gd2VpZ2h0ZWRDb3JyKGdlc3RfcGl0Y2gsIHByb3NvZ3JhbV9waXRjaCwgbWV0aG9kID0gXFxQZWFyc29uXFwsIFxuICAgICAgICAgICAgICAgd2VpZ2h0cyA9IGludGVuc2l0eSwgTUwgPSBGQUxTRSwgZmFzdCA9IFRSVUUpXG4gICAgcmV0dXJuKHdjKVxuICB9IGVsc2Uge1xuICAgIHJldHVybih3ZWlnaHRlZENvcnIoZ2VzdF9waXRjaCwgcHJvc29ncmFtX3BpdGNoLCBtZXRob2QgPSBcXFBlYXJzb25cXCwgXG4gICAgICAgICAgICAgICB3ZWlnaHRzID0gcmVwKDEsIGxlbmd0aChnZXN0X3BpdGNoKSksIE1MID0gRkFMU0UsIGZhc3QgPSBUUlVFKSlcbiAgfVxufVxuXG53Y29ycl9hbGwgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0cywgZnVuY3Rpb24oZWx0KSB7XG4gIGdldF9jb3JyKGVsdCwgd2VpZ2h0cz1UUlVFKVxufSkpWywxXVxuXG5nZXN0c19kYXRhIDwtIGFkZF9jb2x1bW4oZ2VzdHNfZGF0YSwgd2NvcnI9d2NvcnJfYWxsKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r</p>
+</div>
+<div id="compute-the-correlation-and-rms-given-the-entire-gesture-name" class="section level1">
+<h1>Compute the correlation and rms given the entire gesture name</h1>
+<p>get_corr &lt;- function(gest_name, weights=FALSE) { # Get the index of the gesture index&lt;-get_gest_index(gest_name) # Use it to get the freq of the gesture gest_pitch &lt;- gest_interps[[index]]$f</p>
+<p># Get the reference phrase phrase_name &lt;- get_ref_name(gest_name)<br />
+# Use it to get the prosogram pitch ref and the intensity prosogram_pitch &lt;- get_ref_ptsf(phrase_name)</p>
+<p># If using weights, get the intensity of the ref phrase if (weights) {<br />
+intensity &lt;- get_ref_tsi(phrase_name)</p>
+<pre><code>wc &lt;- weightedCorr(gest_pitch, prosogram_pitch, method = \Pearson\, 
+           weights = intensity, ML = FALSE, fast = TRUE)
+return(wc)</code></pre>
+<p>} else { return(weightedCorr(gest_pitch, prosogram_pitch, method = , weights = rep(1, length(gest_pitch)), ML = FALSE, fast = TRUE)) } }</p>
+<p>wcorr_all &lt;- do.call(, lapply(gests, function(elt) { get_corr(elt, weights=TRUE) }))[,1]</p>
+<p>gests_data &lt;- add_column(gests_data, wcorr=wcorr_all)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -2200,30 +2091,10 @@ gests_data &lt;- add_column(gests_data, wcorr=wcorr_all)</code></pre>
 <p>Make some filtering functions:</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuZ2V0X2dlc3RzX2J5X3N1YmplY3QgPC0gZnVuY3Rpb24ocywgdCkge1xuICBpZiAobWlzc2luZyhzKSAmIG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXN1YmplY3QsIHR5cGU9PXR5cGUpKVxuICB9IGVsc2UgaWYgKG1pc3NpbmcocykpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXN1YmplY3QsIHR5cGU9PXQpKVxuICB9IGVsc2UgaWYgKG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXMsIHR5cGU9PXR5cGUpKVxuICB9XG4gIHJldHVybihnZXN0c19kYXRhICU+JSBmaWx0ZXIoc3ViamVjdD09cywgdHlwZT09dCkpXG59XG5cbmdldF9nZXN0c19ieV9waHJhc2UgPC0gZnVuY3Rpb24ocF9pZCwgdCkge1xuICBpZiAobWlzc2luZyhwX2lkKSAmIG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHBpZD09cGlkLCB0eXBlPT10eXBlKSlcbiAgfSBlbHNlIGlmIChtaXNzaW5nKHBfaWQpKSB7XG4gICAgcmV0dXJuKGdlc3RzX2RhdGEgJT4lIGZpbHRlcihwaWQ9PXBpZCwgdHlwZT09dCkpXG4gIH0gZWxzZSBpZiAobWlzc2luZyh0KSkge1xuICAgIHJldHVybihnZXN0c19kYXRhICU+JSBmaWx0ZXIocGlkPT1wX2lkLCB0eXBlPT10eXBlKSlcbiAgfVxuICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHBpZD09cF9pZCwgdHlwZT09dCkpXG59XG5cbmBgYFxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r</p>
-<pre class="r"><code>get_gests_by_subject &lt;- function(s, t) {
-  if (missing(s) &amp; missing(t)) {
-    return(gests_data %&gt;% filter(subject==subject, type==type))
-  } else if (missing(s)) {
-    return(gests_data %&gt;% filter(subject==subject, type==t))
-  } else if (missing(t)) {
-    return(gests_data %&gt;% filter(subject==s, type==type))
-  }
-  return(gests_data %&gt;% filter(subject==s, type==t))
-}
-
-get_gests_by_phrase &lt;- function(p_id, t) {
-  if (missing(p_id) &amp; missing(t)) {
-    return(gests_data %&gt;% filter(pid==pid, type==type))
-  } else if (missing(p_id)) {
-    return(gests_data %&gt;% filter(pid==pid, type==t))
-  } else if (missing(t)) {
-    return(gests_data %&gt;% filter(pid==p_id, type==type))
-  }
-  return(gests_data %&gt;% filter(pid==p_id, type==t))
-}
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuZ2V0X2dlc3RzX2J5X3N1YmplY3QgPC0gZnVuY3Rpb24ocywgdCkge1xuICBpZiAobWlzc2luZyhzKSAmIG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXN1YmplY3QsIHR5cGU9PXR5cGUpKVxuICB9IGVsc2UgaWYgKG1pc3NpbmcocykpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXN1YmplY3QsIHR5cGU9PXQpKVxuICB9IGVsc2UgaWYgKG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHN1YmplY3Q9PXMsIHR5cGU9PXR5cGUpKVxuICB9XG4gIHJldHVybihnZXN0c19kYXRhICU+JSBmaWx0ZXIoc3ViamVjdD09cywgdHlwZT09dCkpXG59XG5cbmdldF9nZXN0c19ieV9waHJhc2UgPC0gZnVuY3Rpb24ocF9pZCwgdCkge1xuICBpZiAobWlzc2luZyhwX2lkKSAmIG1pc3NpbmcodCkpIHtcbiAgICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHBpZD09cGlkLCB0eXBlPT10eXBlKSlcbiAgfSBlbHNlIGlmIChtaXNzaW5nKHBfaWQpKSB7XG4gICAgcmV0dXJuKGdlc3RzX2RhdGEgJT4lIGZpbHRlcihwaWQ9PXBpZCwgdHlwZT09dCkpXG4gIH0gZWxzZSBpZiAobWlzc2luZyh0KSkge1xuICAgIHJldHVybihnZXN0c19kYXRhICU+JSBmaWx0ZXIocGlkPT1wX2lkLCB0eXBlPT10eXBlKSlcbiAgfVxuICByZXR1cm4oZ2VzdHNfZGF0YSAlPiUgZmlsdGVyKHBpZD09cF9pZCwgdHlwZT09dCkpXG59XG5cbmBgYFxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r <code>r</code>r get_gests_by_subject &lt;- function(s, t) { if (missing(s) &amp; missing(t)) { return(gests_data %&gt;% filter(subject==subject, type==type)) } else if (missing(s)) { return(gests_data %&gt;% filter(subject==subject, type==t)) } else if (missing(t)) { return(gests_data %&gt;% filter(subject==s, type==type)) } return(gests_data %&gt;% filter(subject==s, type==t)) }</p>
+<p>get_gests_by_phrase &lt;- function(p_id, t) { if (missing(p_id) &amp; missing(t)) { return(gests_data %&gt;% filter(pid==pid, type==type)) } else if (missing(p_id)) { return(gests_data %&gt;% filter(pid==pid, type==t)) } else if (missing(t)) { return(gests_data %&gt;% filter(pid==p_id, type==type)) } return(gests_data %&gt;% filter(pid==p_id, type==t)) }</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
@@ -2231,37 +2102,21 @@ get_gests_by_phrase &lt;- function(p_id, t) {
 <p>By phrase</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuIyBHZXQgdGhlIHVuaXF1ZSBwaWRzXG5wX2lkcyA8LSBjKCcyJywgJzJiaXMnLCAnNycsICc3YmlzJywgJzgnLCAnOGJpcycsICcxMCcsICcxMGJpcycsICcxMScsICcxMWJpcycsICcyMScsICcyMWJpcycpXG5cbndjb3JyX3BfYmxpbmQgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShwX2lkcywgZnVuY3Rpb24oZWx0KSB7XG4gIG1lYW4oZ2V0X2dlc3RzX2J5X3BocmFzZShwX2lkPWVsdCwgdD0nYmxpbmQnKSR3Y29ycilcbn0pKVssMV1cblxud2NvcnJfcF9ndWlkZSA8LSBkby5jYWxsKFxccmJpbmRcXCwgbGFwcGx5KHBfaWRzLCBmdW5jdGlvbihlbHQpIHtcbiAgbWVhbihnZXRfZ2VzdHNfYnlfcGhyYXNlKHBfaWQ9ZWx0LCB0PSdndWlkZScpJHdjb3JyKVxufSkpWywxXVxuXG53Y29ycl9ieV9waWQgPC0gdGliYmxlKHBpZCA9IHBfaWRzLCB3Y29ycl9ibGluZCA9IHdjb3JyX3BfYmxpbmQsIHdjb3JyX2d1aWRlID0gd2NvcnJfcF9ndWlkZSkgJT4lXG4gICAgICAgICAgICAgICAgYXJyYW5nZShwaWQpXG5cbmBgYFxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r</p>
-<pre class="r"><code># Get the unique pids
-p_ids &lt;- c('2', '2bis', '7', '7bis', '8', '8bis', '10', '10bis', '11', '11bis', '21', '21bis')
-
-wcorr_p_blind &lt;- do.call(\rbind\, lapply(p_ids, function(elt) {
-  mean(get_gests_by_phrase(p_id=elt, t='blind')$wcorr)
-}))[,1]
-
-wcorr_p_guide &lt;- do.call(\rbind\, lapply(p_ids, function(elt) {
-  mean(get_gests_by_phrase(p_id=elt, t='guide')$wcorr)
-}))[,1]
-
-wcorr_by_pid &lt;- tibble(pid = p_ids, wcorr_blind = wcorr_p_blind, wcorr_guide = wcorr_p_guide) %&gt;%
-                arrange(pid)
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuIyBHZXQgdGhlIHVuaXF1ZSBwaWRzXG5wX2lkcyA8LSBjKCcyJywgJzJiaXMnLCAnNycsICc3YmlzJywgJzgnLCAnOGJpcycsICcxMCcsICcxMGJpcycsICcxMScsICcxMWJpcycsICcyMScsICcyMWJpcycpXG5cbndjb3JyX3BfYmxpbmQgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShwX2lkcywgZnVuY3Rpb24oZWx0KSB7XG4gIG1lYW4oZ2V0X2dlc3RzX2J5X3BocmFzZShwX2lkPWVsdCwgdD0nYmxpbmQnKSR3Y29ycilcbn0pKVssMV1cblxud2NvcnJfcF9ndWlkZSA8LSBkby5jYWxsKFxccmJpbmRcXCwgbGFwcGx5KHBfaWRzLCBmdW5jdGlvbihlbHQpIHtcbiAgbWVhbihnZXRfZ2VzdHNfYnlfcGhyYXNlKHBfaWQ9ZWx0LCB0PSdndWlkZScpJHdjb3JyKVxufSkpWywxXVxuXG53Y29ycl9ieV9waWQgPC0gdGliYmxlKHBpZCA9IHBfaWRzLCB3Y29ycl9ibGluZCA9IHdjb3JyX3BfYmxpbmQsIHdjb3JyX2d1aWRlID0gd2NvcnJfcF9ndWlkZSkgJT4lXG4gICAgICAgICAgICAgICAgYXJyYW5nZShwaWQpXG5cbmBgYFxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r <code>r</code>r # Get the unique pids p_ids &lt;- c(‘2’, ‘2bis’, ‘7’, ‘7bis’, ‘8’, ‘8bis’, ‘10’, ‘10bis’, ‘11’, ‘11bis’, ‘21’, ‘21bis’)</p>
+<p>wcorr_p_blind &lt;- do.call(, lapply(p_ids, function(elt) { mean(get_gests_by_phrase(p_id=elt, t=‘blind’)$wcorr) }))[,1]</p>
+<p>wcorr_p_guide &lt;- do.call(, lapply(p_ids, function(elt) { mean(get_gests_by_phrase(p_id=elt, t=‘guide’)$wcorr) }))[,1]</p>
+<p>wcorr_by_pid &lt;- tibble(pid = p_ids, wcorr_blind = wcorr_p_blind, wcorr_guide = wcorr_p_guide) %&gt;% arrange(pid)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuIyBCb3hwbG90cyBvZiB3Y29yciBieSBwaHJhc2Vcbmdlc3RzX2RhdGEgJT4lXG4gIGdncGxvdChhZXMoeD1waWQsIHk9d2NvcnIsIGZpbGw9ZmFjdG9yKHR5cGUpKSkgK1xuICBnZW9tX2JveHBsb3QoKSArXG4gIGxhYnModGl0bGU9XFxDb3JyZWxhdGlvbiBvZiBnZXN0dXJlIHdpdGggcmVmZXJlbmNlXFwsIFxuICAgICAgICAgICAgc3VidGl0bGU9XFxHcm91cGVkIGJ5IHBocmFzZVxcLFxuICAgICAgICAgICAgeD1cXFBocmFzZSBpZFxcKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code># Boxplots of wcorr by phrase
-gests_data %&gt;%
-  ggplot(aes(x=pid, y=wcorr, fill=factor(type))) +
-  geom_boxplot() +
-  labs(title=\Correlation of gesture with reference\, 
-            subtitle=\Grouped by phrase\,
-            x=\Phrase id\)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuIyBCb3hwbG90cyBvZiB3Y29yciBieSBwaHJhc2Vcbmdlc3RzX2RhdGEgJT4lXG4gIGdncGxvdChhZXMoeD1waWQsIHk9d2NvcnIsIGZpbGw9ZmFjdG9yKHR5cGUpKSkgK1xuICBnZW9tX2JveHBsb3QoKSArXG4gIGxhYnModGl0bGU9XFxDb3JyZWxhdGlvbiBvZiBnZXN0dXJlIHdpdGggcmVmZXJlbmNlXFwsIFxuICAgICAgICAgICAgc3VidGl0bGU9XFxHcm91cGVkIGJ5IHBocmFzZVxcLFxuICAgICAgICAgICAgeD1cXFBocmFzZSBpZFxcKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r # Boxplots of wcorr by phrase gests_data %&gt;% ggplot(aes(x=pid, y=wcorr, fill=factor(type))) + geom_boxplot() + labs(title=of gesture with reference, subtitle=by phrase, x=id)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-plot-begin -->
@@ -2271,15 +2126,9 @@ gests_data %&gt;%
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuIyBCb3hwbG90cyBvZiB3Y29yciBieSBzdWJqZWN0XG5nZXN0c19kYXRhICU+JVxuICBnZ3Bsb3QoYWVzKHg9c3ViamVjdCwgeT13Y29yciwgZmlsbD1mYWN0b3IodHlwZSkpKSArXG4gIGdlb21fYm94cGxvdCgpICtcbiAgbGFicyh0aXRsZT1cXENvcnJlbGF0aW9uIG9mIGdlc3R1cmUgd2l0aCByZWZlcmVuY2VcXCwgXG4gICAgICAgICAgICBzdWJ0aXRsZT1cXEdyb3VwZWQgYnkgc3ViamVjdFxcLFxuICAgICAgICAgICAgeD1cXFN1YmplY3QgaWRcXClcbmBgYFxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r</p>
-<pre class="r"><code># Boxplots of wcorr by subject
-gests_data %&gt;%
-  ggplot(aes(x=subject, y=wcorr, fill=factor(type))) +
-  geom_boxplot() +
-  labs(title=\Correlation of gesture with reference\, 
-            subtitle=\Grouped by subject\,
-            x=\Subject id\)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuIyBCb3hwbG90cyBvZiB3Y29yciBieSBzdWJqZWN0XG5nZXN0c19kYXRhICU+JVxuICBnZ3Bsb3QoYWVzKHg9c3ViamVjdCwgeT13Y29yciwgZmlsbD1mYWN0b3IodHlwZSkpKSArXG4gIGdlb21fYm94cGxvdCgpICtcbiAgbGFicyh0aXRsZT1cXENvcnJlbGF0aW9uIG9mIGdlc3R1cmUgd2l0aCByZWZlcmVuY2VcXCwgXG4gICAgICAgICAgICBzdWJ0aXRsZT1cXEdyb3VwZWQgYnkgc3ViamVjdFxcLFxuICAgICAgICAgICAgeD1cXFN1YmplY3QgaWRcXClcbmBgYFxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r <code>r</code>r # Boxplots of wcorr by subject gests_data %&gt;% ggplot(aes(x=subject, y=wcorr, fill=factor(type))) + geom_boxplot() + labs(title=of gesture with reference, subtitle=by subject, x=id)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-plot-begin -->
@@ -2302,61 +2151,29 @@ gests_data %&gt;%
 <p>Compare the gesture to only the part of the reference with the syllables.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuXG5jb21wYXJlMiA8LSBmdW5jdGlvbihnZXN0X2lkKSB7XG4gICMgR2V0IHRoZSBmaXJzdCBnZXN0dXJlIGZyb20gdGhlIGxpc3RcbiAgbXlfZ2VzdCA8LSBzbGljZShnZXN0c19kYXRhLCBnZXN0X2lkKSAgXG4gIFxuICAjIEdldCB0aGUgb3JpZ2luYWwgZGF0YSBcbiAgbXlfZ2VzdF9kYXRhIDwtIGdlc3Rfb3JpZ2luYWxzW1tnZXN0X2lkXV1cbiAgIyBGaW5kIHRoZSBzdGFydGluZyBhbmQgZW5kaW5nIHNjcnViIHRpbWVzXG4gIHN0YXJ0X3NjcnViIDwtIG15X2dlc3RfZGF0YSRzY3J1YlsxXVxuICBlbmRfc2NydWIgPC0gdGFpbChteV9nZXN0X2RhdGEkc2NydWIsIDEpXG5cbiAgIyBGaW5kIHRoZSBjb3JyZXNwb25kaW5nIHBocmFzZSBmb3IgdGhpcyBnZXN0dXJlXG4gIG15X3JlZiA8LSBnZXRfcmVmX3BzZ3NfaW50ZXJwKG15X2dlc3QkcGhyYXNlKVxuICAjIE51bWJlciBvZiBwb2ludHMgaW4gbXlfcmVmXG4gIG15X3JlZl9sZW5ndGggPC0gbGVuZ3RoKG15X3JlZiRmKVxuICAjIEdldCB0aGUgc3RhcnQgYW5kIGluZGV4IG9mIHRoZSByZWZlcmVuY2UgcGhyYXNlIGJhc2VkIG9uIHRoZSBzdGFydCBhbmQgZW5kIHNjcnViIHBvaW50c1xuICBteV9yZWZfc3RhcnRfaW5kZXggPC0gZmxvb3Ioc3RhcnRfc2NydWIgKiBteV9yZWZfbGVuZ3RoKVxuICBteV9yZWZfZW5kX2luZGV4IDwtIGNlaWxpbmcoZW5kX3NjcnViICogbXlfcmVmX2xlbmd0aClcbiAgIyBHZXQgdGhlIHBhcnQgb2YgdGhlIHJlZmVyZW5jZSB0byBjb21wYXJlIHdpdGggdGhlIGdlc3R1cmVcbiAgbXlfcmVmX2YgPC0gbXlfcmVmJGZbbXlfcmVmX3N0YXJ0X2luZGV4Om15X3JlZl9lbmRfaW5kZXhdXG4gIG15X3JlZl90IDwtIG15X3JlZiR0W215X3JlZl9zdGFydF9pbmRleDpteV9yZWZfZW5kX2luZGV4XVxuICBcbiAgIyBHZXQgdGhlIGludGVuc2l0eSB0b29cbiAgbXlfcmVmX2kgPC0gZ2V0X3JlZl90c2kobXlfZ2VzdCRwaHJhc2UpW215X3JlZl9zdGFydF9pbmRleDpteV9yZWZfZW5kX2luZGV4XVxuICBcbiAgIyBOb3csIGludGVycG9sYXRlIHRoZSBvcmlnaW5hbCBnZXN0dXJlIGJhc2VkIG9uIHRoZSBudW1iZXIgb2YgcG9pbnRzIGluIHRoZSBzdWJzZXQgb2YgdGhlIHJlZmVyZW5jZVxuICBteV9nZXN0X2ludGVycDwtZ2V0X2ludGVycG9sYXRlZF9kYXRhKG15X2dlc3RfZGF0YSwgbGVuZ3RoKG15X3JlZl9mKSlcblxuICBcbiAgcmV0dXJuKHdlaWdodGVkQ29ycihteV9yZWZfZiwgbXlfZ2VzdF9pbnRlcnAkZiwgbWV0aG9kID0gXFxQZWFyc29uXFwsIFxuICAgICAgICAgICAgICAgICAgICAgIHdlaWdodHMgPSBteV9yZWZfaSwgTUwgPSBGQUxTRSwgZmFzdCA9IFRSVUUpKVxufVxuXG4jIFJ1biBuZXcgY29tcGFyaXNvbiBvbiBhbGwgdGhlIGdlc3R1cmVzXG5jb21wYXJlMl9hbGwgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0c19kYXRhJGlkLCBmdW5jdGlvbihlbHQpIHtcbiAgY29tcGFyZTIoZWx0KVxufSkpWywxXVxuXG5nZXN0c19kYXRhIDwtIGFkZF9jb2x1bW4oZ2VzdHNfZGF0YSwgd2NvcnIyID0gY29tcGFyZTJfYWxsKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>
-compare2 &lt;- function(gest_id) {
-  # Get the first gesture from the list
-  my_gest &lt;- slice(gests_data, gest_id)  
-  
-  # Get the original data 
-  my_gest_data &lt;- gest_originals[[gest_id]]
-  # Find the starting and ending scrub times
-  start_scrub &lt;- my_gest_data$scrub[1]
-  end_scrub &lt;- tail(my_gest_data$scrub, 1)
-
-  # Find the corresponding phrase for this gesture
-  my_ref &lt;- get_ref_psgs_interp(my_gest$phrase)
-  # Number of points in my_ref
-  my_ref_length &lt;- length(my_ref$f)
-  # Get the start and index of the reference phrase based on the start and end scrub points
-  my_ref_start_index &lt;- floor(start_scrub * my_ref_length)
-  my_ref_end_index &lt;- ceiling(end_scrub * my_ref_length)
-  # Get the part of the reference to compare with the gesture
-  my_ref_f &lt;- my_ref$f[my_ref_start_index:my_ref_end_index]
-  my_ref_t &lt;- my_ref$t[my_ref_start_index:my_ref_end_index]
-  
-  # Get the intensity too
-  my_ref_i &lt;- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]
-  
-  # Now, interpolate the original gesture based on the number of points in the subset of the reference
-  my_gest_interp&lt;-get_interpolated_data(my_gest_data, length(my_ref_f))
-
-  
-  return(weightedCorr(my_ref_f, my_gest_interp$f, method = \Pearson\, 
-                      weights = my_ref_i, ML = FALSE, fast = TRUE))
-}
-
-# Run new comparison on all the gestures
-compare2_all &lt;- do.call(\rbind\, lapply(gests_data$id, function(elt) {
-  compare2(elt)
-}))[,1]
-
-gests_data &lt;- add_column(gests_data, wcorr2 = compare2_all)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuXG5jb21wYXJlMiA8LSBmdW5jdGlvbihnZXN0X2lkKSB7XG4gICMgR2V0IHRoZSBmaXJzdCBnZXN0dXJlIGZyb20gdGhlIGxpc3RcbiAgbXlfZ2VzdCA8LSBzbGljZShnZXN0c19kYXRhLCBnZXN0X2lkKSAgXG4gIFxuICAjIEdldCB0aGUgb3JpZ2luYWwgZGF0YSBcbiAgbXlfZ2VzdF9kYXRhIDwtIGdlc3Rfb3JpZ2luYWxzW1tnZXN0X2lkXV1cbiAgIyBGaW5kIHRoZSBzdGFydGluZyBhbmQgZW5kaW5nIHNjcnViIHRpbWVzXG4gIHN0YXJ0X3NjcnViIDwtIG15X2dlc3RfZGF0YSRzY3J1YlsxXVxuICBlbmRfc2NydWIgPC0gdGFpbChteV9nZXN0X2RhdGEkc2NydWIsIDEpXG5cbiAgIyBGaW5kIHRoZSBjb3JyZXNwb25kaW5nIHBocmFzZSBmb3IgdGhpcyBnZXN0dXJlXG4gIG15X3JlZiA8LSBnZXRfcmVmX3BzZ3NfaW50ZXJwKG15X2dlc3QkcGhyYXNlKVxuICAjIE51bWJlciBvZiBwb2ludHMgaW4gbXlfcmVmXG4gIG15X3JlZl9sZW5ndGggPC0gbGVuZ3RoKG15X3JlZiRmKVxuICAjIEdldCB0aGUgc3RhcnQgYW5kIGluZGV4IG9mIHRoZSByZWZlcmVuY2UgcGhyYXNlIGJhc2VkIG9uIHRoZSBzdGFydCBhbmQgZW5kIHNjcnViIHBvaW50c1xuICBteV9yZWZfc3RhcnRfaW5kZXggPC0gZmxvb3Ioc3RhcnRfc2NydWIgKiBteV9yZWZfbGVuZ3RoKVxuICBteV9yZWZfZW5kX2luZGV4IDwtIGNlaWxpbmcoZW5kX3NjcnViICogbXlfcmVmX2xlbmd0aClcbiAgIyBHZXQgdGhlIHBhcnQgb2YgdGhlIHJlZmVyZW5jZSB0byBjb21wYXJlIHdpdGggdGhlIGdlc3R1cmVcbiAgbXlfcmVmX2YgPC0gbXlfcmVmJGZbbXlfcmVmX3N0YXJ0X2luZGV4Om15X3JlZl9lbmRfaW5kZXhdXG4gIG15X3JlZl90IDwtIG15X3JlZiR0W215X3JlZl9zdGFydF9pbmRleDpteV9yZWZfZW5kX2luZGV4XVxuICBcbiAgIyBHZXQgdGhlIGludGVuc2l0eSB0b29cbiAgbXlfcmVmX2kgPC0gZ2V0X3JlZl90c2kobXlfZ2VzdCRwaHJhc2UpW215X3JlZl9zdGFydF9pbmRleDpteV9yZWZfZW5kX2luZGV4XVxuICBcbiAgIyBOb3csIGludGVycG9sYXRlIHRoZSBvcmlnaW5hbCBnZXN0dXJlIGJhc2VkIG9uIHRoZSBudW1iZXIgb2YgcG9pbnRzIGluIHRoZSBzdWJzZXQgb2YgdGhlIHJlZmVyZW5jZVxuICBteV9nZXN0X2ludGVycDwtZ2V0X2ludGVycG9sYXRlZF9kYXRhKG15X2dlc3RfZGF0YSwgbGVuZ3RoKG15X3JlZl9mKSlcblxuICBcbiAgcmV0dXJuKHdlaWdodGVkQ29ycihteV9yZWZfZiwgbXlfZ2VzdF9pbnRlcnAkZiwgbWV0aG9kID0gXFxQZWFyc29uXFwsIFxuICAgICAgICAgICAgICAgICAgICAgIHdlaWdodHMgPSBteV9yZWZfaSwgTUwgPSBGQUxTRSwgZmFzdCA9IFRSVUUpKVxufVxuXG4jIFJ1biBuZXcgY29tcGFyaXNvbiBvbiBhbGwgdGhlIGdlc3R1cmVzXG5jb21wYXJlMl9hbGwgPC0gZG8uY2FsbChcXHJiaW5kXFwsIGxhcHBseShnZXN0c19kYXRhJGlkLCBmdW5jdGlvbihlbHQpIHtcbiAgY29tcGFyZTIoZWx0KVxufSkpWywxXVxuXG5nZXN0c19kYXRhIDwtIGFkZF9jb2x1bW4oZ2VzdHNfZGF0YSwgd2NvcnIyID0gY29tcGFyZTJfYWxsKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r</p>
+<p>compare2 &lt;- function(gest_id) { # Get the first gesture from the list my_gest &lt;- slice(gests_data, gest_id)</p>
+<p># Get the original data my_gest_data &lt;- gest_originals[[gest_id]] # Find the starting and ending scrub times start_scrub &lt;- my_gest_data<span class="math inline">\(scrub[1]  end_scrub &lt;- tail(my_gest_data\)</span>scrub, 1)</p>
+<p># Find the corresponding phrase for this gesture my_ref &lt;- get_ref_psgs_interp(my_gest<span class="math inline">\(phrase)  # Number of points in my_ref  my_ref_length &lt;- length(my_ref\)</span>f) # Get the start and index of the reference phrase based on the start and end scrub points my_ref_start_index &lt;- floor(start_scrub * my_ref_length) my_ref_end_index &lt;- ceiling(end_scrub * my_ref_length) # Get the part of the reference to compare with the gesture my_ref_f &lt;- my_ref<span class="math inline">\(f[my_ref_start_index:my_ref_end_index]  my_ref_t &lt;- my_ref\)</span>t[my_ref_start_index:my_ref_end_index]</p>
+<p># Get the intensity too my_ref_i &lt;- get_ref_tsi(my_gest$phrase)[my_ref_start_index:my_ref_end_index]</p>
+<p># Now, interpolate the original gesture based on the number of points in the subset of the reference my_gest_interp&lt;-get_interpolated_data(my_gest_data, length(my_ref_f))</p>
+<p>return(weightedCorr(my_ref_f, my_gest_interp$f, method = , weights = my_ref_i, ML = FALSE, fast = TRUE)) }</p>
+</div>
+<div id="run-new-comparison-on-all-the-gestures" class="section level1">
+<h1>Run new comparison on all the gestures</h1>
+<p>compare2_all &lt;- do.call(, lapply(gests_data$id, function(elt) { compare2(elt) }))[,1]</p>
+<p>gests_data &lt;- add_column(gests_data, wcorr2 = compare2_all)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuZ2VzdHNfZGF0YSAlPiVcbiAgZ2dwbG90KGFlcyh4PXBpZCwgeT13Y29ycjIsIGZpbGw9ZmFjdG9yKHR5cGUpKSkgK1xuICBnZW9tX2JveHBsb3QoKSArXG4gIGxhYnModGl0bGU9XFxDb3JyZWxhdGlvbiBvZiBnZXN0dXJlIHdpdGggcmVmZXJlbmNlXFwsIFxuICAgICAgICAgICAgc3VidGl0bGU9XFxHcm91cGVkIGJ5IHBocmFzZVxcLFxuICAgICAgICAgICAgeD1cXFBocmFzZSBpZFxcKVxuYGBgXG5gYGBcbmBgYCJ9 -->
-<p><code>r</code>r</p>
-<pre class="r"><code>gests_data %&gt;%
-  ggplot(aes(x=pid, y=wcorr2, fill=factor(type))) +
-  geom_boxplot() +
-  labs(title=\Correlation of gesture with reference\, 
-            subtitle=\Grouped by phrase\,
-            x=\Phrase id\)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuZ2VzdHNfZGF0YSAlPiVcbiAgZ2dwbG90KGFlcyh4PXBpZCwgeT13Y29ycjIsIGZpbGw9ZmFjdG9yKHR5cGUpKSkgK1xuICBnZW9tX2JveHBsb3QoKSArXG4gIGxhYnModGl0bGU9XFxDb3JyZWxhdGlvbiBvZiBnZXN0dXJlIHdpdGggcmVmZXJlbmNlXFwsIFxuICAgICAgICAgICAgc3VidGl0bGU9XFxHcm91cGVkIGJ5IHBocmFzZVxcLFxuICAgICAgICAgICAgeD1cXFBocmFzZSBpZFxcKVxuYGBgXG5gYGBcbmBgYFxuYGBgIn0= -->
+<p><code>r</code>r <code>r</code>r gests_data %&gt;% ggplot(aes(x=pid, y=wcorr2, fill=factor(type))) + geom_boxplot() + labs(title=of gesture with reference, subtitle=by phrase, x=id)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-plot-begin -->
@@ -2366,16 +2183,13 @@ gests_data &lt;- add_column(gests_data, wcorr2 = compare2_all)</code></pre>
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuXG4jIEJveHBsb3RzIG9mIHdjb3JyIGJ5IHN1YmplY3Rcbmdlc3RzX2RhdGEgJT4lXG4gIGdncGxvdChhZXMoeD1zdWJqZWN0LCB5PXdjb3JyMiwgZmlsbD1mYWN0b3IodHlwZSkpKSArXG4gIGdlb21fYm94cGxvdCgpICtcbiAgbGFicyh0aXRsZT1cXENvcnJlbGF0aW9uIG9mIGdlc3R1cmUgd2l0aCByZWZlcmVuY2VcXCwgXG4gICAgICAgICAgICBzdWJ0aXRsZT1cXEdyb3VwZWQgYnkgc3ViamVjdFxcLFxuICAgICAgICAgICAgeD1cXFN1YmplY3QgaWRcXCwgeT1cXENvcnJlbGF0aW9uIHNjb3JlXFwpXG5gYGBcbmBgYFxuYGBgIn0= -->
-<p><code>r</code>r</p>
-<pre class="r"><code>
-# Boxplots of wcorr by subject
-gests_data %&gt;%
-  ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) +
-  geom_boxplot() +
-  labs(title=\Correlation of gesture with reference\, 
-            subtitle=\Grouped by subject\,
-            x=\Subject id\, y=\Correlation score\)</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuYGBgclxuXG4jIEJveHBsb3RzIG9mIHdjb3JyIGJ5IHN1YmplY3Rcbmdlc3RzX2RhdGEgJT4lXG4gIGdncGxvdChhZXMoeD1zdWJqZWN0LCB5PXdjb3JyMiwgZmlsbD1mYWN0b3IodHlwZSkpKSArXG4gIGdlb21fYm94cGxvdCgpICtcbiAgbGFicyh0aXRsZT1cXENvcnJlbGF0aW9uIG9mIGdlc3R1cmUgd2l0aCByZWZlcmVuY2VcXCwgXG4gICAgICAgICAgICBzdWJ0aXRsZT1cXEdyb3VwZWQgYnkgc3ViamVjdFxcLFxuICAgICAgICAgICAgeD1cXFN1YmplY3QgaWRcXCwgeT1cXENvcnJlbGF0aW9uIHNjb3JlXFwpXG5gYGBcbmBgYFxuYGBgXG5gYGAifQ== -->
+<p><code>r</code>r <code>r</code>r</p>
+</div>
+<div id="boxplots-of-wcorr-by-subject" class="section level1">
+<h1>Boxplots of wcorr by subject</h1>
+<p>gests_data %&gt;% ggplot(aes(x=subject, y=wcorr2, fill=factor(type))) + geom_boxplot() + labs(title=of gesture with reference, subtitle=by subject, x=id, y=score)</p>
+<pre><code></code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-plot-begin -->
@@ -2385,8 +2199,11 @@ gests_data %&gt;%
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuIyBQdXQgdGhlIG9yaWdpbmFsIGFuZCB0aGUgZ2VzdHVyZSBpbnRvIGEgdGliYmxlXG4gIGNvbXBhcmlzb248LXRpYmJsZShyZWZfZiA9IG15X3JlZl9zdWJzZXQsIHJlZl90ID0gbXlfcmVmX3N1YnNldF90LCByZWZfaSA9IG15X3JlZmlfc3Vic2V0LFxuICAgICAgICAgICAgICAgICAgIGdlc3RfZiA9IG15X2dlc3RfaW50ZXJwJGYsIGdlc3RfcyA9IG15X2dlc3RfaW50ZXJwJHNjcnViKVxuYGBgXG5gYGAifQ== -->
-<p><code>r</code>r # Put the original and the gesture into a tibble comparison&lt;-tibble(ref_f = my_ref_subset, ref_t = my_ref_subset_t, ref_i = my_refi_subset, gest_f = my_gest_interp<span class="math inline">\(f, gest_s = my_gest_interp\)</span>scrub)</p>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYGBgclxuIyBQdXQgdGhlIG9yaWdpbmFsIGFuZCB0aGUgZ2VzdHVyZSBpbnRvIGEgdGliYmxlXG4gIGNvbXBhcmlzb248LXRpYmJsZShyZWZfZiA9IG15X3JlZl9zdWJzZXQsIHJlZl90ID0gbXlfcmVmX3N1YnNldF90LCByZWZfaSA9IG15X3JlZmlfc3Vic2V0LFxuICAgICAgICAgICAgICAgICAgIGdlc3RfZiA9IG15X2dlc3RfaW50ZXJwJGYsIGdlc3RfcyA9IG15X2dlc3RfaW50ZXJwJHNjcnViKVxuYGBgXG5gYGBcbmBgYCJ9 -->
+<p><code>r</code>r</p>
+<pre class="r"><code># Put the original and the gesture into a tibble
+  comparison&lt;-tibble(ref_f = my_ref_subset, ref_t = my_ref_subset_t, ref_i = my_refi_subset,
+                   gest_f = my_gest_interp$f, gest_s = my_gest_interp$scrub)</code></pre>
 <pre><code></code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gZXZhbF90aWR5KHhzW1tqXV0sIG1hc2spIDogb2JqZWN0ICdteV9yZWZfc3Vic2V0JyBub3QgZm91bmRcbiJ9 -->

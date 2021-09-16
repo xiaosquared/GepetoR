@@ -15,7 +15,7 @@ output:
     toc: yes
 ---
 
-This document is a first attempt to quantitatively compare gestures made using the Gepeto app with their corresponding reference gestures. Following the model of d'allessandro et al 2011, we use Pearson's correlation and Root Mean Square Error (RMSE) are computed. Results are presented along with plots of the gesture scaled to and overlaid with its reference. Audio of both are also included.
+This document is a first attempt to quantitatively compare gestures made using the Gepeto app with their corresponding reference gestures. Following the model of D'allessandro et al 2011, we use Pearson's correlation and Root Mean Square Error (RMSE) are computed. Results are presented along with plots of the gesture scaled to and overlaid with its reference. Audio of both are also included.
 
 The original paper weighed the correlation and RMSE with the signal power. For simplicity, I am not doing that for now, but results still seem ok. The original paper also used dynamic time warping to modify signals of uneven lengths. I am just doing a linear scaling, which does not warp the rhythm of the signal. It is important to retain the actual rhythm of the gesture because the correct pronunciation of the corpus phrases depend on correct rhythm.
 

@@ -17,7 +17,7 @@ library("stringr")
 source("../utils/hertzToST.R")
 
 # Lowest pitch
-ref = 130
+ref = 60
 # Relative path to where the files are
 path="../data/pitch-tier-tests/"
 
@@ -50,7 +50,7 @@ pitchTierToJSON <- function(name) {
   my.JSON <- toJSON(pt.df)
   
   # Get the core name for the output filename
-  out_name <- str_split(name, "_styl.PitchTier")[[1]][1]
+  out_name <- str_split(name, ".PitchTier")[[1]][1]
   
   # Write JSON object into the same directory as the original file
   write(my.JSON, paste0(path,out_name, ".json"))
@@ -98,7 +98,7 @@ pitchTierToJSON2 <- function(name) {
   pt.df[nrow(pt.df) + 1,] = c(0.98, pt.df[nrow(pt.df),2])
   
   # Get the core name for the output filename
-  out_name <- str_split(name, "_styl.PitchTier")[[1]][1]
+  out_name <- str_split(name, ".PitchTier")[[1]][1]
   
   # EXTRA STEP for this version, make a list
   pt.list <- list(points = pt.df, reference=ref, name=out_name)
