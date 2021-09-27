@@ -2,7 +2,7 @@
 title: "R Notebook"
 output: html_notebook
 ---
-
+# Contents
 0. Global definitions
 1. File Loading:
   1.1 Reference recordings: DONE
@@ -18,11 +18,18 @@ output: html_notebook
   2.2 Subject audio
 
 3. Comparisons
-4. Consolidating, Plotting
-  4.1 Pl
+  - Weighted correlation and RMSE, like before
+  - But I think correlation is more meaningful in this case
+
+4. Score Plots
+  4.0 Consolidating scores
+  4.1 Overall scores
+  4.2 Scores by phrase
+
+5. Frequency plots
 
 ---------------------------
-0. Global definitions
+# 0. Global definitions
 ```{r}
 library(tidyverse)
 library(rPraat)
@@ -73,13 +80,19 @@ get_ref_index <- function(pt_filename) {
   return(ref_index)
 }
 
+# Get the reference data based on phrase_id
+get_ref_roi_data <- function(phrase_id) {
+  index<-which(ref_ids==phrase_id)
+  ref_data<-ref_pts_roi[[index]]
+  num_points<-length(ref_data$f)
+  my_data<-tibble(f=ref_data$f, t=ref_data$t, percent=seq(1, num_points)/num_points, condition="ref")
+  return(my_data)
+}
 
 ```
 
-
 # 1. File Loading
 ## 1.1 Loading reference (demo) recordings
-
 ```{r}
 # For REFERENCE recordings:
 ref_path <- "../data/21_05-fallrise/reference/"
@@ -353,9 +366,9 @@ mean(natives_gest_rmse) # 3.03
 
 ```
 
-## 4. Consolidation
+## 4. Score Plots
+### 4.0. Consolidating data
 ```{r}
-
 learners_voice_info <- do.call("rbind", lapply(learners_pt_filenames, function(item) {
   name <- str_split(item, '.PitchTier')[[1]][1]
   info <- str_split(name, '-')[[1]]
@@ -389,7 +402,8 @@ all_scores<-rbind(learners_voice_scores, natives_voice_scores, learners_gest_sco
 
 ```
 
-### 4.1.a
+### 4.1 Overall scores
+#### 4.1.a Correlation
 ```{r}
 # Overall correlation scores
 all_scores %>% 
@@ -399,9 +413,9 @@ all_scores %>%
             x="Condition", y="Correlation score")
 
 ```
-
+#### 4.1.b. RMSE
 ```{r}
-# Overall correlation scores
+# Overall RMSE scores
 all_scores %>% 
   ggplot(aes(x=type, y=rmse, fill=factor(native))) +
   geom_boxplot() + 
@@ -410,10 +424,12 @@ all_scores %>%
 
 ```
 
-### 4.1.b
+### 4.2 Scores by phrase
 For free interpretation, natives sometimes had lower correlation scores for the "a" phrase, indicating more variation in pronunciation. For "b" phrases (fallrise), the non-natives consistently score worse.
 
 For imitation, everyone does quite well across the board, but non-natives are not good with phrases 3b (Susan didn't get one credit) and Ab (Ken didn't feed the cat). 
+
+#### 4.2.1.a Vocal scores: free reading vs. imitation (Correlation)
 ```{r}
 # Correlation scores by phrase
 corr_free <- all_scores %>% filter(type=="free") %>%
@@ -441,26 +457,7 @@ grid.arrange(corr_free, corr_imitation, ncol=1)
 
 ```
 
-```{r}
-# Correlation scores by phrase
-corr_learners <- all_scores %>% filter(type!="free" & native==FALSE) %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores for Non-natives", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", values=wes_palette("Moonrise3"))
-
-corr_natives <- all_scores %>% filter(type!="free" & native==TRUE) %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores for Natives", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", labels=c("Gestural imitation", "vocal imitation"), values=wes_palette("Moonrise3"))
-
-grid.arrange(corr_learners, corr_natives, ncol=1)
-
-```
-
+#### 4.2.1.b. Vocal scores: free reading vs. imitation (RMSE)
 ```{r}
 
 # RMSE scores by phrase
@@ -488,3 +485,116 @@ rmse_chironomy <- all_scores %>% filter(type=="guide") %>%
 grid.arrange(rmse_free, rmse_imitation, ncol=1)
 
 ```
+
+#### 4.2.2.a Imitation scores: vocal vs. chironomy (Correlation)
+```{r}
+# Correlation scores by phrase
+corr_learners <- all_scores %>% filter(type!="free" & native==FALSE) %>%
+  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
+  geom_boxplot() + 
+  labs(title="Correlation Scores for Non-natives", 
+            x="Phrase", y="Correlation score") + 
+  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocal"), values=wes_palette("Moonrise3"))
+
+corr_natives <- all_scores %>% filter(type!="free" & native==TRUE) %>%
+  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
+  geom_boxplot() + 
+  labs(title="Correlation Scores for Natives", 
+            x="Phrase", y="Correlation score") + 
+  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocals"), values=wes_palette("Moonrise3"))
+
+grid.arrange(corr_learners, corr_natives, ncol=1)
+
+```
+
+## 5. Frequency Plots
+### 5.1. Preparing the data
+```{r}
+# Function factory to associate information with frequency curves
+get_curve_info <- function(filenames, data, nativeness) {
+  function(index) {
+    # Get the filename, remove extension
+    filename<-filenames[[index]]
+    filename<-str_split(filename, '[.]')[[1]][1]
+    # Get the parts of the filename
+    filename_parts<-str_split(filename, "-")[[1]]
+    # Get the gesture data
+    gest_data<-data[[index]] 
+    # Get the number of points, to calculate "percent" time
+    num_points<-length(gest_data$f)
+    my_percent<-seq(1, num_points)/num_points
+    my_data<-tibble(f=gest_data$f, t=gest_data$t, percent=my_percent,
+                         subject=filename_parts[1], condition=filename_parts[2], 
+                         phrase=filename_parts[3], order=filename_parts[4], 
+                         native=nativeness)
+    return(my_data)
+  }
+}
+
+# Function to get inforrmation for learners' gestures
+get_learner_gest_info <- get_curve_info(learners_gest_filenames, learners_gests_roi, FALSE)
+# All the learners gest data in a giant tibble
+learners_gest_data<-do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info))
+
+# Function to get information for natives' gestures
+get_native_gest_info <- get_curve_info(natives_gest_filenames, natives_gests_roi, TRUE)
+# All the native gest data in a giant tibble
+natives_gest_data<-do.call("rbind", lapply(seq(1, length(natives_gest_filenames)), get_native_gest_info))
+
+# Function to get information for learners' voice data
+get_learner_voice_info <- get_curve_info(learners_pt_filenames, learners_pts_roi, FALSE)
+# Learners voice data
+learners_voice_data<-do.call("rbind", lapply(seq(1, length(learners_pt_filenames)), get_learner_voice_info))
+learners_voice_imitation_data <- filter(learners_voice_data, condition=="imitation")
+learners_voice_reading_data <- filter(learners_voice_data, condition=="free")
+
+# Function to get information for natives voice info
+get_native_voice_info <- get_curve_info(natives_pt_filenames, natives_pts_roi, TRUE)
+natives_voice_data<-do.call("rbind", lapply(seq(1, length(natives_pt_filenames)), get_native_voice_info))
+natives_voice_imitation_data <- filter(natives_voice_data, condition=="imitation")
+natives_voice_reading_data <- filter(natives_voice_data, condition=="free")
+
+```
+
+
+```{r}
+library(cowplot)
+
+# Plots the refefence gesture with all the subject gestures
+plot_curves_with_ref <- function(f0_data, phrase_id, subject_group_name, condition) {
+  ref_data<-get_ref_roi_data(phrase_id)
+  my_f0_data <- f0_data %>% filter(phrase==phrase_id)
+  ggplot(ref_data, mapping=aes(x=percent, y=f, color="Ref")) + 
+  geom_line(size=1.5) +
+  geom_line(data=my_f0_data, mapping=aes(x=percent, y=f, color=subject)) +
+  labs(title=paste0("Aligned Ref and Subject F0s, ", subject_group_name),
+                 subtitle=paste0("Phrase: ", phrase_id, ",Condition: ", condition), 
+                 y="Frequency (Semitones)", x="Percent time")
+}
+
+# Function that makes and saves plots for diff data sets
+save_curves_ref_plots <- function(f0_data, subject_group, condition) {
+  plot3a <- plot_curves_with_ref(f0_data, "3a", subject_group, condition)
+  plot3b <- plot_curves_with_ref(f0_data, "3b", subject_group, condition)
+  plot5a <- plot_curves_with_ref(f0_data, "5a", subject_group, condition)
+  plot5b <- plot_curves_with_ref(f0_data, "5b", subject_group, condition)
+  plotAa <- plot_curves_with_ref(f0_data, "Aa", subject_group, condition)
+  plotAb <- plot_curves_with_ref(f0_data, "Ab", subject_group, condition)
+  plotCa <- plot_curves_with_ref(f0_data, "Ca", subject_group, condition)
+  plotCb <- plot_curves_with_ref(f0_data, "Cb", subject_group, condition)
+  curves35 <- plot_grid(plot3a, plot3b, plot5a, plot5b, ncol=2)
+  curvesAC <- plot_grid(plotAa, plotAb, plotCa, plotCb, ncol=2)
+  filename35 <- paste("3ab5ab", subject_group, condition, sep="_")
+  filenameAC <- paste("AabCab", subject_group, condition, sep="_")
+  ggsave(paste0(filename35, ".png"), plot=curves35, device='png', path="../data/21_05-fallrise/_plots", width = 10, height = 8)
+  ggsave(paste0(filenameAC, ".png"), plot=curvesAC, device='png', path="../data/21_05-fallrise/_plots", width = 10, height = 8)
+}
+
+save_curves_ref_plots(learners_gest_data, "Learners", "GesturalImitation")
+save_curves_ref_plots(natives_gest_data, "Natives", "GesturalImitation")
+save_curves_ref_plots(learners_voice_imitation_data, "Learners", "VocalImitation")
+save_curves_ref_plots(natives_voice_imitation_data, "Natives", "VocalImitation")
+
+
+```
+
