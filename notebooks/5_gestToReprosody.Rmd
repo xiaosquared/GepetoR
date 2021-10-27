@@ -28,12 +28,12 @@ options(tibble.print_max = Inf)
 
 # Gesture files are in two places. Uncomment one at a time and run thhe whole thing
 #path="../data/20_12_15-pilot_gestures/modalities/gestures/"
-path="../data/21_05-fallrise/gestures/a10/"
+path="../data/21_05-fallrise/gestures/"
 ref_freq = 116.54
 getwd()
 setwd(path)
 filenames <- dir(pattern="\\.gest$")
-setwd("../../../../notebooks/")
+setwd("../../../notebooks/")
 getwd()
 
 out<-sapply(filenames, gestToReprosody)

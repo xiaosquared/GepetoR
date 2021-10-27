@@ -1,0 +1,254 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(rPraat)
+
+# Function copied from https://bit.ly/2ZsZ0gw (StackOverflow)
+
+# gap_width = 5, top=5 for the reference files
+rise_and_falls <- function(data, gap_width = 10, top = 5, type = "rise") {
+  value <- data$f
+  time <-data$t
+  
+  type <- match.arg(type, c("fall", "rise"))
+  if (type == "fall") {
+    rle <- rle(sign(diff(value)) == -1)
+  } else {
+    rle <- rle(sign(diff(value)) == 1)
+  }
+  rle$values <- !rle$values & rle$lengths <= gap_width | rle$values
+  rle <- rle(inverse.rle(rle)) # Clean up changed runs
+  df <- data.frame(
+    start = cumsum(rle$lengths) - rle$lengths + 1,
+    end = cumsum(rle$lengths),
+    len = rle$lengths,
+    drop = rle$values
+  )
+  df <- transform(
+    df,
+    start_value = value[start],
+    end_value = value[end],
+    start_time = time[start],
+    end_time = time[end]
+  )
+  df$diff <- df$start_value - df$end_value
+  #df <- df[order(df$diff),]
+  if (type == "fall") {
+    tail(df, top)
+  } else {
+    head(df, top)
+  }
+  as_tibble(df)
+}
+
+# Function to get only the max rise and max fall based on result from of rise_and_falls
+get_max_rise_and_fall <- function(raf) {
+  # If only 1 row in the tibble, don't do anything
+  raf <- raf %>% filter(diff != 0)
+  if (nrow(raf)==1) {
+    return(raf)
+  }
+  max_row <- slice_max(filter(raf, drop==TRUE), diff)
+  min_row <- slice_min(filter(raf, drop==FALSE), diff)
+  result<-bind_rows(min_row, max_row)
+  return(result)
+}
+
+
+```
+
+# 
+Make sure that the data structures in 18_compareGestFallrise are loaded
+```{r}
+library(cowplot)
+
+# Rises and falls for refs
+ref_rafs_all <- ref_pts_roi %>% lapply(rise_and_falls, type="fall")
+ref_rafs <- ref_rafs_all %>% lapply(get_max_rise_and_fall)
+
+# Plot the Rise & Fall lines with the original
+plot_rf <- function(pt, raf, my_title) {
+  pt_data <- tibble(t=pt$t, f=pt$f)
+  ggplot(pt_data, aes(x=t, y=f)) + geom_line() +
+  geom_segment(data=raf, aes(x=start_time, y=start_value, 
+                             xend=end_time, yend=end_value),
+                             size=2, color="red") +
+  labs(title=my_title, y="Frequency (ST)", x="Time")  
+}
+# Calls plot_rf for ref phrases
+plot_ref_rf_helper <- function(id) {
+  plot_rf(ref_pts_roi[[id]], ref_rafs[[id]], ref_ROI[[id]])
+}
+
+# All the plots for ref phrases, with overlaid max rise and fall
+ref_raf_plots <- seq(1, length(ref_rafs)) %>% lapply(plot_ref_rf_helper)
+
+ref_raf35 <- plot_grid(ref_raf_plots[[1]], ref_raf_plots[[2]], 
+          ref_raf_plots[[3]], ref_raf_plots[[4]], ncol=2)
+
+ref_rafAC <- plot_grid(ref_raf_plots[[5]], ref_raf_plots[[6]], 
+          ref_raf_plots[[7]], ref_raf_plots[[8]], ncol=2)
+
+ref_raf35
+ref_rafAC
+
+filename35 <- paste("3ab5ab_main_movement")
+ggsave(paste0(filename35, ".png"), plot=ref_raf35, device='png',
+       path="../data/21_05-fallrise/_plots", width = 10, height = 8)
+
+filenameAC <- paste("AabCab_main_movement")
+ggsave(paste0(filenameAC, ".png"), plot=ref_rafAC, device='png',
+       path="../data/21_05-fallrise/_plots", width = 10, height = 8)
+
+# NOTE: The first reference file should probably have different settings to get the entire fall
+```
+
+## Gestural Files
+```{r}
+
+# Generates a function to put the RAFs in a list
+get_raf_list <- function(info_data, rafs, pts_roi) {
+  function(id) {
+    my_info_data <- slice(info_data, id)
+    my_raf <- rafs[[id]]
+    my_raf <- my_raf %>% mutate(subject=my_info_data$subject, type=my_info_data$type,
+                                pid=my_info_data$pid, order=my_info_data$order,
+                                native=my_info_data$native)
+    # Convert start_time & end_time as percentages
+    my_roi<-pts_roi[[id]]
+    my_roi_min <- head(my_roi$t, 1)
+    my_roi_max <- tail(my_roi$t, 1)
+    my_raf <- my_raf %>% mutate(start_percent=(start_time-my_roi_min)/(my_roi_max-my_roi_min),
+                                end_percent=(end_time-my_roi_min)/(my_roi_max-my_roi_min)) %>%
+      select(start_time, end_time, start_percent, end_percent, start_value, end_value, diff,
+             subject, pid, type)
+    return(my_raf)
+  }
+}
+
+# All the RAF data in a list
+lg_rafs_all <- learners_gests_roi2 %>% lapply(rise_and_falls, type="fall")
+lg_rafs_reduced <- lg_rafs_all %>% lapply(get_max_rise_and_fall)
+
+# MANUALLY FIX sa2_Cb (ATTENTION! When I rerun notebook 18 after
+# deleting the data for sa1, this will be #16)
+lg_rafs_reduced[[24]] <- slice(lg_rafs_all[[24]], 2, 3)
+
+# Function to create a list from learners gesture RAFs 
+get_lg_raf_list <- get_raf_list(learners_gest_info, lg_rafs_reduced, learners_gests_roi2)
+# Learners gesture RAFs in a tibble
+lg_raf_data <- do.call("rbind", lapply(seq(1, length(lg_rafs_reduced)), get_lg_raf_list))
+
+# Gernalized function to plot RAF with curve
+get_plot_rf_helper <- function(info_data, rafs, pts_roi) {
+  function(id) {
+    info <- slice(info_data, id)
+    title<-paste0("ID: ", id, ", ", info$subject, "_", info$type, "_", info$pid)
+    plot_rf(pts_roi[[id]], rafs[[id]], title)
+  }
+}
+
+# Get the plot function for learners gests RAFs  
+plot_lg_rf <- get_plot_rf_helper(learners_gest_info, lg_rafs_all, learners_gests_roi2)
+plot_lg_rf_reduced <- get_plot_rf_helper(learners_gest_info, lg_rafs_reduced, learners_gests_roi2)
+
+# All the RAF plots for learners gests
+lg_raf_plots <- seq(1, length(lg_rafs_all)) %>% lapply(plot_lg_rf)
+lg_raf_plots_reduced <-  seq(1, length(lg_rafs_reduced)) %>% lapply(plot_lg_rf_reduced)
+
+# Save all the RAF plots in separate files to look at them
+save_raf_plots_helper <- function(raf_plots, subfolder) {
+  function(id) {
+    my_plot <- raf_plots[[id]]
+    filename <- paste0("gest_", id)
+    ggsave(paste0(filename, ".png"), plot=my_plot, device='png',
+         path=paste0("../data/21_05-fallrise/_plots/", subfolder), width=6, height=4)
+  }
+}
+save_raf_plots_all <- save_raf_plots_helper(lg_raf_plots_all, "rafs")
+save_raf_plots_reduced <- save_raf_plots_helper(lg_raf_plots_reduced, "rafs2")
+
+seq(1, length(lg_raf_plots)) %>% lapply(save_raf_plots_helper)
+seq(1, length(lg_raf_plots_reduced)) %>% lapply(save_raf_plots_reduced)
+
+# Plotted! All the gestures of all the RAFs seem to be ok
+# Next, for the reduced ones... Go through manually and identify which ones need to be changed
+# For phrase b's, there's only #24, sa2_Cb
+# For phrase a's, just get the amount of fall, don't really need RAFs
+
+# Add fall & rise info to learners_gest_info
+# only get the fallrise phrases
+lg_raf_b_phrases <- lg_raf_data %>% filter(substring(pid, 2, 2)=="b")
+lg_rise_b_phrases <- lg_raf_b_phrases %>% filter(diff > 0) # diff contains rise
+lg_fall_b_phrases <- lg_raf_b_phrases %>% filter(diff < 0) # diff contains fall
+
+# Next, make a new tibble from learners_gest_info and put the info in new columns
+
+```
+
+
+## Vocal Files
+```{r}
+
+# Vocal files for learners
+lv_rafs_all <- learners_pts_roi2 %>% lapply(rise_and_falls, type="rise") 
+lv_rafs <- lv_rafs_all %>% lapply(get_max_rise_and_fall)
+
+# Add subject id to each line of RAF data
+lv_raf_list <- seq(1, length(lv_rafs_all)) %>% lapply(function(id) {
+  learners_info <- slice(learners_voice_info, id)
+  lv_raf <- lv_rafs[[id]]
+  lv_raf <- lv_raf %>% mutate(subject=learners_info$subject, type=learners_info$type,
+                              pid=learners_info$pid, order=learners_info$order,
+                              native=learners_info$native)
+  # In order to plot on top of reference curve, 
+  # need to get start_time & end_time as percentage 
+  lv_pt<-learners_pts_roi2[[id]]
+  lv_raf <- lv_raf %>% mutate(start_percent=(start_time-lv_pt$tmin)/(lv_pt$tmax-lv_pt$tmin),
+                              end_percent=(end_time-lv_pt$tmin)/(lv_pt$tmax-lv_pt$tmin)) %>%
+     select(start_time, end_time, 
+            start_percent, end_percent, start_value, end_value, subject, pid, type, diff)
+  return(lv_raf)
+}) 
+lv_raf_data <- do.call("rbind", lv_raf_list)
+
+plot_lv_rf_helper <- function(id) {
+  info <- slice(learners_voice_info, id)
+  title<-paste(id, info$subject, info$type, info$pid, sep="_")
+  plot_rf(learners_pts_roi2[[id]], lv_rafs_all[[id]], title)
+}
+
+lv_raf_plots <- seq(1, length(lv_rafs)) %>% lapply(plot_lv_rf_helper)
+
+
+#######
+
+# Plot on top of original
+# Plots the refefence gesture with all the subject gestures
+plot_subject_raf_with_ref <- function(raf_data, phrase_id, subject_group_name, 
+                                 condition, ref_pts_roi, note="") {
+  ref_data<-get_ref_roi_data(ref_pts_roi, phrase_id)
+  my_raf_data <- raf_data %>% filter(pid==phrase_id, condition==condition)
+  ggplot(ref_data, mapping=aes(x=percent, y=f, color="Ref")) + 
+  geom_line(size=1.5) +
+  geom_segment(data=my_raf_data,mapping=aes(x=start_percent, y=start_value, 
+                             xend=end_percent, yend=end_value, color=subject)) +  
+  labs(title=paste0("Aligned Ref and Subject main movements, ", subject_group_name, " ", note),
+                 subtitle=paste0("Phrase: ", phrase_id, ",Condition: ", condition), 
+                 y="Frequency (Semitones)", x="Percent time")
+}
+
+# Divide by free or imitation
+lv_raf_data_free <- filter(lv_raf_data, type=="free")
+lv_raf_data_imitation <- filter(lv_raf_data, type=="imitation")
+
+plot_subject_raf_with_ref(lv_raf_data_free, "3b", "Learners", "VoiceAll", ref_pts_roi)
+plot_subject_raf_with_ref(lv_raf_data_imitation, "3b", "Learners", "VoiceAll", ref_pts_roi)
+
+```
+
