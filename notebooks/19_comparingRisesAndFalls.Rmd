@@ -94,8 +94,6 @@ ref_raf35 <- plot_grid(ref_raf_plots[[1]], ref_raf_plots[[2]],
 ref_rafAC <- plot_grid(ref_raf_plots[[5]], ref_raf_plots[[6]], 
           ref_raf_plots[[7]], ref_raf_plots[[8]], ncol=2)
 
-ref_raf35
-ref_rafAC
 
 filename35 <- paste("3ab5ab_main_movement")
 ggsave(paste0(filename35, ".png"), plot=ref_raf35, device='png',
@@ -105,10 +103,33 @@ filenameAC <- paste("AabCab_main_movement")
 ggsave(paste0(filenameAC, ".png"), plot=ref_rafAC, device='png',
        path="../data/21_05-fallrise/_plots", width = 10, height = 8)
 
+# Get the fall & rise data for the B phrases
+# Make ref_rafs into a big tibble with phrase id
+ref_rafs_tibble <- do.call("rbind", lapply(seq(1, length(ref_rafs)), function(id) {
+  my_ref_info <- slice(ref_info, id)
+  my_raf <- ref_rafs[[id]]
+  my_raf <- my_raf %>% mutate(pid=ref_ids[[id]], start_percent=start_time/my_ref_info$duration,
+                    end_percent=end_time/my_ref_info$duration) %>%
+            select(pid, start_time, end_time, start_percent, end_percent, 
+                   start_value, end_value, diff)
+  return(my_raf)
+}))
+
+ref_rise_b_phrases <- filter(ref_rafs_tibble, substring(pid, 2, 2)=="b") %>% 
+                      filter(diff > 0) %>% mutate(rise=diff) %>% select(pid, rise)
+ref_fall_b_phrases <- filter(ref_rafs_tibble, substring(pid, 2, 2)=="b") %>% 
+                      filter(diff < 0) %>% mutate(fall=diff) %>% select(pid, fall)
+
+# Info on the rise fall of Ref phrases
+ref_rf_info <- tibble(pid=ref_ids) %>% 
+               left_join(ref_rise_b_phrases) %>% left_join(ref_fall_b_phrases)
+
+# TODO: fall info for A phrases - follow the guide for gestures
+
 # NOTE: The first reference file should probably have different settings to get the entire fall
 ```
 
-## Gestural Files
+## Gestural Files - fallrise phrases
 ```{r}
 
 # Generates a function to put the RAFs in a list
@@ -184,12 +205,55 @@ seq(1, length(lg_raf_plots_reduced)) %>% lapply(save_raf_plots_reduced)
 # Add fall & rise info to learners_gest_info
 # only get the fallrise phrases
 lg_raf_b_phrases <- lg_raf_data %>% filter(substring(pid, 2, 2)=="b")
-lg_rise_b_phrases <- lg_raf_b_phrases %>% filter(diff > 0) # diff contains rise
-lg_fall_b_phrases <- lg_raf_b_phrases %>% filter(diff < 0) # diff contains fall
+lg_rise_b_phrases <- lg_raf_b_phrases %>% filter(diff > 0) %>%
+                     mutate(rise=diff) %>% select(subject, type, pid, rise)
+lg_fall_b_phrases <- lg_raf_b_phrases %>% filter(diff < 0) %>%
+                     mutate(fall=diff) %>% select(subject, type, pid, fall)
 
 # Next, make a new tibble from learners_gest_info and put the info in new columns
+lg_rf_b_phrases <- inner_join(lg_rise_b_phrases, lg_fall_b_phrases)
+
+# Graph showing the amount of rise for B phrases compared to the reference
+lg_rf_b_phrases %>% 
+  ggplot(aes(x=pid, y=rise))+ geom_boxplot() + 
+  geom_point(data=ref_rf_info%>%filter(substring(pid,2, 2)=="b"), 
+             aes(x=pid, y=rise, color="Reference")) +
+  ggtitle("Amount of rise for b phrases")
+  
+lg_rf_b_phrases %>%
+  ggplot(aes(x=pid, y=fall))+ geom_boxplot() + 
+  geom_point(data=ref_rf_info%>%filter(substring(pid,2, 2)=="b"), 
+             aes(x=pid, y=fall, color="Reference")) +
+  ggtitle("Amount of fall for b phrases")
 
 ```
+
+## Gestural files - fall phrases
+```{r}
+get_fall_info <- function(info_data, rois) {
+  function(id) {
+    my_info <- slice(info_data, id)
+    my_roi <- rois[[id]]
+    my_fall <- min(my_roi$f) - max(my_roi$f)
+    my_info <- my_info %>% mutate(fall=my_fall, rise=0)
+    return(my_info)
+  }
+}
+
+# Get indices of Fall files
+a_indices <- which(learners_gest_info$pid %in% c('3a', '5a', 'Aa', 'Ca'))
+get_lg_fall_info <- get_fall_info(learners_gest_info, learners_gests_roi2)
+
+lg_rf_a_phrases <- do.call("rbind", lapply(a_indices, get_lg_fall_info))
+
+lg_rf_a_phrases %>% 
+  ggplot(aes(x=pid, y=fall))+ geom_boxplot() + 
+  geom_point(data=ref_rf_info%>%filter(substring(pid,2, 2)=="a"), 
+             aes(x=pid, y=fall, color="Reference")) +
+  ggtitle("Amount of fall for a phrases")
+
+```
+
 
 
 ## Vocal Files

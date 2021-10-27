@@ -74,8 +74,8 @@ load_gest <- function(filename) {
 ref_ids <- c('3a', '3b', '5a', '5b', 'Aa', 'Ab', 'Ca', 'Cb')
 ref_ROI <- c("Credit (fall)", "Credit (fallrise)",
              "Good (fall)", "Good (fallrise)",
-             "Cat (fall)", "Cat (fallrise", 
-             "Anyone (fall)", "Anyone (fallrise")
+             "Cat (fall)", "Cat (fallrise)", 
+             "Anyone (fall)", "Anyone (fallrise)")
 
 # Get index of reference file
 get_ref_index <- function(pt_filename) {
