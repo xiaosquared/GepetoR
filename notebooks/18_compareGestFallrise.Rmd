@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "Comparisons for Fallrise Data"
 output: html_notebook
 ---
 # Contents
@@ -12,22 +12,18 @@ output: html_notebook
   1.2 Gesture files
   1.3 Vocal files: 
 Note: there are 2 versions of TextGrids for every vocal and gestural file, one with the ending consonant and one without.
+  1.4: Info tibbles for all files
 
 2. Preparing for comparison:
     - From TextGrids, identify the start and end time of ROI for each file
   2.1 Reference recordings
-  2.2 Subject audio
+  2.2 Subjects' audio:
+    2.2.1 Normalizing audio
+    2.2.2 ROIs
 
-3. Comparisons
-  - Weighted correlation and RMSE, like before
-  - But I think correlation is more meaningful in this case
+Comparisons & score plots moved to 18b
 
-4. Score Plots
-  4.0 Consolidating scores
-  4.1 Overall scores
-  4.2 Scores by phrase
-
-5. Frequency plots
+3. Frequency plots
 
 ---------------------------
 # 0. Global definitions
@@ -157,7 +153,10 @@ natives_gests <- lapply(paste0(gest_path_natives, "gest/", natives_gest_filename
 natives_gests_tgs <- lapply(paste0(gest_path_natives, "tg/", natives_tg_filenames), load_textgrid)
 natives_gests_tgs2 <- lapply(paste0(gest_path_natives, "tg_noend/", natives_tg2_filenames), load_textgrid)
 
-
+# Both together
+all_gests <- append(learners_gests, natives_gests)
+all_gests_tgs <- append(learners_gests_tgs, natives_gests_tgs)
+all_gests_tgs2 <- append(learners_gests_tgs2, natives_gests_tgs2)
 ```
 
 ## 1.3 Loading vocal recordingss
@@ -183,6 +182,48 @@ natives_tg2_filenames <- dir(paste0(voice_natives_path, "tg_noend"))
 natives_pts <- lapply(paste0(voice_natives_path, "pt/", natives_pt_filenames), load_pitchtier)
 natives_tgs <- lapply(paste0(voice_natives_path, "tg/", natives_tg_filenames), load_textgrid)
 natives_tgs2 <- lapply(paste0(voice_natives_path, "tg_noend/", natives_tg2_filenames), load_textgrid)
+
+# Both together
+all_pts <- append(learners_pts, natives_pts)
+all_tgs <- append(learners_tgs, natives_tgs)
+all_tgs2 <- append(learners_tgs2, natives_tgs2)
+```
+
+
+## 1.4 Info tibbles for all files
+```{r}
+learners_voice_info <- do.call("rbind", lapply(learners_pt_filenames, function(item) {
+  name <- str_split(item, '.PitchTier')[[1]][1]
+  info <- str_split(name, '-')[[1]]
+  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=FALSE))
+}))
+
+natives_voice_info <- do.call("rbind", lapply(natives_pt_filenames, function(item) {
+  name <- str_split(item, '.PitchTier')[[1]][1]
+  info <- str_split(name, '-')[[1]]
+  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=TRUE))
+}))
+
+
+learners_gest_info <- do.call("rbind", lapply(learners_gest_filenames, function(item) {
+  name <- str_split(item, '.gest')[[1]][1]
+  info <- str_split(name, '-')[[1]]
+  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=FALSE))
+}))
+
+natives_gest_info <- do.call("rbind", lapply(natives_gest_filenames, function(item) {
+  name <- str_split(item, '.gest')[[1]][1]
+  info <- str_split(name, '-')[[1]]
+  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=TRUE))
+}))
+
+# Combine learners and natives
+voice_info <- full_join(learners_voice_info, natives_voice_info)
+# Add column that encodes the index, to easily select pt/gest files
+voice_info$index <- 1:nrow(voice_info)
+
+gest_info <- full_join(learners_gest_info, natives_gest_info)
+gest_info$index <- 1:nrow(gest_info)
 ```
 
 
@@ -230,6 +271,33 @@ ref_its_roi2 <- seq(1, length(ref_tgs)) %>% lapply(get_ref_its_roi2)
 ```
 
 ## 2.2 Preparing vocal recordings
+### 2.2.1 Normalizing
+```{r}
+# Get the average pitch of every subject
+
+# Helper function used by get_subject_mean_freq
+get_freqs <- function(index) {return(tibble(f=all_pts[[index]]$f))}
+
+generate_subject_mean_freq <- function(my_subject) {
+  # Find all the indices of the pitchtiers for the subject
+  pt_indices <- voice_info %>% filter(subject==my_subject) %>% select(index)  
+  all_freqs <- do.call("rbind", lapply(pt_indices$index, get_freqs))  
+  mean(all_freqs$f)
+}
+
+subjects <- c("sa2", "sa3", "sa4", "sa5", "sa6", "sa7", "sa8", "sa10", "sa11", "sa12", "sa13", "sa14",
+              "sn1", "sn2", "sn3", "sn4", "sn5", "sn6", "sn7", "sn8", "sn9", "sn10", "sn11", "sn12")
+means<- lapply(subjects, generate_subject_mean_freq) %>% unlist(recursive = FALSE, use.names = FALSE)
+subjects_means <- tibble(subject=subjects, mean=means) 
+
+get_subject_mean_freq <- function(my_subject) {
+  info<-filter(subjects_means, subject==my_subject)
+  return(info$mean)
+}
+```
+
+
+### 2.2.2 ROIs for vocal recordings
 ```{r}
 # returns a function that prepares subject pitch tier file
 # specify vectors for the filenames, pitchtiers (in semitones), and textgrids 
@@ -240,6 +308,14 @@ get_subject_pt_prep_function <- function(filenames, pts, tgs, ref_pts_roi, same=
     # Print index for debugging: 
     #print(paste("Current Index:", index))
     item <- filenames[[index]]
+    
+    # Get the subject from filename
+    filename<-str_split(item, '[.]')[[1]][1]
+    # Get the parts of the filename
+    filename_parts<-str_split(item, "-")[[1]]
+    my_subject<- filename_parts[1]
+    mean_freq <- get_subject_mean_freq(my_subject)
+    
     # Find the index of that ref phrase
     ref_index <- get_ref_index2(item, same)
     # Get the ref pitch tier (ROI)
@@ -252,10 +328,12 @@ get_subject_pt_prep_function <- function(filenames, pts, tgs, ref_pts_roi, same=
     # Interpolate based on the number of points in the ROI of the reference pitchtier
     pt_roi_interp <- pt.interpolate(pt_roi, 
                      seq(subject_roi_start, subject_roi_end, length=length(ref_pt$f)))
+    pt_roi_interp$f <- pt_roi_interp$f-mean_freq
+    return(pt_roi_interp)
   }
 }
 
-# Function to prepare the free vocal files for LEARNERS, then using it
+s# Function to prepare the free vocal files for LEARNERS, then using it
 learners_prep <- get_subject_pt_prep_function(learners_pt_filenames, learners_pts, learners_tgs, ref_pts_roi)
 learners_pts_roi <- seq(1, length(learners_pt_filenames)) %>% lapply(learners_prep)
 # For tgs2
@@ -290,7 +368,7 @@ get_subject_gest_prep_function <- function(filenames, gests, tgs, ref_pts_roi, s
   function(index) {
     file <- filenames[[index]]
     # Print index for debugging: 
-    #print(paste("Current Index:", index))
+    print(paste("Current Index:", index))
     ref_index <- get_ref_index2(file, same)
     # Get ref pitch tier (ROI)
     ref_pt <- ref_pts_roi[[ref_index]]
@@ -367,339 +445,15 @@ natives_gests_roi_nontarget <- seq(1, length(natives_gest_filenames)) %>% lapply
 ```
 
 
-
-## 3. Comparison
-### 3.1 Comparison function
-```{r}
-library("wCorr") # for the weighted correlation function
-
-# Non-weighted Pearson's correleation
-get_corr <- function(ref_pt, subject_pt, ref_it){
-  weightedCorr(ref_pt, subject_pt, weights=ref_it, method="pearson")
-  #weightedCorr(ref_pt, subject_pt, method="pearson")
-}
-
-# Returns a function that does comparison
-# Specify vectors for the filenames, pitchtiers for subject and reference
-# Specify type of comparison
-get_comparison_function <- function(filenames, pts, ref_pts, ref_its, method, same=TRUE) {
-  function(index) {
-    filename <- filenames[[index]]
-    #print(filename)
-    # Find the index of that ref phrase
-    ref_index <- get_ref_index2(filename, same)
-    # Get the ref pitch tier (roi) and intensity tier
-    ref_pt <- ref_pts[[ref_index]]
-    ref_it <- ref_its[[ref_index]]
-    # Run the method    
-    method(ref_pt$f, pts[[index]]$f, ref_it$i)
-  }
-} 
-```
-
-
-### 3.2 Scores for comparison with target reference
-```{r}
-## CORRELATION SCORES
-### VOICE
-# Function that gets the weighted Pearson's Correlation scores for LEANERS Voice
-get_corr_learners_voice <- get_comparison_function(learners_pt_filenames, learners_pts_roi, 
-                                                 ref_pts_roi, ref_its_roi, get_corr) 
-# The weighted Pearson's Correlation scores for LEARNERS
-learners_voice_corr <- seq(1, length(learners_pt_filenames)) %>% sapply(get_corr_learners_voice)
-# It's really bad, as expected :-)
-mean(learners_voice_corr) 
-
-# For tg2
-get_corr_learners_voice2 <- get_comparison_function(learners_pt_filenames, learners_pts_roi2, 
-                                                 ref_pts_roi2, ref_its_roi2, get_corr) 
-learners_voice_corr2 <- seq(1, length(learners_pt_filenames)) %>% sapply(get_corr_learners_voice2)
-mean(learners_voice_corr2)
-
-# Function that gets the weighted Pearson's Correlation scores for NATIVES Voice
-get_corr_natives_voice <- get_comparison_function(natives_pt_filenames, natives_pts_roi, 
-                                                ref_pts_roi, ref_its_roi, get_corr) 
-# The weighted Pearson's Correlation scores for NATIVES
-natives_voice_corr <- seq(1, length(natives_pt_filenames)) %>% sapply(get_corr_natives_voice)
-# It's not really that much better than the learners
-mean(natives_voice_corr) 
-
-# For tg2
-get_corr_natives_voice2 <- get_comparison_function(natives_pt_filenames, natives_pts_roi2, 
-                                                ref_pts_roi2, ref_its_roi2, get_corr) 
-natives_voice_corr2 <- seq(1, length(natives_pt_filenames)) %>% sapply(get_corr_natives_voice2)
-mean(natives_voice_corr2) 
-
-### GESTURE
-
-# Function that gets the weighted Pearson's Correlation scores for LEANERS Gestures
-get_corr_learners_gest <- get_comparison_function(learners_gest_filenames, learners_gests_roi,
-                                                  ref_pts_roi, ref_its_roi, get_corr)
-learners_gest_corr <- seq(1, length(learners_gest_filenames)) %>% sapply(get_corr_learners_gest)
-mean(learners_gest_corr) 
-
-# For tg2
-get_corr_learners_gest2 <- get_comparison_function(learners_gest_filenames, learners_gests_roi2,
-                                                  ref_pts_roi2, ref_its_roi2, get_corr)
-learners_gest_corr2 <- seq(1, length(learners_gest_filenames)) %>% sapply(get_corr_learners_gest2)
-mean(learners_gest_corr2) 
-
-# Function that gets the weighted Pearson's Correlation scores for NATIVES Gestures
-get_corr_natives_gest <- get_comparison_function(natives_gest_filenames, natives_gests_roi,
-                                                  ref_pts_roi, ref_its_roi, get_corr)
-natives_gest_corr <- seq(1, length(natives_gest_filenames)) %>% sapply(get_corr_natives_gest)
-mean(natives_gest_corr) 
-
-# For tg2
-get_corr_natives_gest2 <- get_comparison_function(natives_gest_filenames, natives_gests_roi2,
-                                                  ref_pts_roi2, ref_its_roi2, get_corr)
-natives_gest_corr2 <- seq(1, length(natives_gest_filenames)) %>% sapply(get_corr_natives_gest2)
-mean(natives_gest_corr2) 
-```
-
-### 3.3. Scores for comparison with non-target reference
-
-```{r}
-# Function that gets the weighted Pearson's Correlation scores for LEANERS Voice with Nontarget reference
-get_corr_learners_voice_nontarget <- get_comparison_function(learners_pt_filenames,
-                                                             learners_pts_roi_nontarget, 
-                                                             ref_pts_roi, ref_its_roi, get_corr, FALSE) 
-learners_voice_corr_nontarget <- seq(1, length(learners_pt_filenames)) %>%
-                                 sapply(get_corr_learners_voice_nontarget)
-mean(learners_voice_corr_nontarget) 
-
-# Function that gets the weighted Pearson's Correlation scores for NATIVES Voice
-get_corr_natives_voice_nontarget <- get_comparison_function(natives_pt_filenames, 
-                                                            natives_pts_roi_nontarget, 
-                                                            ref_pts_roi, ref_its_roi, get_corr, FALSE) 
-natives_voice_corr_nontarget <- seq(1, length(natives_pt_filenames)) %>%
-                                sapply(get_corr_natives_voice_nontarget)
-mean(natives_voice_corr_nontarget) 
-
-# Function that gets the weighted Pearson's Correlation scores for LEANERS Gestures
-get_corr_learners_gest_nontarget <- get_comparison_function(learners_gest_filenames,
-                                                            learners_gests_roi_nontarget,
-                                                            ref_pts_roi, ref_its_roi, get_corr, FALSE)
-learners_gest_corr_nontarget <- seq(1, length(learners_gest_filenames)) %>% 
-                      sapply(get_corr_learners_gest_nontarget)
-mean(learners_gest_corr_nontarget) 
-
-# Function that gets the weighted Pearson's Correlation scores for NATIVES Gestures
-get_corr_natives_gest_nontarget <- get_comparison_function(natives_gest_filenames, 
-                                                 natives_gests_roi_nontarget,
-                                                 ref_pts_roi, ref_its_roi, get_corr, FALSE)
-natives_gest_corr_nontarget <- seq(1, length(natives_gest_filenames)) %>%
-                               sapply(get_corr_natives_gest_nontarget)
-mean(natives_gest_corr_nontarget) 
-
-```
-
-
-
-## 4. Score Plots
-### 4.0. Consolidating data
-```{r}
-learners_voice_info <- do.call("rbind", lapply(learners_pt_filenames, function(item) {
-  name <- str_split(item, '.PitchTier')[[1]][1]
-  info <- str_split(name, '-')[[1]]
-  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=FALSE))
-}))
-
-natives_voice_info <- do.call("rbind", lapply(natives_pt_filenames, function(item) {
-  name <- str_split(item, '.PitchTier')[[1]][1]
-  info <- str_split(name, '-')[[1]]
-  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=TRUE))
-}))
-
-learners_gest_info <- do.call("rbind", lapply(learners_gest_filenames, function(item) {
-  name <- str_split(item, '.gest')[[1]][1]
-  info <- str_split(name, '-')[[1]]
-  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=FALSE))
-}))
-
-natives_gest_info <- do.call("rbind", lapply(natives_gest_filenames, function(item) {
-  name <- str_split(item, '.gest')[[1]][1]
-  info <- str_split(name, '-')[[1]]
-  return(tibble(subject=info[1], type=info[2], pid=info[3], order=info[4], native=TRUE))
-}))
-
-# Adding scores to info tibble
-learners_voice_scores <- learners_voice_info %>% add_column(corr=learners_voice_corr,
-                                                            corr_nt=learners_voice_corr_nontarget,
-                                                            corr_ne=learners_voice_corr2)
-natives_voice_scores <- natives_voice_info %>% add_column(corr=natives_voice_corr,
-                                                          corr_nt=natives_voice_corr_nontarget,
-                                                          corr_ne=natives_voice_corr2)
-learners_gest_scores <- learners_gest_info %>% add_column(corr=learners_gest_corr,
-                                                          corr_nt=learners_gest_corr_nontarget,
-                                                          corr_ne=learners_gest_corr2)
-natives_gest_scores <- natives_gest_info %>% add_column(corr=natives_gest_corr,
-                                                        corr_nt=natives_gest_corr_nontarget,
-                                                        corr_ne=natives_gest_corr2)
-all_scores<-rbind(learners_voice_scores, natives_voice_scores, learners_gest_scores, natives_gest_scores)
-
-```
-
-
-### 4.1 Overall scores
-```{r}
-# Overall correlation scores
-all_scores %>% 
-  ggplot(aes(x=type, y=corr, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Correlation with Reference", 
-            x="Condition", y="Correlation score")
-
-```
-
-```{r}
-# Non-target correlation scores
-all_scores %>% 
-  ggplot(aes(x=type, y=corr_ne, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Correlation ROI without final consonant", x="Condition", y="Correlation score")
-```
-
-
-### 4.2 Scores by phrase
-For free interpretation, natives sometimes had lower correlation scores for the "a" phrase, indicating more variation in pronunciation. For "b" phrases (fallrise), the non-natives consistently score worse.
-
-For imitation, everyone does quite well across the board, but non-natives are not good with phrases 3b (Susan didn't get one credit) and Ab (Ken didn't feed the cat). 
-
-#### 4.2.1 Vocal scores: free reading vs. imitation (Correlation)
-```{r}
-# Correlation scores by phrase
-corr_free <- all_scores %>% filter(type=="free") %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Vocal Correlation with Reference - Free", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_discrete(name = "Nativeness")
-
-corr_imitation <- all_scores %>% filter(type=="imitation") %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Vocal Correlation with Reference - Imitation", 
-            x="Phrase", y="Correlation score") +
-  scale_fill_discrete(name = "Nativeness")
-
-corr_chironomy <- all_scores %>% filter(type=="guide") %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Gestural Correlation with Reference - Chironomy", 
-            x="Phrase", y="Correlation score") +
-  scale_fill_discrete(name = "Nativeness")
-
-grid.arrange(corr_free, corr_imitation, ncol=1)
-
-```
-
-```{r}
-# TextGrids without final consonant
-corr_free_ne <- all_scores %>% filter(type=="free") %>%
-  ggplot(aes(x=pid, y=corr_ne, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Vocal Correlation - Free, ROI without final consonant", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_discrete(name = "Nativeness")
-
-corr_imitation_ne <- all_scores %>% filter(type=="imitation") %>%
-  ggplot(aes(x=pid, y=corr_ne, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Vocal Correlation - Imitation, ROI without final consonant", 
-            x="Phrase", y="Correlation score") +
-  scale_fill_discrete(name = "Nativeness")
-
-corr_chironomy_ne <- all_scores %>% filter(type=="guide") %>%
-  ggplot(aes(x=pid, y=corr_ne, fill=factor(native))) +
-  geom_boxplot() + 
-  labs(title="Gestural Correlation, ROI without final consonant", 
-            x="Phrase", y="Correlation score") +
-  scale_fill_discrete(name = "Nativeness")
-
-grid.arrange(corr_free_ne, corr_imitation_ne, ncol=1)
-
-```
-
-
-```{r}
-grid.arrange(corr_chironomy, corr_imitation, ncol=1)
-```
-```{r}
-grid.arrange(corr_chironomy_ne, corr_imitation_ne, ncol=1)
-```
-
-
-#### 4.2.2 Imitation scores: vocal vs. chironomy (Correlation)
-```{r}
-# Correlation scores by phrase
-corr_learners <- all_scores %>% filter(type!="free" & native==FALSE) %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores for Non-natives", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocal"), values=wes_palette("Moonrise3"))
-
-corr_natives <- all_scores %>% filter(type!="free" & native==TRUE) %>%
-  ggplot(aes(x=pid, y=corr, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores for Natives", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocals"), values=wes_palette("Moonrise3"))
-
-grid.arrange(corr_learners, corr_natives, ncol=1)
-
-```
-```{r}
-# Correlation scores by phrase
-corr_learners_ne <- all_scores %>% filter(type!="free" & native==FALSE) %>%
-  ggplot(aes(x=pid, y=corr_ne, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores, ROI without final consonant - Nonnative", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocal"), values=wes_palette("Moonrise3"))
-
-corr_natives_ne <- all_scores %>% filter(type!="free" & native==TRUE) %>%
-  ggplot(aes(x=pid, y=corr_ne, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores, ROI without final consonant - Native", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type", labels=c("Gestural", "Vocals"), values=wes_palette("Moonrise3"))
-
-grid.arrange(corr_learners_ne, corr_natives_ne, ncol=1)
-```
-
-### 4.3 Scores by subject
-
-```{r}
-# Correlation scores by subject
-all_scores %>% filter(type!="free") %>%
-  ggplot(aes(x=subject, y=corr, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores by subject", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type" , values=wes_palette("Moonrise2"))
-
-```
-```{r}
-all_scores %>% filter(type!="free") %>%
-  ggplot(aes(x=subject, y=corr_ne, fill=factor(type))) +
-  geom_boxplot() + 
-  labs(title="Correlation Scores by subject, ROI without final consonant", 
-            x="Phrase", y="Correlation score") + 
-  scale_fill_manual(name = "Type" , values=wes_palette("Moonrise2"))
-
-```
-
-
-## 5. Frequency Plots
-### 5.1. Preparing the data
+## 3. Frequency Plots
+### 3.1. Preparing the data
 ```{r}
 # Function factory to associate information with frequency curves
 get_curve_info <- function(filenames, data, nativeness) {
   function(index) {
     # Get the filename, remove extension
     filename<-filenames[[index]]
+    #print(filename)
     filename<-str_split(filename, '[.]')[[1]][1]
     # Get the parts of the filename
     filename_parts<-str_split(filename, "-")[[1]]
@@ -708,10 +462,13 @@ get_curve_info <- function(filenames, data, nativeness) {
     # Get the number of points, to calculate "percent" time
     num_points<-length(gest_data$f)
     my_percent<-seq(1, num_points)/num_points
-    my_data<-tibble(f=gest_data$f, t=gest_data$t, percent=my_percent,
+    # Add marker for start of the "event" (for autocorrelation stuff in GAMM)
+    my_event<-rep(FALSE, num_points)
+    my_event[1]<-TRUE
+    my_data<-tibble(f=gest_data$f, t=gest_data$t, t.norm=my_percent,
                          subject=filename_parts[1], condition=filename_parts[2], 
-                         phrase=filename_parts[3], order=filename_parts[4], 
-                         native=nativeness)
+                         phrase=filename_parts[3], fallrise=substring(filename_parts[[3]], 2, 2)=='b',
+                         order=filename_parts[4], event=my_event, native=nativeness)
     return(my_data)
   }
 }
@@ -722,7 +479,7 @@ get_learner_gest_info <- get_curve_info(learners_gest_filenames, learners_gests_
 learners_gest_data<-do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info))
 # tg2:
 get_learner_gest_info2 <- get_curve_info(learners_gest_filenames, learners_gests_roi2, FALSE)
-learners_gest_data2<-do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info2))
+learners_gest_data2 <- do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info2))
 
 
 # Function to get information for natives' gestures
@@ -769,7 +526,7 @@ plot_curves_with_ref <- function(f0_data, phrase_id, subject_group_name, conditi
   my_f0_data <- f0_data %>% filter(phrase==phrase_id)
   ggplot(ref_data, mapping=aes(x=percent, y=f, color="Ref")) + 
   geom_line(size=1.5) +
-  geom_line(data=my_f0_data, mapping=aes(x=percent, y=f, color=subject)) +
+  geom_line(data=my_f0_data, mapping=aes(x=t.norm, y=f, color=subject)) +
   labs(title=paste0("Aligned Ref and Subject F0s, ", subject_group_name, " ", note),
                  subtitle=paste0("Phrase: ", phrase_id, ",Condition: ", condition), 
                  y="Frequency (Semitones)", x="Percent time")
@@ -802,6 +559,8 @@ save_curves_ref_plots(learners_gest_data2, "Learners", "GesturalImitation", ref_
 save_curves_ref_plots(natives_gest_data2, "Natives", "GesturalImitation", ref_pts_roi2, "ne")
 save_curves_ref_plots(learners_voice_imitation_data2, "Learners", "VocalImitation", ref_pts_roi2, "ne")
 save_curves_ref_plots(natives_voice_imitation_data2, "Natives", "VocalImitation", ref_pts_roi2, "ne")
+
+save_curves_ref_plots(learners_voice_reading_data, "Learners", "VocalReading", ref_pts_roi)
 
 ```
 
