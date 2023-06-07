@@ -99,13 +99,15 @@ get_ref_index2 <- function(pt_filename, same=TRUE) {
 }
 
 # Get the reference data based on phrase_id
-get_ref_roi_data <- function(ref_pts_roi, phrase_id) {
+get_ref_data <- function(ref_pts_roi, phrase_id) {
   index<-which(ref_ids==phrase_id)
   ref_data<-ref_pts_roi[[index]]
   num_points<-length(ref_data$f)
   my_data<-tibble(f=ref_data$f, t=ref_data$t, percent=seq(1, num_points)/num_points, condition="ref")
   return(my_data)
 }
+
+
 
 ```
 
@@ -159,7 +161,7 @@ all_gests_tgs <- append(learners_gests_tgs, natives_gests_tgs)
 all_gests_tgs2 <- append(learners_gests_tgs2, natives_gests_tgs2)
 ```
 
-## 1.3 Loading vocal recordingss
+## 1.3 Loading vocal recordings
 ```{r}
 # For Vocal Recordings
 voice_learners_path <- "../data/21_05-fallrise/voice_learners/"
@@ -333,7 +335,7 @@ get_subject_pt_prep_function <- function(filenames, pts, tgs, ref_pts_roi, same=
   }
 }
 
-s# Function to prepare the free vocal files for LEARNERS, then using it
+# Function to prepare the free vocal files for LEARNERS, then using it
 learners_prep <- get_subject_pt_prep_function(learners_pt_filenames, learners_pts, learners_tgs, ref_pts_roi)
 learners_pts_roi <- seq(1, length(learners_pt_filenames)) %>% lapply(learners_prep)
 # For tgs2
@@ -448,6 +450,9 @@ natives_gests_roi_nontarget <- seq(1, length(natives_gest_filenames)) %>% lapply
 ## 3. Frequency Plots
 ### 3.1. Preparing the data
 ```{r}
+
+# NOTE!! Consider incorporating perception test results at this stage to make things go faster
+
 # Function factory to associate information with frequency curves
 get_curve_info <- function(filenames, data, nativeness) {
   function(index) {
@@ -473,14 +478,16 @@ get_curve_info <- function(filenames, data, nativeness) {
   }
 }
 
-# Function to get inforrmation for learners' gestures
+# Function to get information for learners' gestures
 get_learner_gest_info <- get_curve_info(learners_gest_filenames, learners_gests_roi, FALSE)
 # All the learners gest data in a giant tibble
 learners_gest_data<-do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info))
 # tg2:
 get_learner_gest_info2 <- get_curve_info(learners_gest_filenames, learners_gests_roi2, FALSE)
 learners_gest_data2 <- do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info2))
-
+# Entire curve, not only ROI
+get_learner_gest_info_all <- get_curve_info(learners_gest_filenames, learners_gests, FALSE)
+learners_gest_data_all<-do.call("rbind", lapply(seq(1, length(learners_gest_filenames)), get_learner_gest_info_all))
 
 # Function to get information for natives' gestures
 get_native_gest_info <- get_curve_info(natives_gest_filenames, natives_gests_roi, TRUE)
@@ -489,7 +496,9 @@ natives_gest_data<-do.call("rbind", lapply(seq(1, length(natives_gest_filenames)
 #tg2:
 get_native_gest_info2 <- get_curve_info(natives_gest_filenames, natives_gests_roi2, TRUE)
 natives_gest_data2<-do.call("rbind", lapply(seq(1, length(natives_gest_filenames)), get_native_gest_info2))
-
+# Entire curve, not only ROI
+get_native_gest_info_all <- get_curve_info(natives_gest_filenames, learners_gests, TRUE)
+natives_gest_data_all<-do.call("rbind", lapply(seq(1, length(natives_gest_filenames)), get_native_gest_info_all))
 
 # Function to get information for learners' voice data
 get_learner_voice_info <- get_curve_info(learners_pt_filenames, learners_pts_roi, FALSE)
@@ -501,6 +510,12 @@ get_learner_voice_info2 <- get_curve_info(learners_pt_filenames, learners_pts_ro
 learners_voice_data2<-do.call("rbind", lapply(seq(1, length(learners_pt_filenames)), get_learner_voice_info2))
 learners_voice_imitation_data2 <- filter(learners_voice_data, condition=="imitation")
 learners_voice_reading_data2 <- filter(learners_voice_data, condition=="free")
+# Entire curve, not only ROIs
+get_learner_voice_info_all <- get_curve_info(learners_pt_filenames, learners_pts, FALSE)
+learners_voice_data_all<-do.call("rbind", lapply(seq(1, length(learners_pt_filenames)), get_learner_voice_info_all))
+learners_voice_imitation_data_all <- filter(learners_voice_data_all, condition=="imitation")
+learners_voice_reading_data_all <- filter(learners_voice_data_all, condition=="free")
+
 
 # Function to get information for natives voice info
 get_native_voice_info <- get_curve_info(natives_pt_filenames, natives_pts_roi, TRUE)
@@ -512,6 +527,11 @@ get_native_voice_info2 <- get_curve_info(natives_pt_filenames, natives_pts_roi2,
 natives_voice_data2<-do.call("rbind", lapply(seq(1, length(natives_pt_filenames)), get_native_voice_info2))
 natives_voice_imitation_data2 <- filter(natives_voice_data, condition=="imitation")
 natives_voice_reading_data2 <- filter(natives_voice_data, condition=="free")
+# Entire curve, not only ROIS
+get_native_voice_info_all <- get_curve_info(natives_pt_filenames, natives_pts, TRUE)
+natives_voice_data_all<-do.call("rbind", lapply(seq(1, length(natives_pt_filenames)), get_native_voice_info_all))
+natives_voice_imitation_data_all <- filter(natives_voice_data_all, condition=="imitation")
+natives_voice_reading_data_all <- filter(natives_voice_data_all, condition=="free")
 
 ```
 
@@ -522,7 +542,7 @@ library(cowplot)
 
 # Plots the refefence gesture with all the subject gestures
 plot_curves_with_ref <- function(f0_data, phrase_id, subject_group_name, condition, ref_pts_roi, note="") {
-  ref_data<-get_ref_roi_data(ref_pts_roi, phrase_id)
+  ref_data<-get_ref_data(ref_pts_roi, phrase_id)
   my_f0_data <- f0_data %>% filter(phrase==phrase_id)
   ggplot(ref_data, mapping=aes(x=percent, y=f, color="Ref")) + 
   geom_line(size=1.5) +
@@ -531,6 +551,7 @@ plot_curves_with_ref <- function(f0_data, phrase_id, subject_group_name, conditi
                  subtitle=paste0("Phrase: ", phrase_id, ",Condition: ", condition), 
                  y="Frequency (Semitones)", x="Percent time")
 }
+
 
 # Function that makes and saves plots for diff data sets
 save_curves_ref_plots <- function(f0_data, subject_group, condition, ref_pts_roi, note="") {
@@ -559,8 +580,17 @@ save_curves_ref_plots(learners_gest_data2, "Learners", "GesturalImitation", ref_
 save_curves_ref_plots(natives_gest_data2, "Natives", "GesturalImitation", ref_pts_roi2, "ne")
 save_curves_ref_plots(learners_voice_imitation_data2, "Learners", "VocalImitation", ref_pts_roi2, "ne")
 save_curves_ref_plots(natives_voice_imitation_data2, "Natives", "VocalImitation", ref_pts_roi2, "ne")
+save_curves_ref_plots(learners_voice_imitation_data2, "Learners", "VocalReading", ref_pts_roi2, "ne")
+save_curves_ref_plots(natives_voice_imitation_data2, "Natives", "VocalReading", ref_pts_roi2, "ne")
 
-save_curves_ref_plots(learners_voice_reading_data, "Learners", "VocalReading", ref_pts_roi)
+
+  # All
+save_curves_ref_plots(learners_voice_reading_data_all, "Learners", "VocalReading", ref_pts, "All")
+save_curves_ref_plots(natives_voice_reading_data_all, "Natives", "VocalReading", ref_pts, "All")
+save_curves_ref_plots(learners_voice_imitation_data_all, "Learners", "VocalImitation", ref_pts, "All")
+save_curves_ref_plots(natives_voice_imitation_data_all, "Natives", "VocaImitation", ref_pts, "All")
+save_curves_ref_plots(learners_gest_data_all, "Learners", "GesturalImitation", ref_pts, "All")
+save_curves_ref_plots(natives_gest_data_all, "Natives", "GesturalImitation", ref_pts, "All")
 
 ```
 

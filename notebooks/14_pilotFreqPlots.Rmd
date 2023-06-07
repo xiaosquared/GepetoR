@@ -15,6 +15,22 @@ library("gridExtra")
 voice_comparison_data_tibble <- readRDS("../data/21_02-study/saved/voice_curves.rds")
 aligned_voice_data_tibble <- readRDS("../data/21_02-study/saved/voice_curves_aligned.rds")
 gest_comparison_data_tibble <- readRDS("../data/21_02-study/saved/gest_curves.rds")
+
+
+  phrase_id <- 7
+  my_type <- "imitation"
+
+my_data <- filter(voice_comparison_data_tibble,phrase==ref_phrases[[phrase_id]], condition==my_type)
+ggplot(data=my_data, aes(x=percent_t, y=rec_f, color=subject)) + 
+              geom_line(mapping=aes(x=percent_t, y=rec_f, color=subject))
+  
+
+
+my_plot <- ggplot(data=my_data, aes(x=percent_t, y=ref_f_psg, color="Reference")) +
+            scale_color_discrete(name = "Data source") +
+            geom_line(size=2) +
+            geom_line(mapping=aes(x=percent_t, y=rec_f, color=subject)) +
+
 ```
 
 # Gestures

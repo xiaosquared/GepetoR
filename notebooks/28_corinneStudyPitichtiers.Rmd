@@ -1,0 +1,103 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(rPraat)
+source("../utils/hertzToST.R")
+
+ref_freq <- 120
+
+# Get all the filenames of pre/post test recordings
+pre_path <- "../data/23_06-corinne/pretest/"
+pre_pt_filenames <- dir(pre_path)
+post_path <- "../data/23_06-corinne/posttest/"
+post_pt_filenames <- dir(post_path)
+
+
+# Load a pitchtier given its filename 
+load_pitchtier_corinne <- function(filename) {
+  my_pt <- pt.read(filename)
+  my_pt$f <- hertz_to_semitones(my_pt$f, ref_freq)
+  return(my_pt)
+}
+
+# Load all the pitchtiers
+pre_pts <- lapply(paste0(pre_path, pre_pt_filenames), load_pitchtier_corinne)
+post_pts <- lapply(paste0(post_path, post_pt_filenames), load_pitchtier_corinne)
+
+# Function to generate tibble with f0 data and metadata
+get_f0_data <- function(filenames, pts) {
+  function(index) {
+    # Get the filename, remove extension
+    filename<-filenames[[index]]
+    filename<-str_split(filename, '[.]')[[1]][1]
+    # Get the parts of the filename
+    filename_parts<-str_split(filename, "_")[[1]]
+    # Get the pitchtier data
+    pt_data<-pts[[index]]
+    # Calculate percent time from number of points
+    num_points<-length(pt_data$f)
+    my_percent<-seq(1, num_points)/num_points
+    # Put everything into tibble
+    my_data<-tibble(f=pt_data$f, t=pt_data$t, t.norm=my_percent,
+                    subject=filename_parts[1], which.test=filename_parts[2], 
+                    phrase=filename_parts[4], intonation=filename_parts[3])
+    return(my_data)
+  }
+}
+get_pre_data <- get_f0_data(pre_pt_filenames,  pre_pts)
+get_post_data <- get_f0_data(post_pt_filenames,  post_pts)
+
+# All the pre/post test data
+pre_data<-do.call("rbind", lapply(seq(1, length(pre_pt_filenames)), get_pre_data))
+post_data<-do.call("rbind", lapply(seq(1, length(post_pt_filenames)), get_post_data))
+
+```
+
+
+```{r}
+
+post_data %>% filter(intonation=="disbelief") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Posttest disbelief intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+post_data %>% filter(intonation=="sentence") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Posttest declaration intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+post_data %>% filter(intonation=="question") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Posttest question intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+
+pre_data %>% filter(intonation=="disbelief") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Pretest disbelief intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+pre_data %>% filter(intonation=="sentence") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Pretest declaration intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+pre_data %>% filter(intonation=="question") %>%
+  ggplot(aes(x=t.norm, y=f, color=subject)) + 
+  geom_smooth() + geom_point() +
+  labs(title=paste0("Pretest question intonation - all phrases"),
+                 y="Frequency (Semitones)", x="Percent time")
+
+
+```
+
